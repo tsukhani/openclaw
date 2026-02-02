@@ -2,6 +2,20 @@ import fs from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
+export type AutoCaptureConfig = {
+  enabled: boolean;
+  /** LLM provider for memory extraction: "openrouter" (default) or "openai" */
+  provider?: "openrouter" | "openai";
+  /** LLM model for memory extraction (default: google/gemini-2.0-flash-001) */
+  model?: string;
+  /** API key for the LLM provider (supports ${ENV_VAR} syntax) */
+  apiKey?: string;
+  /** Base URL for the LLM provider (default: https://openrouter.ai/api/v1) */
+  baseUrl?: string;
+  /** Maximum messages to send for extraction (default: 10) */
+  maxMessages?: number;
+};
+
 export type MemoryConfig = {
   embedding: {
     provider: "openai";
@@ -9,7 +23,8 @@ export type MemoryConfig = {
     apiKey: string;
   };
   dbPath?: string;
-  autoCapture?: boolean;
+  /** @deprecated Use autoCapture object instead. Boolean true enables with defaults. */
+  autoCapture?: boolean | AutoCaptureConfig;
   autoRecall?: boolean;
   coreMemory?: {
     enabled?: boolean;
@@ -117,6 +132,33 @@ export const memoryConfigSchema = {
 
     const model = resolveEmbeddingModel(embedding);
 
+    // Parse autoCapture (supports boolean for backward compat, or object for LLM config)
+    let autoCapture: MemoryConfig["autoCapture"];
+    if (cfg.autoCapture === false) {
+      autoCapture = false;
+    } else if (cfg.autoCapture === true || cfg.autoCapture === undefined) {
+      // Legacy boolean or default — enable with defaults
+      autoCapture = { enabled: true };
+    } else if (typeof cfg.autoCapture === "object" && !Array.isArray(cfg.autoCapture)) {
+      const ac = cfg.autoCapture as Record<string, unknown>;
+      assertAllowedKeys(
+        ac,
+        ["enabled", "provider", "model", "apiKey", "baseUrl", "maxMessages"],
+        "autoCapture config",
+      );
+      autoCapture = {
+        enabled: ac.enabled !== false,
+        provider:
+          ac.provider === "openai" || ac.provider === "openrouter"
+            ? ac.provider
+            : "openrouter",
+        model: typeof ac.model === "string" ? ac.model : undefined,
+        apiKey: typeof ac.apiKey === "string" ? resolveEnvVars(ac.apiKey) : undefined,
+        baseUrl: typeof ac.baseUrl === "string" ? ac.baseUrl : undefined,
+        maxMessages: typeof ac.maxMessages === "number" ? ac.maxMessages : undefined,
+      };
+    }
+
     // Parse coreMemory
     let coreMemory: MemoryConfig["coreMemory"];
     if (cfg.coreMemory && typeof cfg.coreMemory === "object" && !Array.isArray(cfg.coreMemory)) {
@@ -136,7 +178,7 @@ export const memoryConfigSchema = {
         apiKey: resolveEnvVars(embedding.apiKey),
       },
       dbPath: typeof cfg.dbPath === "string" ? cfg.dbPath : DEFAULT_DB_PATH,
-      autoCapture: cfg.autoCapture !== false,
+      autoCapture: autoCapture ?? { enabled: true },
       autoRecall: cfg.autoRecall !== false,
       coreMemory,
     };
@@ -158,9 +200,27 @@ export const memoryConfigSchema = {
       placeholder: "~/.openclaw/memory/lancedb",
       advanced: true,
     },
-    autoCapture: {
+    "autoCapture.enabled": {
       label: "Auto-Capture",
-      help: "Automatically capture important information from conversations",
+      help: "Automatically capture important information from conversations using LLM extraction",
+    },
+    "autoCapture.provider": {
+      label: "Capture LLM Provider",
+      placeholder: "openrouter",
+      advanced: true,
+      help: "LLM provider for memory extraction (openrouter or openai)",
+    },
+    "autoCapture.model": {
+      label: "Capture Model",
+      placeholder: "google/gemini-2.0-flash-001",
+      advanced: true,
+      help: "LLM model for memory extraction (use a fast/cheap model)",
+    },
+    "autoCapture.apiKey": {
+      label: "Capture API Key",
+      sensitive: true,
+      advanced: true,
+      help: "API key for capture LLM (defaults to OpenRouter key from provider config)",
     },
     autoRecall: {
       label: "Auto-Recall",

@@ -14,6 +14,7 @@ import OpenAI from "openai";
 import { stringEnum } from "openclaw/plugin-sdk";
 import {
   MEMORY_CATEGORIES,
+  type AutoCaptureConfig,
   type MemoryCategory,
   memoryConfigSchema,
   vectorDimsForModel,
@@ -222,60 +223,116 @@ class Embeddings {
 }
 
 // ============================================================================
-// Rule-based capture filter
+// LLM-based memory extraction
 // ============================================================================
 
-const MEMORY_TRIGGERS = [
-  /zapamatuj si|pamatuj|remember/i,
-  /preferuji|radši|nechci|prefer/i,
-  /rozhodli jsme|budeme používat/i,
-  /\+\d{10,}/,
-  /[\w.-]+@[\w.-]+\.\w+/,
-  /můj\s+\w+\s+je|je\s+můj/i,
-  /my\s+\w+\s+is|is\s+my/i,
-  /i (like|prefer|hate|love|want|need)/i,
-  /always|never|important/i,
-];
+const EXTRACTION_PROMPT = `You are a memory extraction system for a personal AI assistant. Extract durable knowledge worth remembering across sessions — things useful weeks or months from now.
 
-function shouldCapture(text: string): boolean {
-  if (text.length < 10 || text.length > 500) {
-    return false;
-  }
-  // Skip injected context from memory recall
-  if (text.includes("<relevant-memories>")) {
-    return false;
-  }
-  // Skip system-generated content
-  if (text.startsWith("<") && text.includes("</")) {
-    return false;
-  }
-  // Skip agent summary responses (contain markdown formatting)
-  if (text.includes("**") && text.includes("\n-")) {
-    return false;
-  }
-  // Skip emoji-heavy responses (likely agent output)
-  const emojiCount = (text.match(/[\u{1F300}-\u{1F9FF}]/gu) || []).length;
-  if (emojiCount > 3) {
-    return false;
-  }
-  return MEMORY_TRIGGERS.some((r) => r.test(text));
-}
+Be selective. Most exchanges contain nothing new worth storing. Return [] when there's nothing.
 
-function detectCategory(text: string): MemoryCategory {
-  const lower = text.toLowerCase();
-  if (/prefer|radši|like|love|hate|want/i.test(lower)) {
-    return "preference";
+EXTRACT:
+- Personal facts: names, birthdays, addresses, family, relationships, preferences
+- Contact info: phone numbers, emails, addresses
+- Decisions and agreements: what was decided, chosen, or approved
+- Work outcomes: what was built, fixed, configured, deployed (the WHAT, not the HOW)
+- Business info: clients, contracts, deals, deadlines, new contacts
+- New people/organizations with identifying details
+- Lessons learned: gotchas, pitfalls, things that broke and why
+
+DO NOT EXTRACT:
+- Step-by-step process details (commands run, files read, debugging steps)
+- Conversation mechanics ("let me check", "here's what I found", "on it!")
+- Raw tool/command output or data dumps
+- Transient status ("working on X", "downloading...", "almost done")
+- Greetings, acknowledgments, small talk
+- Information that merely REPEATS what's already in the conversation context
+- Implementation minutiae (variable names, line numbers, exact code changes)
+
+DISTILLATION RULE: When technical work was done, capture the OUTCOME in one clean sentence, not the process. Example: "Implemented LLM-based auto-capture for memory plugin using Gemini Flash via OpenRouter" — NOT "Changed line 540 in index.ts to call OpenAI API with extraction prompt".
+
+For each memory:
+- text: Clean, distilled statement. 30-250 chars. Third person for user facts, neutral for work outcomes.
+- category: preference | fact | decision | entity | other
+- importance: 0.5-1.0 (0.9+ critical personal info, 0.8 decisions/outcomes, 0.7 useful facts, 0.5 nice-to-know)
+
+Respond with ONLY a JSON array. Empty array [] if nothing worth storing.`;
+
+type ExtractedMemory = {
+  text: string;
+  category: MemoryCategory;
+  importance: number;
+};
+
+class MemoryExtractor {
+  private client: OpenAI;
+  private model: string;
+
+  constructor(config: AutoCaptureConfig, fallbackApiKey?: string) {
+    const provider = config.provider ?? "openrouter";
+    const apiKey = config.apiKey ?? fallbackApiKey;
+    if (!apiKey) {
+      throw new Error("autoCapture requires an API key (set autoCapture.apiKey or use OpenRouter provider config)");
+    }
+
+    const baseURL =
+      config.baseUrl ??
+      (provider === "openrouter"
+        ? "https://openrouter.ai/api/v1"
+        : "https://api.openai.com/v1");
+
+    this.model = config.model ?? "google/gemini-2.0-flash-001";
+    this.client = new OpenAI({ apiKey, baseURL });
   }
-  if (/rozhodli|decided|will use|budeme/i.test(lower)) {
-    return "decision";
+
+  async extract(messages: Array<{ role: string; content: string }>): Promise<ExtractedMemory[]> {
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: EXTRACTION_PROMPT },
+        ...messages.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+        {
+          role: "user",
+          content:
+            "Based on the conversation above, extract any memories worth storing. Respond with ONLY a JSON array (no markdown, no explanation).",
+        },
+      ],
+      temperature: 0,
+      max_tokens: 1024,
+    });
+
+    const raw = response.choices?.[0]?.message?.content?.trim();
+    if (!raw) return [];
+
+    try {
+      // Strip markdown code fences if present
+      const cleaned = raw.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
+      const parsed = JSON.parse(cleaned);
+      if (!Array.isArray(parsed)) return [];
+
+      // Validate and normalize each entry
+      return parsed
+        .filter(
+          (m: unknown): m is ExtractedMemory =>
+            !!m &&
+            typeof m === "object" &&
+            typeof (m as Record<string, unknown>).text === "string" &&
+            (m as Record<string, unknown>).text !== "",
+        )
+        .map((m) => ({
+          text: String(m.text).slice(0, 500),
+          category: MEMORY_CATEGORIES.includes(m.category as MemoryCategory)
+            ? (m.category as MemoryCategory)
+            : ("fact" as MemoryCategory),
+          importance: typeof m.importance === "number" ? Math.min(1, Math.max(0, m.importance)) : 0.7,
+        }))
+        .slice(0, 5); // Max 5 memories per turn
+    } catch {
+      return [];
+    }
   }
-  if (/\+\d{10,}|@[\w.-]+\.\w+|is called|jmenuje se/i.test(lower)) {
-    return "entity";
-  }
-  if (/is|are|has|have|je|má|jsou/i.test(lower)) {
-    return "fact";
-  }
-  return "other";
 }
 
 // ============================================================================
@@ -295,6 +352,34 @@ const memoryPlugin = {
     const vectorDim = vectorDimsForModel(cfg.embedding.model ?? "text-embedding-3-small");
     const db = new MemoryDB(resolvedDbPath, vectorDim);
     const embeddings = new Embeddings(cfg.embedding.apiKey, cfg.embedding.model!);
+
+    // Resolve autoCapture config
+    const autoCaptureConfig: AutoCaptureConfig | false =
+      cfg.autoCapture === false
+        ? false
+        : cfg.autoCapture === true
+          ? { enabled: true }
+          : (cfg.autoCapture as AutoCaptureConfig);
+
+    // Initialize LLM extractor for auto-capture
+    let extractor: MemoryExtractor | null = null;
+    if (autoCaptureConfig && autoCaptureConfig.enabled) {
+      try {
+        // Try to get OpenRouter API key from provider config as fallback
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const orKey = (api.config as any)?.models?.providers?.openrouter?.apiKey as
+          | string
+          | undefined;
+
+        extractor = new MemoryExtractor(autoCaptureConfig, orKey);
+        api.logger.info(
+          `memory-lancedb: LLM extractor initialized (model: ${autoCaptureConfig.model ?? "google/gemini-2.0-flash-001"})`,
+        );
+      } catch (err) {
+        api.logger.warn(`memory-lancedb: LLM extractor init failed: ${String(err)}`);
+        api.logger.warn("memory-lancedb: auto-capture disabled (no LLM available)");
+      }
+    }
 
     api.logger.info(`memory-lancedb: plugin registered (db: ${resolvedDbPath}, lazy init)`);
 
@@ -564,8 +649,10 @@ const memoryPlugin = {
       });
     }
 
-    // Auto-capture: analyze and store important information after agent ends (scoped by agentId)
-    if (cfg.autoCapture) {
+    // Auto-capture: LLM-based memory extraction after agent ends (scoped by agentId)
+    if (extractor) {
+      const maxMessages = (autoCaptureConfig && typeof autoCaptureConfig === "object" && autoCaptureConfig.maxMessages) || 10;
+
       api.on("agent_end", async (event, ctx) => {
         if (!event.success || !event.messages || event.messages.length === 0) {
           return;
@@ -573,31 +660,20 @@ const memoryPlugin = {
         const agentId = ctx.agentId ?? "main";
 
         try {
-          // Extract text content from messages (handling unknown[] type)
-          const texts: string[] = [];
+          // Extract text content from messages into role/content pairs
+          const chatMessages: Array<{ role: string; content: string }> = [];
           for (const msg of event.messages) {
-            // Type guard for message object
-            if (!msg || typeof msg !== "object") {
-              continue;
-            }
+            if (!msg || typeof msg !== "object") continue;
             const msgObj = msg as Record<string, unknown>;
-
-            // Only process user and assistant messages
             const role = msgObj.role;
-            if (role !== "user" && role !== "assistant") {
-              continue;
-            }
+            if (role !== "user" && role !== "assistant") continue;
 
+            let text = "";
             const content = msgObj.content;
-
-            // Handle string content directly
             if (typeof content === "string") {
-              texts.push(content);
-              continue;
-            }
-
-            // Handle array content (content blocks)
-            if (Array.isArray(content)) {
+              text = content;
+            } else if (Array.isArray(content)) {
+              const parts: string[] = [];
               for (const block of content) {
                 if (
                   block &&
@@ -607,42 +683,55 @@ const memoryPlugin = {
                   "text" in block &&
                   typeof (block as Record<string, unknown>).text === "string"
                 ) {
-                  texts.push((block as Record<string, unknown>).text as string);
+                  parts.push((block as Record<string, unknown>).text as string);
                 }
               }
+              text = parts.join("\n");
             }
+
+            if (!text || text.length < 2) continue;
+
+            // Strip injected memory context from user messages
+            text = text.replace(/<relevant-memories>[\s\S]*?<\/relevant-memories>\s*/g, "").trim();
+            if (!text) continue;
+
+            chatMessages.push({ role: String(role), content: text });
           }
 
-          // Filter for capturable content
-          const toCapture = texts.filter((text) => text && shouldCapture(text));
-          if (toCapture.length === 0) {
-            return;
-          }
+          // Take only the last N messages to limit token usage
+          const recent = chatMessages.slice(-maxMessages);
+          if (recent.length === 0) return;
 
-          // Store each capturable piece (limit to 3 per conversation)
+          // Call LLM to extract memories
+          const extracted = await extractor!.extract(recent);
+          if (extracted.length === 0) return;
+
+          // Store each extracted memory with dedup check
           let stored = 0;
-          for (const text of toCapture.slice(0, 3)) {
-            const category = detectCategory(text);
-            const vector = await embeddings.embed(text);
+          for (const memory of extracted) {
+            const vector = await embeddings.embed(memory.text);
 
-            // Check for duplicates within this agent's namespace
-            const existing = await db.search(vector, 1, 0.95, agentId);
+            // Check for duplicates within this agent's namespace (0.92 cosine = very similar)
+            const existing = await db.search(vector, 1, 0.92, agentId);
             if (existing.length > 0) {
+              api.logger.info?.(
+                `memory-lancedb: skipping duplicate "${memory.text.slice(0, 60)}..." (similar to "${existing[0].entry.text.slice(0, 60)}...")`,
+              );
               continue;
             }
 
             await db.store({
-              text,
+              text: memory.text,
               vector,
-              importance: 0.7,
-              category,
+              importance: memory.importance,
+              category: memory.category,
               agent_id: agentId,
             });
             stored++;
           }
 
           if (stored > 0) {
-            api.logger.info(`memory-lancedb: auto-captured ${stored} memories`);
+            api.logger.info(`memory-lancedb: auto-captured ${stored} memories via LLM extraction`);
           }
         } catch (err) {
           api.logger.warn(`memory-lancedb: capture failed: ${String(err)}`);
