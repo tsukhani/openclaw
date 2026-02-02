@@ -136,6 +136,27 @@ class MemoryDB {
     return true;
   }
 
+  async listByCategory(
+    category: string,
+    limit = 50,
+    minImportance = 0,
+  ): Promise<MemoryEntry[]> {
+    await this.ensureInitialized();
+    const filter =
+      minImportance > 0
+        ? `category = '${category}' AND importance >= ${minImportance}`
+        : `category = '${category}'`;
+    const results = await this.table!.query().where(filter).limit(limit).toArray();
+    return results.map((row) => ({
+      id: row.id as string,
+      text: row.text as string,
+      vector: row.vector as number[],
+      importance: row.importance as number,
+      category: row.category as MemoryEntry["category"],
+      createdAt: row.createdAt as number,
+    }));
+  }
+
   async count(): Promise<number> {
     await this.ensureInitialized();
     return this.table!.countRows();
@@ -299,7 +320,7 @@ const memoryPlugin = {
         name: "memory_store",
         label: "Memory Store",
         description:
-          "Save important information in long-term memory. Use for preferences, facts, decisions.",
+          "Save important information in long-term memory. Use for preferences, facts, decisions. Use category 'boot' for information that should be loaded at every session start (replaces MEMORY.md).",
         parameters: Type.Object({
           text: Type.String({ description: "Information to remember" }),
           importance: Type.Optional(Type.Number({ description: "Importance 0-1 (default: 0.7)" })),
@@ -583,6 +604,61 @@ const memoryPlugin = {
           }
         } catch (err) {
           api.logger.warn(`memory-lancedb: capture failed: ${String(err)}`);
+        }
+      });
+    }
+
+    // ========================================================================
+    // Boot Context Hook
+    // ========================================================================
+
+    // Inject boot-category memories as virtual MEMORY.md at bootstrap time
+    if (cfg.bootContext?.enabled) {
+      api.on("agent_bootstrap", async (event) => {
+        try {
+          const maxEntries = cfg.bootContext?.maxEntries ?? 50;
+          const minImportance = cfg.bootContext?.minImportance ?? 0.5;
+
+          // Use category-based query for reliable boot memory retrieval
+          const bootMemories = await db.listByCategory("boot", maxEntries, minImportance);
+
+          if (bootMemories.length === 0) {
+            return;
+          }
+
+          // Format boot memories into a MEMORY.md-style document
+          let content = "# Boot Context (from LanceDB)\n\n";
+          content += "*Auto-loaded from long-term memory*\n\n";
+          for (const mem of bootMemories) {
+            content += `- ${mem.text}\n`;
+          }
+
+          // Find and replace MEMORY.md in the files list, or add it
+          const files = [...event.files];
+          const memoryIndex = files.findIndex(
+            (f) => f.name === "MEMORY.md" || f.name === "memory.md",
+          );
+
+          const virtualFile = {
+            name: "MEMORY.md" as const,
+            path: "memory://lancedb/boot-context",
+            content,
+            missing: false,
+          };
+
+          if (memoryIndex >= 0) {
+            files[memoryIndex] = virtualFile;
+          } else {
+            files.push(virtualFile);
+          }
+
+          api.logger.info?.(
+            `memory-lancedb: injected ${bootMemories.length} boot memories into context`,
+          );
+
+          return { files };
+        } catch (err) {
+          api.logger.warn(`memory-lancedb: boot context injection failed: ${String(err)}`);
         }
       });
     }
