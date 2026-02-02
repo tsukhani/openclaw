@@ -16,6 +16,9 @@ import type {
   PluginHookBeforeCompactionEvent,
   PluginHookBeforeToolCallEvent,
   PluginHookBeforeToolCallResult,
+  PluginHookBootstrapContext,
+  PluginHookBootstrapEvent,
+  PluginHookBootstrapResult,
   PluginHookGatewayContext,
   PluginHookGatewayStartEvent,
   PluginHookGatewayStopEvent,
@@ -40,6 +43,9 @@ export type {
   PluginHookAgentContext,
   PluginHookBeforeAgentStartEvent,
   PluginHookBeforeAgentStartResult,
+  PluginHookBootstrapContext,
+  PluginHookBootstrapEvent,
+  PluginHookBootstrapResult,
   PluginHookAgentEndEvent,
   PluginHookBeforeCompactionEvent,
   PluginHookAfterCompactionEvent,
@@ -208,6 +214,25 @@ export function createHookRunner(registry: PluginRegistry, options: HookRunnerOp
     ctx: PluginHookAgentContext,
   ): Promise<void> {
     return runVoidHook("agent_end", event, ctx);
+  }
+
+  /**
+   * Run agent_bootstrap hook.
+   * Allows plugins to inject or replace bootstrap files (e.g. virtual MEMORY.md).
+   * Runs sequentially, merging file lists.
+   */
+  async function runAgentBootstrap(
+    event: PluginHookBootstrapEvent,
+    ctx: PluginHookBootstrapContext,
+  ): Promise<PluginHookBootstrapResult | undefined> {
+    return runModifyingHook<"agent_bootstrap", PluginHookBootstrapResult>(
+      "agent_bootstrap",
+      event,
+      ctx,
+      (acc, next) => ({
+        files: next.files ?? acc?.files,
+      }),
+    );
   }
 
   /**
@@ -445,6 +470,7 @@ export function createHookRunner(registry: PluginRegistry, options: HookRunnerOp
     // Agent hooks
     runBeforeAgentStart,
     runAgentEnd,
+    runAgentBootstrap,
     runBeforeCompaction,
     runAfterCompaction,
     // Message hooks
