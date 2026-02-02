@@ -197,6 +197,19 @@ class MemoryDB {
     }
     return this.table!.countRows();
   }
+
+  /** Get the N most recent memories for an agent, sorted newest first */
+  async getRecent(limit: number, agentId: string): Promise<MemoryEntry[]> {
+    await this.ensureInitialized();
+    const rows = await this.table!
+      .query()
+      .where(`agent_id = '${agentId}'`)
+      .toArray();
+    // Sort by createdAt descending and take top N
+    return (rows as MemoryEntry[])
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+      .slice(0, limit);
+  }
 }
 
 // ============================================================================
@@ -220,6 +233,23 @@ class Embeddings {
     });
     return response.data[0].embedding;
   }
+}
+
+// ============================================================================
+// Vector utilities
+// ============================================================================
+
+function cosineSimilarity(a: number[], b: number[]): number {
+  let dot = 0;
+  let magA = 0;
+  let magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  const denom = Math.sqrt(magA) * Math.sqrt(magB);
+  return denom === 0 ? 0 : dot / denom;
 }
 
 // ============================================================================
@@ -284,11 +314,23 @@ class MemoryExtractor {
     this.client = new OpenAI({ apiKey, baseURL });
   }
 
-  async extract(messages: Array<{ role: string; content: string }>): Promise<ExtractedMemory[]> {
+  async extract(
+    messages: Array<{ role: string; content: string }>,
+    existingMemories?: string[],
+  ): Promise<ExtractedMemory[]> {
+    // Build the "already known" context to prevent re-extraction
+    let alreadyKnown = "";
+    if (existingMemories && existingMemories.length > 0) {
+      alreadyKnown =
+        "\n\n<already_stored>\nThe following facts are ALREADY in memory. Do NOT extract anything that overlaps with or restates these:\n" +
+        existingMemories.map((m) => `- ${m}`).join("\n") +
+        "\n</already_stored>";
+    }
+
     const response = await this.client.chat.completions.create({
       model: this.model,
       messages: [
-        { role: "system", content: EXTRACTION_PROMPT },
+        { role: "system", content: EXTRACTION_PROMPT + alreadyKnown },
         ...messages.map((m) => ({
           role: m.role as "user" | "assistant",
           content: m.content,
@@ -296,7 +338,7 @@ class MemoryExtractor {
         {
           role: "user",
           content:
-            "Based on the conversation above, extract any memories worth storing. Respond with ONLY a JSON array (no markdown, no explanation).",
+            "Based on the conversation above, extract any NEW memories worth storing that are NOT already in the <already_stored> list. Respond with ONLY a JSON array (no markdown). Return [] if nothing new.",
         },
       ],
       temperature: 0,
@@ -699,23 +741,43 @@ const memoryPlugin = {
           }
 
           // Take only the last N messages to limit token usage
-          const recent = chatMessages.slice(-maxMessages);
-          if (recent.length === 0) return;
+          const recentMessages = chatMessages.slice(-maxMessages);
+          if (recentMessages.length === 0) return;
 
-          // Call LLM to extract memories
-          const extracted = await extractor!.extract(recent);
+          // Fetch recent memories so LLM knows what's already stored (~500 extra tokens)
+          const recentMemories = await db.getRecent(20, agentId);
+          const existingTexts = recentMemories.map((m) => m.text);
+
+          // Call LLM to extract memories (with existing context to prevent re-extraction)
+          const extracted = await extractor!.extract(recentMessages, existingTexts);
           if (extracted.length === 0) return;
 
-          // Store each extracted memory with dedup check
+          // Store with two-layer dedup: intra-batch + DB check
           let stored = 0;
+          const batchVectors: number[][] = []; // Track vectors within this batch
+
           for (const memory of extracted) {
             const vector = await embeddings.embed(memory.text);
 
-            // Check for duplicates within this agent's namespace (0.92 cosine = very similar)
-            const existing = await db.search(vector, 1, 0.92, agentId);
+            // Layer 1: Intra-batch dedup (compare against others in this extraction)
+            let batchDuplicate = false;
+            for (const prev of batchVectors) {
+              const sim = cosineSimilarity(vector, prev);
+              if (sim >= 0.88) {
+                batchDuplicate = true;
+                api.logger.info?.(
+                  `memory-lancedb: skipping intra-batch duplicate "${memory.text.slice(0, 60)}..."`,
+                );
+                break;
+              }
+            }
+            if (batchDuplicate) continue;
+
+            // Layer 2: DB dedup (compare against all stored memories for this agent)
+            const existing = await db.search(vector, 1, 0.88, agentId);
             if (existing.length > 0) {
               api.logger.info?.(
-                `memory-lancedb: skipping duplicate "${memory.text.slice(0, 60)}..." (similar to "${existing[0].entry.text.slice(0, 60)}...")`,
+                `memory-lancedb: skipping DB duplicate "${memory.text.slice(0, 60)}..." (≈ "${existing[0].entry.text.slice(0, 60)}...")`,
               );
               continue;
             }
@@ -727,6 +789,7 @@ const memoryPlugin = {
               category: memory.category,
               agent_id: agentId,
             });
+            batchVectors.push(vector);
             stored++;
           }
 
