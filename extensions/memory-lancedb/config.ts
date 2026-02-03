@@ -178,7 +178,8 @@ export const memoryConfigSchema = {
       dbPath: typeof cfg.dbPath === "string" ? cfg.dbPath : DEFAULT_DB_PATH,
       autoCapture: autoCapture ?? { enabled: true },
       autoRecall: cfg.autoRecall !== false,
-      coreMemory,
+      // Default coreMemory to enabled for consistency with autoCapture/autoRecall
+      coreMemory: coreMemory ?? { enabled: true, maxEntries: 50, minImportance: 0.5 },
     };
   },
   uiHints: {
