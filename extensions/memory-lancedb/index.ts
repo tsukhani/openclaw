@@ -230,7 +230,7 @@ class MemoryDB {
     for (const row of rows) {
       ids.add((row.agent_id as string) ?? "main");
     }
-    return Array.from(ids).sort();
+    return Array.from(ids).toSorted();
   }
 
   /** Get the N most recent memories for an agent, sorted newest first */
@@ -239,7 +239,7 @@ class MemoryDB {
     const rows = await this.table!.query().where(`agent_id = '${agentId}'`).toArray();
     // Sort by createdAt descending and take top N
     return (rows as MemoryEntry[])
-      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+      .toSorted((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
       .slice(0, limit);
   }
 }
@@ -378,13 +378,17 @@ class MemoryExtractor {
     });
 
     const raw = response.choices?.[0]?.message?.content?.trim();
-    if (!raw) return [];
+    if (!raw) {
+      return [];
+    }
 
     try {
       // Strip markdown code fences if present
       const cleaned = raw.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
       const parsed = JSON.parse(cleaned);
-      if (!Array.isArray(parsed)) return [];
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
 
       // Validate and normalize each entry
       return parsed
@@ -675,11 +679,17 @@ const memoryPlugin = {
         };
         for (const m of memories) {
           const imp = m.importance || 0;
-          if (imp >= 0.9) importance["critical (0.9-1.0)"]++;
-          else if (imp >= 0.8) importance["high (0.8-0.89)"]++;
-          else if (imp >= 0.7) importance["medium (0.7-0.79)"]++;
-          else if (imp >= 0.5) importance["low (0.5-0.69)"]++;
-          else importance["minimal (<0.5)"]++;
+          if (imp >= 0.9) {
+            importance["critical (0.9-1.0)"]++;
+          } else if (imp >= 0.8) {
+            importance["high (0.8-0.89)"]++;
+          } else if (imp >= 0.7) {
+            importance["medium (0.7-0.79)"]++;
+          } else if (imp >= 0.5) {
+            importance["low (0.5-0.69)"]++;
+          } else {
+            importance["minimal (<0.5)"]++;
+          }
         }
 
         // Near-duplicate detection (sample — check all pairs, report top matches)
@@ -697,7 +707,7 @@ const memoryPlugin = {
               }
             }
           }
-          nearDupes.sort((a, b) => parseFloat(b.sim) - parseFloat(a.sim));
+          nearDupes.sort((a, b) => parseFloat(b.sim) - parseFloat(a.sim)); // eslint-disable-line unicorn/no-array-sort
         }
 
         // Average text length
@@ -705,7 +715,7 @@ const memoryPlugin = {
           total > 0 ? Math.round(memories.reduce((s, m) => s + m.text.length, 0) / total) : 0;
 
         // Oldest & newest
-        const sorted = [...memories].sort((a, b) => a.createdAt - b.createdAt);
+        const sorted = memories.toSorted((a, b) => a.createdAt - b.createdAt);
         const oldest = sorted[0]?.createdAt
           ? new Date(sorted[0].createdAt).toISOString().slice(0, 10)
           : "n/a";
@@ -727,7 +737,7 @@ const memoryPlugin = {
           report[agentId] = { ...agentReport, nearDupeDetails: nearDupes.slice(0, 10) };
         } else {
           console.log(`\n🧠 Memory Health — agent: ${agentId}`);
-          console.log(`${"─".repeat(50)}`);
+          console.log("─".repeat(50));
           console.log(`   Total memories:  ${total}`);
           console.log(`   Avg text length: ${avgLen} chars`);
           console.log(`   Date range:      ${oldest} → ${newest}`);
@@ -771,7 +781,7 @@ const memoryPlugin = {
       minPasses?: string;
       maxPasses?: string;
     }) => {
-      const { execSync, spawn } = await import("node:child_process");
+      const { spawn } = await import("node:child_process");
       const scriptPath = api.resolvePath("../../scripts/memory-consolidate.mjs");
       const workspaceScript = `${process.env.HOME}/.openclaw/workspace/scripts/memory-consolidate.mjs`;
 
@@ -795,11 +805,21 @@ const memoryPlugin = {
       }
 
       const args: string[] = [];
-      if (opts.agent) args.push("--agent", opts.agent);
-      if (opts.dryRun) args.push("--dry-run");
-      if (opts.verbose) args.push("--verbose");
-      if (opts.minPasses) args.push("--min-passes", opts.minPasses);
-      if (opts.maxPasses) args.push("--max-passes", opts.maxPasses);
+      if (opts.agent) {
+        args.push("--agent", opts.agent);
+      }
+      if (opts.dryRun) {
+        args.push("--dry-run");
+      }
+      if (opts.verbose) {
+        args.push("--verbose");
+      }
+      if (opts.minPasses) {
+        args.push("--min-passes", opts.minPasses);
+      }
+      if (opts.maxPasses) {
+        args.push("--max-passes", opts.maxPasses);
+      }
 
       console.log(`🧠 Running memory consolidation (sleep cycle)...`);
       console.log(`   Script: ${script}`);
@@ -852,10 +872,10 @@ const memoryPlugin = {
                     categories[m.category] = (categories[m.category] || 0) + 1;
                   }
                   const catSummary = Object.entries(categories)
-                    .sort((a, b) => b[1] - a[1])
+                    .toSorted((a, b) => b[1] - a[1])
                     .map(([cat, count]) => `${cat}: ${count}`)
                     .join(", ");
-                  const sorted = [...memories].sort((a, b) => a.createdAt - b.createdAt);
+                  const sorted = memories.toSorted((a, b) => a.createdAt - b.createdAt);
                   const oldest = sorted[0]?.createdAt
                     ? new Date(sorted[0].createdAt).toISOString().slice(0, 10)
                     : "n/a";
@@ -864,15 +884,19 @@ const memoryPlugin = {
                     : "n/a";
 
                   console.log(`Long-Term Memory (LanceDB) — ${agentId}`);
-                  console.log(`${"─".repeat(50)}`);
+                  console.log("─".repeat(50));
                   console.log(`  Provider:    memory-lancedb`);
                   console.log(`  Store:       ${resolvedDbPath}`);
                   console.log(`  Embedding:   ${cfg.embedding.model} (${vectorDim}d)`);
                   console.log(`  Memories:    ${total}`);
                   console.log(`  Categories:  ${catSummary}`);
                   console.log(`  Date range:  ${oldest} → ${newest}`);
-                  if (cfg.autoRecall) console.log(`  Auto-recall: enabled`);
-                  if (cfg.autoCapture) console.log(`  Auto-capture: enabled`);
+                  if (cfg.autoRecall) {
+                    console.log(`  Auto-recall: enabled`);
+                  }
+                  if (cfg.autoCapture) {
+                    console.log(`  Auto-capture: enabled`);
+                  }
                   console.log("");
                 }
               } catch (err) {
@@ -904,7 +928,7 @@ const memoryPlugin = {
                   );
                 } else if (opts.verbose) {
                   console.log(`\n🧠 Memories — agent: ${agentId} (${memories.length} total)`);
-                  console.log(`${"─".repeat(60)}`);
+                  console.log("─".repeat(60));
                   for (const m of memories) {
                     console.log(
                       `  [${m.category}] (${m.importance}) ${m.text.slice(0, 120)}${m.text.length > 120 ? "..." : ""}`,
@@ -993,10 +1017,14 @@ const memoryPlugin = {
           // Extract text content from messages into role/content pairs
           const chatMessages: Array<{ role: string; content: string }> = [];
           for (const msg of event.messages) {
-            if (!msg || typeof msg !== "object") continue;
+            if (!msg || typeof msg !== "object") {
+              continue;
+            }
             const msgObj = msg as Record<string, unknown>;
             const role = msgObj.role;
-            if (role !== "user" && role !== "assistant") continue;
+            if (role !== "user" && role !== "assistant") {
+              continue;
+            }
 
             let text = "";
             const content = msgObj.content;
@@ -1019,26 +1047,34 @@ const memoryPlugin = {
               text = parts.join("\n");
             }
 
-            if (!text || text.length < 2) continue;
+            if (!text || text.length < 2) {
+              continue;
+            }
 
             // Strip injected memory context from user messages
             text = text.replace(/<relevant-memories>[\s\S]*?<\/relevant-memories>\s*/g, "").trim();
-            if (!text) continue;
+            if (!text) {
+              continue;
+            }
 
             chatMessages.push({ role: String(role), content: text });
           }
 
           // Take only the last N messages to limit token usage
           const recentMessages = chatMessages.slice(-maxMessages);
-          if (recentMessages.length === 0) return;
+          if (recentMessages.length === 0) {
+            return;
+          }
 
           // Fetch recent memories so LLM knows what's already stored (~500 extra tokens)
           const recentMemories = await db.getRecent(20, agentId);
           const existingTexts = recentMemories.map((m) => m.text);
 
           // Call LLM to extract memories (with existing context to prevent re-extraction)
-          const extracted = await extractor!.extract(recentMessages, existingTexts);
-          if (extracted.length === 0) return;
+          const extracted = await extractor.extract(recentMessages, existingTexts);
+          if (extracted.length === 0) {
+            return;
+          }
 
           // Store with two-layer dedup: intra-batch + DB check
           let stored = 0;
@@ -1059,7 +1095,9 @@ const memoryPlugin = {
                 break;
               }
             }
-            if (batchDuplicate) continue;
+            if (batchDuplicate) {
+              continue;
+            }
 
             // Layer 2: DB dedup (compare against all stored memories for this agent)
             const existing = await db.search(vector, 1, 0.88, agentId);
