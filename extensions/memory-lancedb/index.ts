@@ -198,6 +198,36 @@ class MemoryDB {
     return this.table!.countRows();
   }
 
+  /** Get all memories, optionally filtered by agent */
+  async listAll(agentId?: string): Promise<MemoryEntry[]> {
+    await this.ensureInitialized();
+    let query = this.table!.query();
+    if (agentId) {
+      query = query.where(`agent_id = '${agentId}'`);
+    }
+    const rows = await query.toArray();
+    return rows.map((row) => ({
+      id: row.id as string,
+      text: row.text as string,
+      vector: row.vector as number[],
+      importance: row.importance as number,
+      category: row.category as MemoryEntry["category"],
+      agent_id: (row.agent_id as string) ?? "main",
+      createdAt: row.createdAt as number,
+    }));
+  }
+
+  /** Get distinct agent IDs */
+  async getAgentIds(): Promise<string[]> {
+    await this.ensureInitialized();
+    const rows = await this.table!.query().toArray();
+    const ids = new Set<string>();
+    for (const row of rows) {
+      ids.add((row.agent_id as string) ?? "main");
+    }
+    return Array.from(ids).sort();
+  }
+
   /** Get the N most recent memories for an agent, sorted newest first */
   async getRecent(limit: number, agentId: string): Promise<MemoryEntry[]> {
     await this.ensureInitialized();
@@ -614,27 +644,176 @@ const memoryPlugin = {
     // CLI Commands
     // ========================================================================
 
+    // ========================================================================
+    // CLI: Health & Fix commands
+    // ========================================================================
+
+    const healthAction = async (opts: { agent?: string; json?: boolean; verbose?: boolean }) => {
+      const agentIds = opts.agent ? [opts.agent] : await db.getAgentIds();
+      const report: Record<string, unknown> = {};
+
+      for (const agentId of agentIds) {
+        const memories = await db.listAll(agentId);
+        const total = memories.length;
+
+        // Category breakdown
+        const categories: Record<string, number> = {};
+        for (const m of memories) {
+          categories[m.category] = (categories[m.category] || 0) + 1;
+        }
+
+        // Importance distribution
+        const importance = { "critical (0.9-1.0)": 0, "high (0.8-0.89)": 0, "medium (0.7-0.79)": 0, "low (0.5-0.69)": 0, "minimal (<0.5)": 0 };
+        for (const m of memories) {
+          const imp = m.importance || 0;
+          if (imp >= 0.9) importance["critical (0.9-1.0)"]++;
+          else if (imp >= 0.8) importance["high (0.8-0.89)"]++;
+          else if (imp >= 0.7) importance["medium (0.7-0.79)"]++;
+          else if (imp >= 0.5) importance["low (0.5-0.69)"]++;
+          else importance["minimal (<0.5)"]++;
+        }
+
+        // Near-duplicate detection (sample — check all pairs, report top matches)
+        const nearDupes: Array<{ sim: string; a: string; b: string }> = [];
+        if (opts.verbose && memories.length <= 500) {
+          for (let i = 0; i < memories.length; i++) {
+            for (let j = i + 1; j < memories.length; j++) {
+              const sim = cosineSimilarity(memories[i].vector, memories[j].vector);
+              if (sim >= 0.80) {
+                nearDupes.push({
+                  sim: sim.toFixed(3),
+                  a: memories[i].text.slice(0, 80),
+                  b: memories[j].text.slice(0, 80),
+                });
+              }
+            }
+          }
+          nearDupes.sort((a, b) => parseFloat(b.sim) - parseFloat(a.sim));
+        }
+
+        // Average text length
+        const avgLen = total > 0 ? Math.round(memories.reduce((s, m) => s + m.text.length, 0) / total) : 0;
+
+        // Oldest & newest
+        const sorted = [...memories].sort((a, b) => a.createdAt - b.createdAt);
+        const oldest = sorted[0]?.createdAt ? new Date(sorted[0].createdAt).toISOString().slice(0, 10) : "n/a";
+        const newest = sorted.length ? new Date(sorted[sorted.length - 1].createdAt).toISOString().slice(0, 10) : "n/a";
+
+        const agentReport = { total, categories, importance, avgTextLength: avgLen, oldest, newest, nearDupes: nearDupes.length };
+
+        if (opts.json) {
+          report[agentId] = { ...agentReport, nearDupeDetails: nearDupes.slice(0, 10) };
+        } else {
+          console.log(`\n🧠 Memory Health — agent: ${agentId}`);
+          console.log(`${"─".repeat(50)}`);
+          console.log(`   Total memories:  ${total}`);
+          console.log(`   Avg text length: ${avgLen} chars`);
+          console.log(`   Date range:      ${oldest} → ${newest}`);
+          console.log(`\n   📂 Categories:`);
+          const catOrder = ["core", "fact", "preference", "decision", "entity", "other"];
+          for (const cat of catOrder) {
+            if (categories[cat]) {
+              const pct = ((categories[cat] / total) * 100).toFixed(0);
+              const bar = "█".repeat(Math.max(1, Math.round(categories[cat] / total * 30)));
+              console.log(`      ${cat.padEnd(12)} ${String(categories[cat]).padStart(3)} (${pct.padStart(2)}%) ${bar}`);
+            }
+          }
+          console.log(`\n   ⚡ Importance:`);
+          for (const [label, count] of Object.entries(importance)) {
+            if (count > 0) {
+              console.log(`      ${label.padEnd(20)} ${String(count).padStart(3)}`);
+            }
+          }
+          if (nearDupes.length > 0) {
+            console.log(`\n   ⚠️  Near-duplicates (≥0.80): ${nearDupes.length}`);
+            for (const d of nearDupes.slice(0, 5)) {
+              console.log(`      [${d.sim}] "${d.a}..." ↔ "${d.b}..."`);
+            }
+          } else if (opts.verbose) {
+            console.log(`\n   ✅ No near-duplicates found`);
+          }
+        }
+      }
+
+      if (opts.json) {
+        console.log(JSON.stringify(report, null, 2));
+      }
+    };
+
+    const fixAction = async (opts: { agent?: string; dryRun?: boolean; verbose?: boolean; minPasses?: string; maxPasses?: string }) => {
+      const { execSync, spawn } = await import("node:child_process");
+      const scriptPath = api.resolvePath("../../scripts/memory-consolidate.mjs");
+      const workspaceScript = `${process.env.HOME}/.openclaw/workspace/scripts/memory-consolidate.mjs`;
+
+      // Find the consolidation script
+      let script: string | null = null;
+      for (const candidate of [scriptPath, workspaceScript]) {
+        try {
+          const fs = await import("node:fs");
+          if (fs.existsSync(candidate)) {
+            script = candidate;
+            break;
+          }
+        } catch {}
+      }
+
+      if (!script) {
+        console.error("❌ Memory consolidation script not found.");
+        console.error("   Expected at: ~/.openclaw/workspace/scripts/memory-consolidate.mjs");
+        process.exitCode = 1;
+        return;
+      }
+
+      const args: string[] = [];
+      if (opts.agent) args.push("--agent", opts.agent);
+      if (opts.dryRun) args.push("--dry-run");
+      if (opts.verbose) args.push("--verbose");
+      if (opts.minPasses) args.push("--min-passes", opts.minPasses);
+      if (opts.maxPasses) args.push("--max-passes", opts.maxPasses);
+
+      console.log(`🧠 Running memory consolidation (sleep cycle)...`);
+      console.log(`   Script: ${script}`);
+      console.log(`   Args: ${args.join(" ") || "(defaults)"}\n`);
+
+      const child = spawn("node", [script, ...args], {
+        stdio: "inherit",
+        env: { ...process.env },
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        child.on("close", (code) => {
+          if (code !== 0) {
+            process.exitCode = code ?? 1;
+          }
+          resolve();
+        });
+        child.on("error", reject);
+      });
+    };
+
     api.registerCli(
       ({ program }) => {
-        const memory = program.command("ltm").description("LanceDB memory plugin commands");
+        // Register under 'ltm' namespace
+        const ltm = program.command("ltm").description("LanceDB long-term memory commands");
 
-        memory
+        ltm
           .command("list")
           .description("List memories")
-          .action(async () => {
-            const count = await db.count();
+          .option("--agent <id>", "Agent id")
+          .action(async (opts) => {
+            const count = await db.count(opts.agent);
             console.log(`Total memories: ${count}`);
           });
 
-        memory
+        ltm
           .command("search")
           .description("Search memories")
           .argument("<query>", "Search query")
           .option("--limit <n>", "Max results", "5")
+          .option("--agent <id>", "Agent id")
           .action(async (query, opts) => {
             const vector = await embeddings.embed(query);
-            const results = await db.search(vector, parseInt(opts.limit), 0.3);
-            // Strip vectors for output
+            const results = await db.search(vector, parseInt(opts.limit), 0.3, opts.agent);
             const output = results.map((r) => ({
               id: r.entry.id,
               text: r.entry.text,
@@ -645,13 +824,47 @@ const memoryPlugin = {
             console.log(JSON.stringify(output, null, 2));
           });
 
-        memory
-          .command("stats")
-          .description("Show memory statistics")
-          .action(async () => {
-            const count = await db.count();
-            console.log(`Total memories: ${count}`);
-          });
+        ltm
+          .command("health")
+          .description("Show memory health report (categories, importance, duplicates)")
+          .option("--agent <id>", "Agent id (default: all agents)")
+          .option("--json", "Output as JSON")
+          .option("--verbose", "Include near-duplicate detection")
+          .action(healthAction);
+
+        ltm
+          .command("fix")
+          .description("Run memory consolidation (sleep cycle) — dedup, merge, stale removal")
+          .option("--agent <id>", "Agent id (default: main)")
+          .option("--dry-run", "Preview changes without applying")
+          .option("--verbose", "Detailed logging")
+          .option("--min-passes <n>", "Minimum consolidation passes", "3")
+          .option("--max-passes <n>", "Maximum consolidation passes", "10")
+          .action(fixAction);
+
+        // Also extend the existing 'memory' command if it exists
+        const existingMemory = program.commands.find(
+          (cmd: { name: () => string }) => cmd.name() === "memory",
+        );
+        if (existingMemory) {
+          existingMemory
+            .command("health")
+            .description("Show long-term memory health (categories, importance, duplicates)")
+            .option("--agent <id>", "Agent id (default: all agents)")
+            .option("--json", "Output as JSON")
+            .option("--verbose", "Include near-duplicate detection")
+            .action(healthAction);
+
+          existingMemory
+            .command("fix")
+            .description("Run memory consolidation (sleep cycle)")
+            .option("--agent <id>", "Agent id (default: main)")
+            .option("--dry-run", "Preview changes without applying")
+            .option("--verbose", "Detailed logging")
+            .option("--min-passes <n>", "Minimum passes", "3")
+            .option("--max-passes <n>", "Maximum passes", "10")
+            .action(fixAction);
+        }
       },
       { commands: ["ltm"] },
     );
