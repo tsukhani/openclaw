@@ -21,6 +21,40 @@ import {
 } from "./config.js";
 
 // ============================================================================
+// Input Validation (SQL Injection Prevention)
+// ============================================================================
+
+/**
+ * Validate and sanitize agentId for use in LanceDB filter queries.
+ * Allows alphanumeric characters, hyphens, underscores, and colons.
+ */
+function sanitizeAgentId(agentId: string): string {
+  const sanitized = agentId.replace(/[^a-zA-Z0-9_:-]/g, "");
+  if (sanitized !== agentId) {
+    throw new Error(`Invalid agentId format: contains disallowed characters`);
+  }
+  if (sanitized.length === 0 || sanitized.length > 128) {
+    throw new Error(`Invalid agentId: must be 1-128 characters`);
+  }
+  return sanitized;
+}
+
+/**
+ * Validate category is one of the allowed enum values.
+ */
+function validateCategory(category: string): category is MemoryCategory {
+  return MEMORY_CATEGORIES.includes(category as MemoryCategory);
+}
+
+/**
+ * Escape a string value for use in LanceDB SQL-like filter expressions.
+ * Escapes single quotes by doubling them.
+ */
+function escapeFilterValue(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -130,7 +164,8 @@ class MemoryDB {
 
     let query = this.table!.vectorSearch(vector);
     if (agentId) {
-      query = query.where(`agent_id = '${agentId}'`);
+      const safeAgentId = sanitizeAgentId(agentId);
+      query = query.where(`agent_id = '${escapeFilterValue(safeAgentId)}'`);
     }
     const results = await query.limit(limit).toArray();
 
@@ -174,12 +209,22 @@ class MemoryDB {
     agentId?: string,
   ): Promise<MemoryEntry[]> {
     await this.ensureInitialized();
-    const conditions: string[] = [`category = '${category}'`];
+    // Validate category against allowed enum values
+    if (!validateCategory(category)) {
+      throw new Error(`Invalid category: ${category}`);
+    }
+    const conditions: string[] = [`category = '${escapeFilterValue(category)}'`];
     if (minImportance > 0) {
-      conditions.push(`importance >= ${minImportance}`);
+      // minImportance is a number, safe to interpolate after validation
+      const safeImportance = Number(minImportance);
+      if (!Number.isFinite(safeImportance)) {
+        throw new Error(`Invalid minImportance: ${minImportance}`);
+      }
+      conditions.push(`importance >= ${safeImportance}`);
     }
     if (agentId) {
-      conditions.push(`agent_id = '${agentId}'`);
+      const safeAgentId = sanitizeAgentId(agentId);
+      conditions.push(`agent_id = '${escapeFilterValue(safeAgentId)}'`);
     }
     const filter = conditions.join(" AND ");
     const results = await this.table!.query().where(filter).limit(limit).toArray();
@@ -197,7 +242,10 @@ class MemoryDB {
   async count(agentId?: string): Promise<number> {
     await this.ensureInitialized();
     if (agentId) {
-      const rows = await this.table!.query().where(`agent_id = '${agentId}'`).toArray();
+      const safeAgentId = sanitizeAgentId(agentId);
+      const rows = await this.table!.query()
+        .where(`agent_id = '${escapeFilterValue(safeAgentId)}'`)
+        .toArray();
       return rows.length;
     }
     return this.table!.countRows();
@@ -208,7 +256,8 @@ class MemoryDB {
     await this.ensureInitialized();
     let query = this.table!.query();
     if (agentId) {
-      query = query.where(`agent_id = '${agentId}'`);
+      const safeAgentId = sanitizeAgentId(agentId);
+      query = query.where(`agent_id = '${escapeFilterValue(safeAgentId)}'`);
     }
     const rows = await query.toArray();
     return rows.map((row) => ({
@@ -236,7 +285,10 @@ class MemoryDB {
   /** Get the N most recent memories for an agent, sorted newest first */
   async getRecent(limit: number, agentId: string): Promise<MemoryEntry[]> {
     await this.ensureInitialized();
-    const rows = await this.table!.query().where(`agent_id = '${agentId}'`).toArray();
+    const safeAgentId = sanitizeAgentId(agentId);
+    const rows = await this.table!.query()
+      .where(`agent_id = '${escapeFilterValue(safeAgentId)}'`)
+      .toArray();
     // Sort by createdAt descending and take top N
     return (rows as MemoryEntry[])
       .toSorted((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
