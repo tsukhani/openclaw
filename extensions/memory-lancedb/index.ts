@@ -793,60 +793,42 @@ const memoryPlugin = {
 
     api.registerCli(
       ({ program }) => {
-        // Register under 'ltm' namespace
-        const ltm = program.command("ltm").description("LanceDB long-term memory commands");
-
-        ltm
-          .command("list")
-          .description("List memories")
-          .option("--agent <id>", "Agent id")
-          .action(async (opts) => {
-            const count = await db.count(opts.agent);
-            console.log(`Total memories: ${count}`);
-          });
-
-        ltm
-          .command("search")
-          .description("Search memories")
-          .argument("<query>", "Search query")
-          .option("--limit <n>", "Max results", "5")
-          .option("--agent <id>", "Agent id")
-          .action(async (query, opts) => {
-            const vector = await embeddings.embed(query);
-            const results = await db.search(vector, parseInt(opts.limit), 0.3, opts.agent);
-            const output = results.map((r) => ({
-              id: r.entry.id,
-              text: r.entry.text,
-              category: r.entry.category,
-              importance: r.entry.importance,
-              score: r.score,
-            }));
-            console.log(JSON.stringify(output, null, 2));
-          });
-
-        ltm
-          .command("health")
-          .description("Show memory health report (categories, importance, duplicates)")
-          .option("--agent <id>", "Agent id (default: all agents)")
-          .option("--json", "Output as JSON")
-          .option("--verbose", "Include near-duplicate detection")
-          .action(healthAction);
-
-        ltm
-          .command("fix")
-          .description("Run memory consolidation (sleep cycle) — dedup, merge, stale removal")
-          .option("--agent <id>", "Agent id (default: main)")
-          .option("--dry-run", "Preview changes without applying")
-          .option("--verbose", "Detailed logging")
-          .option("--min-passes <n>", "Minimum consolidation passes", "3")
-          .option("--max-passes <n>", "Maximum consolidation passes", "10")
-          .action(fixAction);
-
-        // Also extend the existing 'memory' command if it exists
+        // Extend the existing 'memory' command with LanceDB-specific subcommands
         const existingMemory = program.commands.find(
           (cmd: { name: () => string }) => cmd.name() === "memory",
         );
         if (existingMemory) {
+          existingMemory
+            .command("list")
+            .description("List long-term memories (count, or detailed with --verbose)")
+            .option("--agent <id>", "Agent id")
+            .option("--verbose", "Show all memories with details")
+            .option("--json", "Output as JSON")
+            .action(async (opts: { agent?: string; verbose?: boolean; json?: boolean }) => {
+              const agentIds = opts.agent ? [opts.agent] : await db.getAgentIds();
+              for (const agentId of agentIds) {
+                const memories = await db.listAll(agentId);
+                if (opts.json) {
+                  const output = memories.map((m) => ({
+                    id: m.id,
+                    text: m.text,
+                    category: m.category,
+                    importance: m.importance,
+                    createdAt: new Date(m.createdAt).toISOString(),
+                  }));
+                  console.log(JSON.stringify({ agentId, total: memories.length, memories: output }, null, 2));
+                } else if (opts.verbose) {
+                  console.log(`\n🧠 Memories — agent: ${agentId} (${memories.length} total)`);
+                  console.log(`${"─".repeat(60)}`);
+                  for (const m of memories) {
+                    console.log(`  [${m.category}] (${m.importance}) ${m.text.slice(0, 120)}${m.text.length > 120 ? "..." : ""}`);
+                  }
+                } else {
+                  console.log(`Agent ${agentId}: ${memories.length} memories`);
+                }
+              }
+            });
+
           existingMemory
             .command("health")
             .description("Show long-term memory health (categories, importance, duplicates)")
@@ -866,7 +848,7 @@ const memoryPlugin = {
             .action(fixAction);
         }
       },
-      { commands: ["ltm"] },
+      { commands: [] },
     );
 
     // ========================================================================
