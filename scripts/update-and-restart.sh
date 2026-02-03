@@ -65,10 +65,26 @@ else
   ok "pnpm install complete"
 fi
 
+# --- pnpm format (check only) ---
+log "Checking code formatting..."
+if pnpm format 2>&1; then
+  ok "Format check passed"
+else
+  warn "Format issues found — run 'pnpm exec oxfmt --write <file>' to fix"
+fi
+
 # --- pnpm build ---
 log "Building TypeScript..."
 pnpm build 2>&1 || fail "pnpm build failed"
 ok "Build complete"
+
+# --- pnpm lint ---
+log "Running linter..."
+if pnpm lint 2>&1; then
+  ok "Lint check passed"
+else
+  warn "Lint issues found — run 'pnpm exec oxlint <file>' to fix"
+fi
 
 # --- pnpm link ---
 log "Linking globally..."
