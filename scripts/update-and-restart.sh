@@ -67,11 +67,8 @@ fi
 
 # --- pnpm format (check only) ---
 log "Checking code formatting..."
-if pnpm format 2>&1; then
-  ok "Format check passed"
-else
-  warn "Format issues found — run 'pnpm exec oxfmt --write <file>' to fix"
-fi
+pnpm format 2>&1 || fail "Format check failed — run 'pnpm exec oxfmt --write <file>' to fix"
+ok "Format check passed"
 
 # --- pnpm build ---
 log "Building TypeScript..."
@@ -80,11 +77,8 @@ ok "Build complete"
 
 # --- pnpm lint ---
 log "Running linter..."
-if pnpm lint 2>&1; then
-  ok "Lint check passed"
-else
-  warn "Lint issues found — run 'pnpm exec oxlint <file>' to fix"
-fi
+pnpm lint 2>&1 || fail "Lint check failed — run 'pnpm exec oxlint <file>' to fix"
+ok "Lint check passed"
 
 # --- pnpm link ---
 log "Linking globally..."
