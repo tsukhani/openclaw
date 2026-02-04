@@ -341,6 +341,10 @@ export type PluginHookBootstrapResult = {
 export type PluginHookBeforeAgentStartEvent = {
   prompt: string;
   messages?: unknown[];
+  /** Model's total context window in tokens. */
+  contextWindowTokens?: number;
+  /** Estimated tokens currently used in context. */
+  estimatedUsedTokens?: number;
 };
 
 export type PluginHookBeforeAgentStartResult = {

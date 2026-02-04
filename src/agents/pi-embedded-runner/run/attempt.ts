@@ -27,6 +27,8 @@ import {
   listChannelSupportedActions,
   resolveChannelMessageToolHints,
 } from "../../channel-tools.js";
+import { estimateMessagesTokens } from "../../compaction.js";
+import { DEFAULT_CONTEXT_TOKENS } from "../../defaults.js";
 import { resolveOpenClawDocsPath } from "../../docs-path.js";
 import { isTimeoutError } from "../../failover-error.js";
 import { resolveModelAuthMode } from "../../model-auth.js";
@@ -843,10 +845,16 @@ export async function runEmbeddedAttempt(
         let effectivePrompt = params.prompt;
         if (hookRunner?.hasHooks("before_agent_start")) {
           try {
+            // Calculate context usage for mid-session memory refresh
+            const contextWindowTokens = params.model.contextWindow ?? DEFAULT_CONTEXT_TOKENS;
+            const estimatedUsedTokens = estimateMessagesTokens(activeSession.messages);
+
             const hookResult = await hookRunner.runBeforeAgentStart(
               {
                 prompt: params.prompt,
                 messages: activeSession.messages,
+                contextWindowTokens,
+                estimatedUsedTokens,
               },
               {
                 agentId: hookAgentId,
