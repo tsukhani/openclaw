@@ -8,6 +8,9 @@ import type { PluginLogger } from "./types.js";
 
 const log = createSubsystemLogger("plugins");
 
+// Track which plugins have already registered CLI commands (idempotency guard)
+const registeredPluginClis = new Set<string>();
+
 export function registerPluginCliCommands(
   program: Command,
   cfg?: OpenClawConfig,
@@ -31,6 +34,10 @@ export function registerPluginCliCommands(
   const existingCommands = new Set(program.commands.map((cmd) => cmd.name()));
 
   for (const entry of registry.cliRegistrars) {
+    // Skip if this plugin's CLI was already registered (idempotency)
+    if (registeredPluginClis.has(entry.pluginId)) {
+      continue;
+    }
     if (entry.commands.length > 0) {
       const overlaps = entry.commands.filter((command) => existingCommands.has(command));
       if (overlaps.length > 0) {
@@ -57,6 +64,8 @@ export function registerPluginCliCommands(
       for (const command of entry.commands) {
         existingCommands.add(command);
       }
+      // Mark as registered after successful registration
+      registeredPluginClis.add(entry.pluginId);
     } catch (err) {
       log.warn(`plugin CLI register failed (${entry.pluginId}): ${String(err)}`);
     }

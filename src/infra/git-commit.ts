@@ -181,6 +181,86 @@ const readCommitFromBuildInfo = () => {
   }
 };
 
+/**
+ * Resolve the commit hash of the upstream tracking branch (e.g., origin/main).
+ * Returns null if not in a git repo or no upstream is configured.
+ */
+export const resolveUpstreamCommitHash = (options: { cwd?: string; moduleUrl?: string } = {}) => {
+  try {
+    const searchDir = resolveCommitSearchDir(options);
+    const packageRoot = resolveOpenClawPackageRootSync({
+      cwd: options.cwd,
+      moduleUrl: options.moduleUrl,
+    });
+    const headPath = resolveGitHeadPath(searchDir, {
+      maxDepth: resolveGitLookupDepth(searchDir, packageRoot),
+    });
+    if (!headPath) {
+      return null;
+    }
+    const refsBase = resolveGitRefsBase(headPath);
+    const head = fs.readFileSync(headPath, "utf-8").trim();
+    if (!head.startsWith("ref:")) {
+      return null; // detached HEAD
+    }
+    const ref = head.replace(/^ref:\s*/i, "").trim();
+    const branchName = ref.replace(/^refs\/heads\//, "");
+
+    // Read the upstream tracking branch from config
+    const configPath = path.join(refsBase, "config");
+    const config = fs.readFileSync(configPath, "utf-8");
+
+    // Parse the config to find [branch "branchName"] section
+    const branchSection = new RegExp(`\\[branch\\s+"${branchName}"\\]([^\\[]+)`, "i");
+    const match = config.match(branchSection);
+    if (!match) {
+      return null;
+    }
+    const section = match[1];
+    const remoteMatch = section.match(/remote\s*=\s*(\S+)/i);
+    const mergeMatch = section.match(/merge\s*=\s*(\S+)/i);
+    if (!remoteMatch || !mergeMatch) {
+      return null;
+    }
+    const remote = remoteMatch[1];
+    const mergeBranch = mergeMatch[1].replace(/^refs\/heads\//, "");
+
+    // Read the upstream ref
+    const upstreamRef = `refs/remotes/${remote}/${mergeBranch}`;
+    const packedRefsPath = path.join(refsBase, "packed-refs");
+    const looseRefPath = resolveRefPath(headPath, upstreamRef);
+    if (!looseRefPath) {
+      return null;
+    }
+
+    // Try loose ref first
+    try {
+      const hash = fs.readFileSync(looseRefPath, "utf-8").trim();
+      return formatCommit(hash);
+    } catch {
+      // Try packed-refs
+      try {
+        const packed = fs.readFileSync(packedRefsPath, "utf-8");
+        const lines = packed.split("\n");
+        for (const line of lines) {
+          if (line.startsWith("#") || !line.trim()) {
+            continue;
+          }
+          const [hash, refName] = line.split(/\s+/);
+          if (refName === upstreamRef) {
+            return formatCommit(hash);
+          }
+        }
+      } catch {
+        // No packed-refs
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 export const resolveCommitHash = (
   options: {
     cwd?: string;

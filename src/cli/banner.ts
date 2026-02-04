@@ -1,5 +1,5 @@
 import { loadConfig } from "../config/config.js";
-import { resolveCommitHash } from "../infra/git-commit.js";
+import { resolveCommitHash, resolveUpstreamCommitHash } from "../infra/git-commit.js";
 import { visibleWidth } from "../terminal/ansi.js";
 import { isRich, theme } from "../terminal/theme.js";
 import { hasRootVersionAlias } from "./argv.js";
@@ -8,6 +8,7 @@ import { pickTagline, type TaglineMode, type TaglineOptions } from "./tagline.js
 type BannerOptions = TaglineOptions & {
   argv?: string[];
   commit?: string | null;
+  upstreamCommit?: string | null;
   columns?: number;
   richTty?: boolean;
 };
@@ -59,27 +60,32 @@ function resolveTaglineMode(options: BannerOptions): TaglineMode | undefined {
 export function formatCliBannerLine(version: string, options: BannerOptions = {}): string {
   const commit =
     options.commit ?? resolveCommitHash({ env: options.env, moduleUrl: import.meta.url });
+  // Use !== undefined so callers can pass null to explicitly suppress upstream display.
+  const upstreamCommit =
+    options.upstreamCommit !== undefined ? options.upstreamCommit : resolveUpstreamCommitHash();
   const commitLabel = commit ?? "unknown";
+  // Show upstream if different from current (indicates local commits ahead)
+  const showUpstream = upstreamCommit && upstreamCommit !== commit;
+  const commitDisplay = showUpstream ? `${commitLabel} ← ${upstreamCommit}` : commitLabel;
   const tagline = pickTagline({ ...options, mode: resolveTaglineMode(options) });
   const rich = options.richTty ?? isRich();
   const title = "🦞 OpenClaw";
   const prefix = "🦞 ";
   const columns = options.columns ?? process.stdout.columns ?? 120;
-  const plainBaseLine = `${title} ${version} (${commitLabel})`;
+  const plainBaseLine = `${title} ${version} (${commitDisplay})`;
   const plainFullLine = tagline ? `${plainBaseLine} — ${tagline}` : plainBaseLine;
   const fitsOnOneLine = visibleWidth(plainFullLine) <= columns;
   if (rich) {
+    const commitPart = showUpstream
+      ? `${theme.muted("(")}${commitLabel}${theme.muted(" ← ")}${theme.muted(upstreamCommit)}${theme.muted(")")}`
+      : theme.muted(`(${commitLabel})`);
     if (fitsOnOneLine) {
       if (!tagline) {
-        return `${theme.heading(title)} ${theme.info(version)} ${theme.muted(`(${commitLabel})`)}`;
+        return `${theme.heading(title)} ${theme.info(version)} ${commitPart}`;
       }
-      return `${theme.heading(title)} ${theme.info(version)} ${theme.muted(
-        `(${commitLabel})`,
-      )} ${theme.muted("—")} ${theme.accentDim(tagline)}`;
+      return `${theme.heading(title)} ${theme.info(version)} ${commitPart} ${theme.muted("—")} ${theme.accentDim(tagline)}`;
     }
-    const line1 = `${theme.heading(title)} ${theme.info(version)} ${theme.muted(
-      `(${commitLabel})`,
-    )}`;
+    const line1 = `${theme.heading(title)} ${theme.info(version)} ${commitPart}`;
     if (!tagline) {
       return line1;
     }
