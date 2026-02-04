@@ -1007,27 +1007,122 @@ export async function updateSessionStoreEntry(params: {
   update: (entry: SessionEntry) => Promise<Partial<SessionEntry> | null>;
 }): Promise<SessionEntry | null> {
   const { storePath, sessionKey, update } = params;
-  return await withSessionStoreLock(storePath, async () => {
-    const store = loadSessionStore(storePath, { skipCache: true });
-    const resolved = resolveStoreSessionEntry({ store, sessionKey });
-    const existing = resolved.existing;
-    if (!existing) {
-      return null;
-    }
-    const patch = await update(existing);
-    if (!patch) {
-      return existing;
-    }
-    const next = mergeSessionEntry(existing, patch);
-    store[resolved.normalizedKey] = next;
-    for (const legacyKey of resolved.legacyKeys) {
-      delete store[legacyKey];
-    }
-    await saveSessionStoreUnlocked(storePath, store, {
-      activeSessionKey: resolved.normalizedKey,
+
+  // Fast path: read the store without locking to get the session entry
+  // The store is cached and TTL-validated, so this is cheap
+  const store = loadSessionStore(storePath);
+  const resolved = resolveStoreSessionEntry({ store, sessionKey });
+  const existing = resolved.existing;
+  if (!existing) {
+    return null;
+  }
+
+  // Get the sessionId for per-session file access
+  const sessionId = existing.sessionId;
+  if (!sessionId) {
+    // Fallback to locked update for legacy entries without sessionId
+    return await withSessionStoreLock(storePath, async () => {
+      const freshStore = loadSessionStore(storePath, { skipCache: true });
+      const freshResolved = resolveStoreSessionEntry({ store: freshStore, sessionKey });
+      const freshExisting = freshResolved.existing;
+      if (!freshExisting) {
+        return null;
+      }
+      const patch = await update(freshExisting);
+      if (!patch) {
+        return freshExisting;
+      }
+      const next = mergeSessionEntry(freshExisting, patch);
+      freshStore[freshResolved.normalizedKey] = next;
+      for (const legacyKey of freshResolved.legacyKeys) {
+        delete freshStore[legacyKey];
+      }
+      await saveSessionStoreUnlocked(storePath, freshStore, {
+        activeSessionKey: freshResolved.normalizedKey,
+      });
+      return next;
     });
-    return next;
-  });
+  }
+
+  // Compute the patch
+  const patch = await update(existing);
+  if (!patch) {
+    return existing;
+  }
+
+  // Merge and create the updated entry
+  const next = mergeSessionEntry(existing, patch);
+
+  // Write to per-session meta file (no global lock needed)
+  const { updateSessionMeta } = await import("./per-session-store.js");
+  const agentId = extractAgentIdFromStorePath(storePath);
+  await updateSessionMeta(sessionId, next, agentId);
+
+  // Update the in-memory cache so subsequent reads see the update
+  store[resolved.normalizedKey] = next;
+  for (const legacyKey of resolved.legacyKeys) {
+    delete store[legacyKey];
+  }
+  invalidateSessionStoreCache(storePath);
+
+  // Async background sync to sessions.json (debounced, best-effort)
+  debouncedSyncToSessionsJson(storePath, resolved.normalizedKey, next);
+
+  return next;
+}
+
+// Helper to extract agentId from store path
+function extractAgentIdFromStorePath(storePath: string): string | undefined {
+  // storePath is like: ~/.openclaw/agents/{agentId}/sessions/sessions.json
+  const match = storePath.match(/agents\/([^/]+)\/sessions/);
+  return match?.[1];
+}
+
+// Debounced sync to sessions.json to keep it in sync (background, best-effort)
+const pendingSyncs = new Map<string, { sessionKey: string; entry: SessionEntry }>();
+let syncTimer: NodeJS.Timeout | null = null;
+
+function debouncedSyncToSessionsJson(
+  storePath: string,
+  sessionKey: string,
+  entry: SessionEntry,
+): void {
+  const key = `${storePath}::${sessionKey}`;
+  pendingSyncs.set(key, { sessionKey, entry });
+
+  if (syncTimer) {
+    return;
+  } // Already scheduled
+
+  syncTimer = setTimeout(async () => {
+    syncTimer = null;
+    const toSync = new Map(pendingSyncs);
+    pendingSyncs.clear();
+
+    // Group by storePath
+    const byStore = new Map<string, Array<{ sessionKey: string; entry: SessionEntry }>>();
+    for (const [key, value] of toSync) {
+      const [sp] = key.split("::");
+      const list = byStore.get(sp) ?? [];
+      list.push(value);
+      byStore.set(sp, list);
+    }
+
+    // Batch update each store
+    for (const [sp, entries] of byStore) {
+      try {
+        await withSessionStoreLock(sp, async () => {
+          const store = loadSessionStore(sp, { skipCache: true });
+          for (const { sessionKey: sk, entry: e } of entries) {
+            store[sk] = e;
+          }
+          await saveSessionStoreUnlocked(sp, store);
+        });
+      } catch {
+        // Best-effort sync, ignore errors
+      }
+    }
+  }, 5000); // 5 second debounce
 }
 
 export async function recordSessionMetaFromInbound(params: {
