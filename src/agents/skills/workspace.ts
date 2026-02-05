@@ -105,6 +105,8 @@ function loadSkillEntries(
     config?: OpenClawConfig;
     managedSkillsDir?: string;
     bundledSkillsDir?: string;
+    /** When true, only load skills from the workspace dir (skip managed/bundled/extra). */
+    scopeToWorkspace?: boolean;
   },
 ): SkillEntry[] {
   const loadSkills = (params: { dir: string; source: string }): Skill[] => {
@@ -123,8 +125,34 @@ function loadSkillEntries(
     return [];
   };
 
+  const workspaceSkillsDir = path.join(workspaceDir, "skills");
+
+  // When scoped to workspace, only load skills from the workspace dir.
+  // This prevents managed/bundled skill paths from leaking into sandboxed
+  // agents where those paths are outside the sandbox root.
+  if (opts?.scopeToWorkspace) {
+    const workspaceSkills = loadSkills({
+      dir: workspaceSkillsDir,
+      source: "openclaw-workspace",
+    });
+    return workspaceSkills.map((skill) => {
+      let frontmatter: ParsedSkillFrontmatter = {};
+      try {
+        const raw = fs.readFileSync(skill.filePath, "utf-8");
+        frontmatter = parseFrontmatter(raw);
+      } catch {
+        // ignore malformed skills
+      }
+      return {
+        skill,
+        frontmatter,
+        metadata: resolveOpenClawMetadata(frontmatter),
+        invocation: resolveSkillInvocationPolicy(frontmatter),
+      };
+    });
+  }
+
   const managedSkillsDir = opts?.managedSkillsDir ?? path.join(CONFIG_DIR, "skills");
-  const workspaceSkillsDir = path.resolve(workspaceDir, "skills");
   const bundledSkillsDir = opts?.bundledSkillsDir ?? resolveBundledSkillsDir();
   const extraDirsRaw = opts?.config?.skills?.load?.extraDirs ?? [];
   const extraDirs = extraDirsRaw
@@ -218,6 +246,8 @@ export function buildWorkspaceSkillSnapshot(
     skillFilter?: string[];
     eligibility?: SkillEligibilityContext;
     snapshotVersion?: number;
+    /** When true, only load skills from the workspace dir (for sandboxed agents). */
+    scopeToWorkspace?: boolean;
   },
 ): SkillSnapshot {
   const skillEntries = opts?.entries ?? loadSkillEntries(workspaceDir, opts);
@@ -351,6 +381,7 @@ export async function syncSkillsToWorkspace(params: {
 }) {
   const sourceDir = resolveUserPath(params.sourceWorkspaceDir);
   const targetDir = resolveUserPath(params.targetWorkspaceDir);
+
   if (sourceDir === targetDir) {
     return;
   }
