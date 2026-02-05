@@ -10,7 +10,18 @@ import { type LogLevel, levelToMinLevel, normalizeLogLevel } from "./levels.js";
 import { resolveNodeRequireFromMeta } from "./node-require.js";
 import { loggingState } from "./state.js";
 
-export const DEFAULT_LOG_DIR = resolvePreferredOpenClawTmpDir();
+// When running under vitest, isolate logs to avoid polluting production logs.
+function getDefaultLogDir(): string {
+  if (process.env.OPENCLAW_LOG_DIR) {
+    return process.env.OPENCLAW_LOG_DIR;
+  }
+  if (process.env.VITEST === "true") {
+    return "/tmp/openclaw-test";
+  }
+  return resolvePreferredOpenClawTmpDir();
+}
+
+export const DEFAULT_LOG_DIR = getDefaultLogDir();
 export const DEFAULT_LOG_FILE = path.join(DEFAULT_LOG_DIR, "openclaw.log"); // legacy single-file path
 
 const LOG_PREFIX = "openclaw";
