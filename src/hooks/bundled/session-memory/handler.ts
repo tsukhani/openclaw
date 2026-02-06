@@ -13,6 +13,7 @@ import type { HookHandler } from "../../hooks.js";
 import { resolveAgentWorkspaceDir } from "../../../agents/agent-scope.js";
 import { resolveStateDir } from "../../../config/paths.js";
 import { createSubsystemLogger } from "../../../logging/subsystem.js";
+import { localDateStr, localTimeStr, tzOffsetLabel } from "../../../logging/timestamp.js";
 import { resolveAgentIdFromSessionKey } from "../../../routing/session-key.js";
 import { hasInterSessionUserProvenance } from "../../../sessions/input-provenance.js";
 import { resolveHookConfig } from "../../config.js";
@@ -88,14 +89,15 @@ async function saveToLanceDB(params: {
   }
 
   // Format memory text with metadata and truncated content
-  const dateStr = timestamp.toISOString().split("T")[0];
-  const timeStr = timestamp.toISOString().split("T")[1].split(".")[0];
+  const dateStr = localDateStr(timestamp);
+  const timeStr = localTimeStr(timestamp);
+  const tz = tzOffsetLabel(timestamp);
   const truncatedContent = sessionContent.slice(0, 2000);
   const wasTruncated = sessionContent.length > 2000;
 
   const memoryText = [
     `Session: ${slug}`,
-    `Date: ${dateStr} ${timeStr} UTC`,
+    `Date: ${dateStr} ${timeStr} ${tz}`,
     `Session Key: ${sessionKey}`,
     "",
     truncatedContent,
@@ -149,7 +151,7 @@ const saveSessionToMemory: HookHandler = async (event) => {
 
     // Get today's date for filename
     const now = new Date(event.timestamp);
-    const dateStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
+    const dateStr = localDateStr(now);
 
     // Generate descriptive slug from session using LLM
     const sessionEntry = (context.previousSessionEntry || context.sessionEntry || {}) as Record<
@@ -206,7 +208,7 @@ const saveSessionToMemory: HookHandler = async (event) => {
 
     // If no slug, use timestamp
     if (!slug) {
-      const timeSlug = now.toISOString().split("T")[1].split(".")[0].replace(/:/g, "");
+      const timeSlug = localTimeStr(now).replace(/:/g, "");
       slug = timeSlug.slice(0, 4); // HHMM
       log.debug("Using fallback timestamp slug", { slug });
     }
@@ -243,8 +245,8 @@ const saveSessionToMemory: HookHandler = async (event) => {
         path: memoryFilePath.replace(os.homedir(), "~"),
       });
 
-      // Format time as HH:MM:SS UTC
-      const timeStr = now.toISOString().split("T")[1].split(".")[0];
+      const timeStr = localTimeStr(now);
+      const tz = tzOffsetLabel(now);
 
       // Extract context details
       const sessionId = (sessionEntry.sessionId as string) || "unknown";
@@ -252,7 +254,7 @@ const saveSessionToMemory: HookHandler = async (event) => {
 
       // Build Markdown entry
       const entryParts = [
-        `# Session: ${dateStr} ${timeStr} UTC`,
+        `# Session: ${dateStr} ${timeStr} ${tz}`,
         "",
         `- **Session Key**: ${event.sessionKey}`,
         `- **Session ID**: ${sessionId}`,
