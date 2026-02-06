@@ -184,7 +184,7 @@ function formatConsoleLine(opts: {
       return color.gray(`${h}:${m}:${s}`);
     }
     if (loggingState.consoleTimestampPrefix) {
-      return color.gray(now.toLocaleString("sv-SE", { timeZoneName: "short" }).replace(" ", "T"));
+      return color.gray(formatLocalIso(now));
     }
     return "";
   })();
