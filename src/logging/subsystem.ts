@@ -175,11 +175,15 @@ function formatConsoleLine(opts: {
           : color.cyan;
   const displayMessage = stripRedundantSubsystemPrefixForConsole(opts.message, displaySubsystem);
   const time = (() => {
+    const now = new Date();
     if (opts.style === "pretty") {
-      return color.gray(new Date().toISOString().slice(11, 19));
+      const h = String(now.getHours()).padStart(2, "0");
+      const m = String(now.getMinutes()).padStart(2, "0");
+      const s = String(now.getSeconds()).padStart(2, "0");
+      return color.gray(`${h}:${m}:${s}`);
     }
     if (loggingState.consoleTimestampPrefix) {
-      return color.gray(new Date().toISOString());
+      return color.gray(now.toLocaleString("sv-SE", { timeZoneName: "short" }).replace(" ", "T"));
     }
     return "";
   })();
