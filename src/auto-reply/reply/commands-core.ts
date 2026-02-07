@@ -209,6 +209,26 @@ export async function handleCommands(params: HandleCommandsParams): Promise<Comm
     return { shouldContinue: false };
   }
 
+  // Notify plugins the old session ended before starting the new one
+  if (resetRequested && params.command.isAuthorizedSender) {
+    const hookRunner = getGlobalHookRunner();
+    if (hookRunner?.hasHooks("session_end")) {
+      const prevEntry = params.previousSessionEntry;
+      const prevSessionId = prevEntry?.sessionId ?? "";
+      await hookRunner.runSessionEnd(
+        {
+          sessionId: prevSessionId,
+          messageCount: 0, // not tracked at this layer
+        },
+        {
+          agentId: resolveAgentIdFromSessionKey(params.sessionKey),
+          sessionId: prevSessionId,
+          sessionKey: params.sessionKey,
+        },
+      );
+    }
+  }
+
   // Trigger internal hook for reset/new commands
   if (resetRequested && params.command.isAuthorizedSender) {
     const commandAction: ResetCommandAction = resetMatch?.[1] === "reset" ? "reset" : "new";
