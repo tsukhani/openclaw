@@ -422,8 +422,8 @@ importers:
   extensions/memory-neo4j:
     dependencies:
       '@sinclair/typebox':
-        specifier: 0.34.47
-        version: 0.34.47
+        specifier: 0.34.48
+        version: 0.34.48
       neo4j-driver:
         specifier: ^5.27.0
         version: 5.28.3
