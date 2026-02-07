@@ -482,6 +482,7 @@ export type PluginHookToolResultPersistResult = {
 export type PluginHookSessionContext = {
   agentId?: string;
   sessionId: string;
+  sessionKey?: string;
 };
 
 // session_start hook
