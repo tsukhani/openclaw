@@ -422,7 +422,6 @@ class MemoryExtractor {
     this.model = config.model ?? "google/gemini-2.0-flash-001";
     this.client = new OpenAI({ apiKey, baseURL });
   }
-  }
 
   async extract(
     messages: Array<{ role: string; content: string }>,
