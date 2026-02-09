@@ -42,7 +42,11 @@ type OpenAiChatCompletionRequest = {
 };
 
 function writeSse(res: ServerResponse, data: unknown) {
+  if (res.writableEnded || res.destroyed) {
+    return;
+  }
   res.write(`data: ${JSON.stringify(data)}\n\n`);
+  (res as unknown as { flush?: () => void }).flush?.();
 }
 
 function asMessages(val: unknown): OpenAiChatMessage[] {
@@ -197,7 +201,7 @@ export async function handleOpenAiHttpRequest(
     return true;
   }
 
-  const runId = `chatcmpl_${randomUUID()}`;
+  const runId = `chatcmpl-${randomUUID()}`;
   const deps = createDefaultDeps();
 
   if (!stream) {
@@ -250,9 +254,26 @@ export async function handleOpenAiHttpRequest(
 
   setSseHeaders(res);
 
+  const created = Math.floor(Date.now() / 1000);
   let wroteRole = false;
   let sawAssistantDelta = false;
   let closed = false;
+
+  /** Send a final chunk with finish_reason and then [DONE]. */
+  function finishStream(finishReason: string = "stop") {
+    if (res.writableEnded || res.destroyed) {
+      return;
+    }
+    writeSse(res, {
+      id: runId,
+      object: "chat.completion.chunk",
+      created,
+      model,
+      choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
+    });
+    writeDone(res);
+    res.end();
+  }
 
   const unsubscribe = onAgentEvent((evt) => {
     if (evt.runId !== runId) {
@@ -264,8 +285,7 @@ export async function handleOpenAiHttpRequest(
 
     if (evt.stream === "assistant") {
       const delta = evt.data?.delta;
-      const text = evt.data?.text;
-      const content = typeof delta === "string" ? delta : typeof text === "string" ? text : "";
+      const content = typeof delta === "string" ? delta : "";
       if (!content) {
         return;
       }
@@ -275,7 +295,7 @@ export async function handleOpenAiHttpRequest(
         writeSse(res, {
           id: runId,
           object: "chat.completion.chunk",
-          created: Math.floor(Date.now() / 1000),
+          created,
           model,
           choices: [{ index: 0, delta: { role: "assistant" } }],
         });
@@ -285,7 +305,7 @@ export async function handleOpenAiHttpRequest(
       writeSse(res, {
         id: runId,
         object: "chat.completion.chunk",
-        created: Math.floor(Date.now() / 1000),
+        created,
         model,
         choices: [
           {
@@ -303,8 +323,7 @@ export async function handleOpenAiHttpRequest(
       if (phase === "end" || phase === "error") {
         closed = true;
         unsubscribe();
-        writeDone(res);
-        res.end();
+        finishStream(phase === "error" ? "stop" : "stop");
       }
     }
   });
@@ -340,7 +359,7 @@ export async function handleOpenAiHttpRequest(
           writeSse(res, {
             id: runId,
             object: "chat.completion.chunk",
-            created: Math.floor(Date.now() / 1000),
+            created,
             model,
             choices: [{ index: 0, delta: { role: "assistant" } }],
           });
@@ -359,7 +378,7 @@ export async function handleOpenAiHttpRequest(
         writeSse(res, {
           id: runId,
           object: "chat.completion.chunk",
-          created: Math.floor(Date.now() / 1000),
+          created,
           model,
           choices: [
             {
@@ -378,7 +397,7 @@ export async function handleOpenAiHttpRequest(
       writeSse(res, {
         id: runId,
         object: "chat.completion.chunk",
-        created: Math.floor(Date.now() / 1000),
+        created,
         model,
         choices: [
           {
@@ -397,8 +416,7 @@ export async function handleOpenAiHttpRequest(
       if (!closed) {
         closed = true;
         unsubscribe();
-        writeDone(res);
-        res.end();
+        finishStream();
       }
     }
   })();
