@@ -62,9 +62,12 @@ export function buildSystemdUnit({
     "TimeoutStopSec=30",
     "TimeoutStartSec=30",
     "SuccessExitStatus=0 143",
-    // Keep service children in the same lifecycle so restarts do not leave
-    // orphan ACP/runtime workers behind.
-    "KillMode=control-group",
+    // KillMode=mixed sends SIGTERM to the main process for graceful shutdown,
+    // then SIGKILL to all remaining cgroup processes (orphaned children like
+    // podman conmon, headless chrome, etc.) after TimeoutStopSec.
+    // Using "process" here would leave the gateway child alive across restarts,
+    // causing port conflicts.
+    "KillMode=mixed",
     workingDirLine,
     ...envLines,
     "",
