@@ -199,15 +199,16 @@ export function buildBootstrapContextFiles(
     if (remainingTotalChars <= 0) {
       break;
     }
+    const filePath = file.path ?? file.name;
     if (file.missing) {
-      const missingText = `[MISSING] Expected at: ${file.path}`;
+      const missingText = `[MISSING] Expected at: ${filePath}`;
       const cappedMissingText = clampToBudget(missingText, remainingTotalChars);
       if (!cappedMissingText) {
         break;
       }
       remainingTotalChars = Math.max(0, remainingTotalChars - cappedMissingText.length);
       result.push({
-        path: file.path,
+        path: filePath,
         content: cappedMissingText,
       });
       continue;
@@ -231,7 +232,7 @@ export function buildBootstrapContextFiles(
     }
     remainingTotalChars = Math.max(0, remainingTotalChars - contentWithinBudget.length);
     result.push({
-      path: file.path,
+      path: filePath,
       content: contentWithinBudget,
     });
   }
