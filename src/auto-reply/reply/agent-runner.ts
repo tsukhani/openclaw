@@ -36,6 +36,7 @@ import { appendUsageLine, formatResponseUsageLine } from "./agent-runner-utils.j
 import { createAudioAsVoiceBuffer, createBlockReplyPipeline } from "./block-reply-pipeline.js";
 import { resolveBlockStreamingCoalescing } from "./block-streaming.js";
 import { createFollowupRunner } from "./followup-runner.js";
+import { markNeedsPostCompactionRecovery } from "./post-compaction-recovery.js";
 import { enqueueFollowupRun, type FollowupRun, type QueueSettings } from "./queue.js";
 import { createReplyToModeFilterForChannel, resolveReplyToMode } from "./reply-threading.js";
 import { incrementRunCompactionCount, persistRunSessionUsage } from "./session-run-accounting.js";
@@ -504,6 +505,16 @@ export async function runReplyAgent(params: {
         storePath,
         lastCallUsage: runResult.meta.agentMeta?.lastCallUsage,
         contextTokensUsed,
+      });
+      // P3: Mark session for post-compaction recovery on the next turn.
+      // This path handles SDK auto-compaction (during the agent run itself).
+      // The memory-flush path in agent-runner-memory.ts handles flush-triggered compaction.
+      // These are mutually exclusive for a given compaction event; setting true is idempotent.
+      await markNeedsPostCompactionRecovery({
+        sessionEntry: activeSessionEntry,
+        sessionStore: activeSessionStore,
+        sessionKey,
+        storePath,
       });
       if (verboseEnabled) {
         const suffix = typeof count === "number" ? ` (count ${count})` : "";

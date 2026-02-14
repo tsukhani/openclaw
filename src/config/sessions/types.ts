@@ -80,6 +80,8 @@ export type SessionEntry = {
   model?: string;
   contextTokens?: number;
   compactionCount?: number;
+  /** Set after auto-compaction; cleared after the next turn injects recovery instructions. */
+  needsPostCompactionRecovery?: boolean;
   memoryFlushAt?: number;
   memoryFlushCompactionCount?: number;
   cliSessionIds?: Record<string, string>;
