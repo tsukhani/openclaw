@@ -41,6 +41,10 @@ import { buildGroupChatContext, buildGroupIntro } from "./groups.js";
 import { buildInboundMetaSystemPrompt, buildInboundUserContextPrefix } from "./inbound-meta.js";
 import type { createModelSelectionState } from "./model-selection.js";
 import { resolveOriginMessageProvider } from "./origin-routing.js";
+import {
+  clearPostCompactionRecovery,
+  prependPostCompactionRecovery,
+} from "./post-compaction-recovery.js";
 import { resolveQueueSettings } from "./queue.js";
 import { routeReply } from "./route-reply.js";
 import { BARE_SESSION_RESET_PROMPT } from "./session-reset-prompt.js";
@@ -340,6 +344,18 @@ export async function runPreparedReply(
   });
   if (queuedSystemPrompt) {
     extraSystemPromptParts.push(queuedSystemPrompt);
+  }
+  // P3: Prepend post-compaction recovery instructions if the previous turn
+  // triggered auto-compaction. This ensures the agent recalls task state from
+  // memory before responding to the user's next message.
+  prefixedBodyBase = prependPostCompactionRecovery(prefixedBodyBase, sessionEntry);
+  if (sessionEntry?.needsPostCompactionRecovery) {
+    await clearPostCompactionRecovery({
+      sessionEntry,
+      sessionStore,
+      sessionKey,
+      storePath,
+    });
   }
   prefixedBodyBase = appendUntrustedContext(prefixedBodyBase, sessionCtx.UntrustedContext);
   const threadStarterBody = ctx.ThreadStarterBody?.trim();
