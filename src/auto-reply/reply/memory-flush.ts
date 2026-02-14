@@ -28,6 +28,7 @@ export const DEFAULT_MEMORY_FLUSH_PROMPT = [
   MEMORY_FLUSH_READ_ONLY_HINT,
   MEMORY_FLUSH_APPEND_ONLY_HINT,
   "Do NOT create timestamped variant files (e.g., YYYY-MM-DD-HHMM.md); always use the canonical YYYY-MM-DD.md filename.",
+  "If there is an active task in progress, save its state: task name, current step, pending actions, and any critical variables. Use memory_store with category 'core' and importance 1.0 for active task state.",
   `If nothing to store, reply with ${SILENT_REPLY_TOKEN}.`,
 ].join(" ");
 
@@ -37,6 +38,7 @@ export const DEFAULT_MEMORY_FLUSH_SYSTEM_PROMPT = [
   MEMORY_FLUSH_TARGET_HINT,
   MEMORY_FLUSH_READ_ONLY_HINT,
   MEMORY_FLUSH_APPEND_ONLY_HINT,
+  "CRITICAL: If there is an active task being worked on, you MUST save its current state (task name, step, pending actions, key variables) to memory_store with category='core' and importance=1.0. This ensures task continuity after compaction.",
   `You may reply, but usually ${SILENT_REPLY_TOKEN} is correct.`,
 ].join(" ");
 
