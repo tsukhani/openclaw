@@ -1,8 +1,9 @@
 /**
  * Session memory hook handler
  *
- * Saves session context to memory when /new or /reset command is triggered
- * Creates a new dated memory file with LLM-generated slug
+ * Saves session context when /new or /reset command is triggered.
+ * Default target: writes SESSION_CONTEXT.md in the workspace root (overwrite).
+ * LanceDB target: stores to LanceDB via Gateway API with LLM-generated slug.
  */
 
 import fs from "node:fs/promises";
@@ -14,7 +15,6 @@ import {
 } from "../../../agents/agent-scope.js";
 import type { OpenClawConfig } from "../../../config/config.js";
 import { resolveStateDir } from "../../../config/paths.js";
-import { writeFileWithinRoot } from "../../../infra/fs-safe.js";
 import { localDateStr, localTimeStr, tzOffsetLabel } from "../../../logging/timestamp.js";
 import { createSubsystemLogger } from "../../../logging/subsystem.js";
 import {
@@ -395,28 +395,19 @@ const saveSessionToMemory: HookHandler = async (event) => {
       });
       log.info(`Session context stored in LanceDB: ${slug}`);
     } else {
-      // Store in file (default behavior)
-      const memoryDir = path.join(workspaceDir, "memory");
-      await fs.mkdir(memoryDir, { recursive: true });
-
-      // Create filename with date and slug
-      const filename = `${dateStr}-${slug}.md`;
-      const memoryFilePath = path.join(memoryDir, filename);
-      log.debug("Memory file path resolved", {
-        filename,
-        path: memoryFilePath.replace(os.homedir(), "~"),
-      });
+      // Write session context to SESSION_CONTEXT.md (overwrite, not append).
+      // This file is read by the session-context hook at bootstrap to provide
+      // continuity across sessions. It is separate from MEMORY.md (core memories).
+      const sessionContextPath = path.join(workspaceDir, "SESSION_CONTEXT.md");
 
       const timeStr = localTimeStr(now);
       const tz = tzOffsetLabel(now);
-
-      // Extract context details
       const sessionId = (sessionEntry.sessionId as string) || "unknown";
       const source = (context.commandSource as string) || "unknown";
 
       // Build Markdown entry
       const entryParts = [
-        `# Session: ${dateStr} ${timeStr} ${tz}`,
+        `# Session Context — ${dateStr} ${timeStr} ${tz}`,
         "",
         `- **Session Key**: ${displaySessionKey}`,
         `- **Session ID**: ${sessionId}`,
@@ -426,22 +417,16 @@ const saveSessionToMemory: HookHandler = async (event) => {
 
       // Include conversation content if available
       if (sessionContent) {
-        entryParts.push("## Conversation Summary", "", sessionContent, "");
+        entryParts.push("## Recent Conversation", "", sessionContent, "");
       }
 
       const entry = entryParts.join("\n");
 
-      // Write under memory root with alias-safe file validation.
-      await writeFileWithinRoot({
-        rootDir: memoryDir,
-        relativePath: filename,
-        data: entry,
-        encoding: "utf-8",
-      });
-      log.debug("Memory file written successfully");
+      // Overwrite SESSION_CONTEXT.md
+      await fs.writeFile(sessionContextPath, entry, "utf-8");
+      log.debug("SESSION_CONTEXT.md written successfully");
 
-      // Log completion (but don't send user-visible confirmation - it's internal housekeeping)
-      const relPath = memoryFilePath.replace(os.homedir(), "~");
+      const relPath = sessionContextPath.replace(os.homedir(), "~");
       log.info(`Session context saved to ${relPath}`);
     }
   } catch (err) {

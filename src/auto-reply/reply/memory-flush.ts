@@ -24,21 +24,19 @@ const MEMORY_FLUSH_REQUIRED_HINTS = [
 
 export const DEFAULT_MEMORY_FLUSH_PROMPT = [
   "Pre-compaction memory flush.",
-  MEMORY_FLUSH_TARGET_HINT,
-  MEMORY_FLUSH_READ_ONLY_HINT,
-  MEMORY_FLUSH_APPEND_ONLY_HINT,
-  "Do NOT create timestamped variant files (e.g., YYYY-MM-DD-HHMM.md); always use the canonical YYYY-MM-DD.md filename.",
-  "If there is an active task in progress, save its state: task name, current step, pending actions, and any critical variables. Use memory_store with category 'core' and importance 1.0 for active task state.",
+  "Write a fresh SESSION_CONTEXT.md in the workspace root summarizing the current session.",
+  "OVERWRITE the file completely — this is a snapshot of the current session state, not an append log.",
+  "Include: key topics discussed, decisions made, active work in progress, and any pending follow-ups.",
+  "Keep it concise (under 3000 characters) and structured with markdown headers.",
+  "If there is an active task in progress, also save its state via memory_store with category='core' and importance=1.0 for task continuity.",
   `If nothing to store, reply with ${SILENT_REPLY_TOKEN}.`,
 ].join(" ");
 
 export const DEFAULT_MEMORY_FLUSH_SYSTEM_PROMPT = [
   "Pre-compaction memory flush turn.",
-  "The session is near auto-compaction; capture durable memories to disk.",
-  MEMORY_FLUSH_TARGET_HINT,
-  MEMORY_FLUSH_READ_ONLY_HINT,
-  MEMORY_FLUSH_APPEND_ONLY_HINT,
-  "CRITICAL: If there is an active task being worked on, you MUST save its current state (task name, step, pending actions, key variables) to memory_store with category='core' and importance=1.0. This ensures task continuity after compaction.",
+  "The session is near auto-compaction; capture session context to SESSION_CONTEXT.md.",
+  "Write a concise, structured summary of the current session to SESSION_CONTEXT.md in the workspace root. Overwrite the file completely.",
+  "CRITICAL: If there is an active task being worked on, you MUST also save its current state (task name, step, pending actions, key variables) to memory_store with category='core' and importance=1.0. This ensures task continuity after compaction.",
   `You may reply, but usually ${SILENT_REPLY_TOKEN} is correct.`,
 ].join(" ");
 
