@@ -210,7 +210,7 @@ async function saveToLanceDB(params: {
   const gatewayPort = cfg.gateway?.port || 18789;
   const gatewayToken = cfg.gateway?.auth?.token;
 
-  if (!gatewayToken) {
+  if (!gatewayToken || typeof gatewayToken !== "string") {
     throw new Error("Gateway auth token not found in config");
   }
 
