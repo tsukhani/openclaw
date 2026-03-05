@@ -20,6 +20,22 @@ const ANTHROPIC_API_VERSION = "2023-06-01";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Sleep that rejects early if the abort signal fires. */
+export function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) return Promise.reject(signal.reason ?? new Error("aborted"));
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason ?? new Error("aborted"));
+      },
+      { once: true },
+    );
+  });
+}
+
 /**
  * Detect whether the config should use the Anthropic Messages API.
  * Decision is based solely on the resolved baseUrl — if it points to
@@ -143,7 +159,7 @@ async function anthropicRequest(
       if (attempt >= config.maxRetries) {
         throw err;
       }
-      await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
+      await abortableDelay(500 * 2 ** attempt, abortSignal);
     }
   }
   return null;
@@ -218,7 +234,7 @@ async function anthropicStreamRequest(
       if (attempt >= config.maxRetries) {
         throw err;
       }
-      await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
+      await abortableDelay(500 * 2 ** attempt, abortSignal);
     }
   }
   return null;
@@ -266,7 +282,7 @@ async function openAIRequest(
       if (attempt >= config.maxRetries) {
         throw err;
       }
-      await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
+      await abortableDelay(500 * 2 ** attempt, abortSignal);
     }
   }
   return null;

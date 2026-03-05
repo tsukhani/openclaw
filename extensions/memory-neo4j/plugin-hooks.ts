@@ -463,7 +463,11 @@ export function registerMemoryHooks(
         ctx.workspaceDir, // Layer 3: pass workspace dir for task auto-tagging
         cfg.autoCaptureAssistant,
         sleepAbortController.signal,
-      );
+      ).catch((err) => {
+        logger.warn?.(
+          `memory-neo4j: auto-capture failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      });
     });
   }
 }
