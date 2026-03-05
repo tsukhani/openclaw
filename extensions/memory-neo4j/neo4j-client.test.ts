@@ -1456,7 +1456,7 @@ describe("Neo4jMemoryClient", () => {
       const input: StoreMemoryInput = {
         id: "mem-bulk-1",
         text: "bulk memory with task",
-        embedding: [0.1, 0.2],
+        embedding: [], // empty embedding skips dimension check (CR-007)
         importance: 0.7,
         category: "fact",
         source: "user",
@@ -1480,7 +1480,7 @@ describe("Neo4jMemoryClient", () => {
       const input: StoreMemoryInput = {
         id: "mem-bulk-2",
         text: "bulk memory without task",
-        embedding: [0.1, 0.2],
+        embedding: [], // empty embedding skips dimension check (CR-007)
         importance: 0.5,
         category: "fact",
         source: "user",

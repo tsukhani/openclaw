@@ -60,6 +60,12 @@ async function getActiveTaskIdForCapture(
     }
   }
 
+  // Keep cache bounded — evict oldest entry if over limit
+  const MAX_CACHE_ENTRIES = 10;
+  if (_taskLedgerCache.size >= MAX_CACHE_ENTRIES) {
+    const firstKey = _taskLedgerCache.keys().next().value;
+    if (firstKey !== undefined) _taskLedgerCache.delete(firstKey);
+  }
   _taskLedgerCache.set(cacheKey, { activeTaskId, expiresAt: now + TASK_LEDGER_CACHE_TTL_MS });
   return activeTaskId;
 }

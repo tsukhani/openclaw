@@ -353,6 +353,13 @@ export class Neo4jMemoryClient {
         );
         return false;
       }
+      // Validate embedding dimensions when a non-empty embedding is provided
+      if (inp.embedding.length > 0 && inp.embedding.length !== this.dimensions) {
+        this.logger.warn(
+          `memory-neo4j: storeManyMemories blocked entry — embedding has ${inp.embedding.length} dims, expected ${this.dimensions}. Skipping.`,
+        );
+        return false;
+      }
       return true;
     });
 

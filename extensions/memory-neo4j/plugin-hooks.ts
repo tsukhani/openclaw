@@ -60,7 +60,6 @@ export function registerMemoryHooks(
   // hook below also checks for existing conversation history to avoid re-injecting core
   // memories after restarts.
   const bootstrappedSessions = new Set<string>();
-  const coreMemoryIdsBySession = new Map<string, Set<string>>();
 
   // Track mid-session refresh: maps sessionKey → tokens at last refresh
   // Used to avoid refreshing too frequently (only refresh after significant context growth)
@@ -88,7 +87,6 @@ export function registerMemoryHooks(
       if (ts < cutoff) {
         bootstrappedSessions.delete(key);
         midSessionRefreshAt.delete(key);
-        coreMemoryIdsBySession.delete(key);
         sessionLastSeen.delete(key);
       }
     }
@@ -106,7 +104,6 @@ export function registerMemoryHooks(
       if (ctx.sessionKey) {
         bootstrappedSessions.delete(ctx.sessionKey);
         midSessionRefreshAt.delete(ctx.sessionKey);
-        coreMemoryIdsBySession.delete(ctx.sessionKey);
         sessionLastSeen.delete(ctx.sessionKey);
         logger.info?.(
           `memory-neo4j: cleared bootstrap/refresh flags for session ${ctx.sessionKey} after compaction`,
@@ -123,7 +120,6 @@ export function registerMemoryHooks(
     if (key) {
       bootstrappedSessions.delete(key);
       midSessionRefreshAt.delete(key);
-      coreMemoryIdsBySession.delete(key);
       sessionLastSeen.delete(key);
       logger.info?.(
         `memory-neo4j: cleared bootstrap/refresh flags for session=${key} (session_end)`,
@@ -396,7 +392,6 @@ export function registerMemoryHooks(
 
         if (sessionKey) {
           bootstrappedSessions.add(sessionKey);
-          coreMemoryIdsBySession.set(sessionKey, new Set(coreMemories.map((m) => m.id)));
           touchSession(sessionKey);
         }
 
