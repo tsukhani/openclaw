@@ -171,6 +171,25 @@ describe("passesAttentionGate", () => {
       expect(passesAttentionGate("yes, sounds right")).toBe(false);
     });
 
+    it("CR-010: should reject plain short acknowledgments but NOT task-reference messages", () => {
+      // Still filtered — too short/few-words to pass the gate regardless of noise pattern
+      expect(passesAttentionGate("ok, thanks!")).toBe(false); // 11 chars
+      expect(passesAttentionGate("sure, sounds good")).toBe(false); // 17 chars
+
+      // Must NOT be filtered — task-ID references make these substantive signals.
+      // Messages are long/wordy enough to pass length + word-count gates, so the
+      // noise pattern (with the negative lookahead) is what preserves them.
+      expect(passesAttentionGate("ok, TASK-001 done and already pushed to the main branch")).toBe(
+        true,
+      );
+      expect(
+        passesAttentionGate("yes, TASK-42 is complete and has been reviewed by the team"),
+      ).toBe(true);
+      expect(passesAttentionGate("sure, TASK-7 merged into the release branch last night")).toBe(
+        true,
+      );
+    });
+
     it("should reject raw sender metadata that survived stripping", () => {
       expect(
         passesAttentionGate(

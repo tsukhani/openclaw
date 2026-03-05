@@ -15,8 +15,9 @@ const NOISE_PATTERNS = [
   // Deictic: messages that are only pronouns/articles/common verbs — no standalone meaning
   // e.g. "I need those", "let me do it", "ok let me test it out", "I got it"
   /^(ok[,.]?\s+)?(i('ll|'m|'d|'ve)?\s+)?(just\s+)?(need|want|got|have|let|let's|let me|give me|send|do|did|try|check|see|look at|test|take|get|go|use)\s+(it|that|this|those|these|them|some|one|the|a|an|me|him|her|us)\s*(out|up|now|then|too|again|later|first|here|there|please)?\s*[.!?]*$/i,
-  // Short acknowledgments with trailing context: "ok, ..." / "yes, ..." when total is brief
-  /^(ok|okay|yes|yeah|yep|sure|no|nope|right|alright|fine|cool|nice|great|perfect)[,.]?\s+.{0,20}$/i,
+  // Short acknowledgments with trailing context: "ok, ..." / "yes, ..." when total is brief.
+  // Negative lookahead preserves task-reference messages like "ok, TASK-001 done".
+  /^(ok|okay|yes|yeah|yep|sure|no|nope|right|alright|fine|cool|nice|great|perfect)[,.]?\s+(?!.*TASK-\d).{0,20}$/i,
   // Conversational filler / noise phrases (standalone, with optional punctuation)
   /^(hmm+|huh|haha|ha|lol|lmao|rofl|nah|meh|idk|brb|ttyl|omg|wow|whoa|welp|oops|ooh|aah|ugh|bleh|pfft|smh|ikr|tbh|imo|fwiw|np|nvm|nm|wut|wat|wha|heh|tsk|sigh|yay|woo+|boo|dang|darn|geez|gosh|sheesh|oof)\s*[.!?]*$/i,
   // Single-word or near-empty

@@ -275,6 +275,42 @@ describe("runSleepCycle orchestrator", () => {
   // OP-107: Phase 8 tip generation uses embedBatch + storeManyMemories
   // --------------------------------------------------------------------------
 
+  // --------------------------------------------------------------------------
+  // CR-009: Phase 2b circuit-breaker — break on stalled batches
+  // --------------------------------------------------------------------------
+
+  it("CR-009: Phase 2b breaks after 3 consecutive stalled batches (same first memory ID)", async () => {
+    const enabledConfig = { ...baseConfig, enabled: true };
+    const stuckMemory = { id: "stuck-mem-id", text: "some memory that never gets tagged" };
+
+    // Always return the same single memory (batchSize=1 so hasMore stays true)
+    (db.listUntaggedMemories as ReturnType<typeof vi.fn>).mockResolvedValue([stuckMemory]);
+
+    // incrementTaggingRetries fails — retry count never increments in DB
+    (db.incrementTaggingRetries as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("DB connection lost"),
+    );
+
+    const { extractTagsOnly } = await import("./extractor.js");
+    // Return empty tags → falls into the else branch → calls incrementTaggingRetries
+    (extractTagsOnly as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+
+    await runSleepCycle(db, embeddings, enabledConfig, logger, {
+      ...fastOptions,
+      skipRetroactiveTagging: false,
+      retroactiveTagBatchSize: 1,
+      extractionDelayMs: 0,
+    });
+
+    // Circuit-breaker fires after 4 listUntaggedMemories calls:
+    // call 1 → sets lastBatchFirstId, stalledCount=0
+    // call 2 → same ID, stalledCount=1
+    // call 3 → same ID, stalledCount=2
+    // call 4 → same ID, stalledCount=3 → break
+    expect(db.listUntaggedMemories).toHaveBeenCalledTimes(4);
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Phase 2b stalled"));
+  });
+
   it("OP-107: calls embedBatch once for all tips and storeManyMemories once", async () => {
     const fs = await import("node:fs/promises");
     const mockFs = fs.default as {

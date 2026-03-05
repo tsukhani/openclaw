@@ -931,6 +931,10 @@ export async function runSleepCycle(
     try {
       let hasMore = true;
       let runningTotal = 0;
+      // Circuit-breaker: track the first ID of each batch to detect stalls
+      // (e.g. incrementTaggingRetries silently fails → same memory loops forever)
+      let lastBatchFirstId: string | undefined;
+      let stalledCount = 0;
       while (hasMore && !abortSignal?.aborted) {
         const untagged = await db.listUntaggedMemories(retroactiveTagBatchSize, agentId);
 
@@ -938,6 +942,20 @@ export async function runSleepCycle(
           hasMore = false;
           break;
         }
+
+        // Circuit-breaker: if the same memory leads consecutive batches, we're stuck
+        if (untagged[0].id === lastBatchFirstId) {
+          stalledCount++;
+          if (stalledCount >= 3) {
+            logger.warn(
+              "memory-neo4j: [sleep] Phase 2b stalled — same memories in 3 consecutive batches, breaking",
+            );
+            break;
+          }
+        } else {
+          stalledCount = 0;
+        }
+        lastBatchFirstId = untagged[0].id;
 
         // Accumulate total across all batches
         runningTotal += untagged.length;
@@ -964,16 +982,25 @@ export async function runSleepCycle(
                 );
               } catch (err) {
                 result.retroactiveTagging.failed++;
-                await db.incrementTaggingRetries(memory.id);
                 logger.warn(
                   `memory-neo4j: [sleep] retroactive tagging write failed for ${memory.id.slice(0, 8)}: ${String(err)}`,
                 );
+                await db.incrementTaggingRetries(memory.id).catch((retryErr) => {
+                  logger.warn(
+                    `memory-neo4j: [sleep] incrementTaggingRetries failed for ${memory.id.slice(0, 8)}: ${String(retryErr)}`,
+                  );
+                });
               }
             } else {
               result.retroactiveTagging.failed++;
               // Increment retry counter so this memory is eventually skipped
-              // after maxRetries (default 3), preventing infinite loops
-              await db.incrementTaggingRetries(memory.id);
+              // after maxRetries (default 3), preventing infinite loops.
+              // Errors are logged so they don't silently prevent progress.
+              await db.incrementTaggingRetries(memory.id).catch((retryErr) => {
+                logger.warn(
+                  `memory-neo4j: [sleep] incrementTaggingRetries failed for ${memory.id.slice(0, 8)}: ${String(retryErr)}`,
+                );
+              });
             }
           }
         }
