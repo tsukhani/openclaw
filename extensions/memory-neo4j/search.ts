@@ -40,7 +40,7 @@ export function classifyQuery(query: string): QueryType {
   const wordCount = words.length;
 
   const commonWords =
-    /^(I|A|An|The|Is|Are|Was|Were|What|Who|Where|When|How|Why|Do|Does|Did|Find|Show|Get|Tell|Me|My|About|For)$/;
+    /^(I|A|An|The|Is|Are|Was|Were|What|Who|Where|When|How|Why|Do|Does|Did|Find|Show|Get|Tell|Me|My|About|For|Can|Could|Has|Have|Should|Would|Please|Will|Shall|May|Might|Am)$/;
   const capitalizedWords = words.filter((w) => /^[A-Z]/.test(w) && !commonWords.test(w));
 
   // Short queries: 1-2 words → boost BM25, but promote to entity if proper noun detected.
@@ -132,6 +132,11 @@ export function fuseWithConfidenceRRF(
   k: number,
   weights: number[],
 ): FusedCandidate[] {
+  if (signals.length !== weights.length) {
+    throw new Error(
+      `fuseWithConfidenceRRF: signals.length (${signals.length}) !== weights.length (${weights.length})`,
+    );
+  }
   // Build per-signal rank/score lookups
   const signalMaps: Map<string, SignalEntry>[] = signals.map((signal) => {
     const map = new Map<string, SignalEntry>();

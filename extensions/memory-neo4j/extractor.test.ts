@@ -877,9 +877,10 @@ describe("runBackgroundExtraction", () => {
   });
 
   it("should mark as 'failed' when extraction returns null", async () => {
+    // Use 400 (Bad Request) — a permanent, non-transient failure
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
-      status: 500,
+      status: 400,
       text: () => Promise.resolve("error"),
     });
 
@@ -2732,9 +2733,9 @@ describe("isTransientError", () => {
     expect(isTransientError(new Error("socket hang up"))).toBe(true);
   });
 
-  it("should classify HTTP 500 as non-transient", () => {
+  it("should classify HTTP 500 as transient", () => {
     expect(isTransientError(new Error("OpenRouter API error 500: internal server error"))).toBe(
-      false,
+      true,
     );
   });
 

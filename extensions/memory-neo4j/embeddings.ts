@@ -200,13 +200,30 @@ export class Embeddings {
     }
 
     // Merge computed results back, validate dimensions, and populate cache
+    let failCount = 0;
     for (let i = 0; i < uncachedIndices.length; i++) {
       const embedding = computed[i];
       if (embedding.length > 0) {
         this.validateDimensions(embedding, `batch index ${uncachedIndices[i]}`);
         this.cache.set(uncachedTexts[i], embedding);
+      } else {
+        failCount++;
+        this.logger?.warn?.(
+          `memory-neo4j: embedBatch: empty embedding at index ${uncachedIndices[i]}`,
+        );
       }
       results[uncachedIndices[i]] = embedding;
+    }
+
+    if (failCount > 0) {
+      if (failCount > uncachedTexts.length / 2) {
+        throw new Error(
+          `memory-neo4j: embedBatch: ${failCount}/${uncachedTexts.length} embeddings failed (exceeded 50% threshold)`,
+        );
+      }
+      this.logger?.warn?.(
+        `memory-neo4j: embedBatch: ${failCount}/${uncachedTexts.length} embeddings failed`,
+      );
     }
 
     return results as number[][];
@@ -271,13 +288,25 @@ export class Embeddings {
     }
     // Same guard as embedOpenAI — only text-embedding-3-* supports `dimensions`.
     const supportsCustomDimensions = this.model.startsWith("text-embedding-3");
-    const response = await this.client.embeddings.create({
-      model: this.model,
-      input: texts,
-      ...(supportsCustomDimensions ? { dimensions: this.expectedDimensions } : {}),
-    });
-    // Sort by index to ensure correct order
-    return [...response.data].sort((a, b) => a.index - b.index).map((d) => d.embedding);
+    const MAX_RETRIES = 2;
+    let lastErr: unknown;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response = await this.client.embeddings.create({
+          model: this.model,
+          input: texts,
+          ...(supportsCustomDimensions ? { dimensions: this.expectedDimensions } : {}),
+        });
+        // Sort by index to ensure correct order
+        return [...response.data].sort((a, b) => a.index - b.index).map((d) => d.embedding);
+      } catch (err) {
+        lastErr = err;
+        if (attempt < MAX_RETRIES) {
+          await new Promise((r) => setTimeout(r, 300 * 2 ** attempt));
+        }
+      }
+    }
+    throw lastErr;
   }
 
   // Timeout for Ollama embedding fetch calls to prevent hanging indefinitely

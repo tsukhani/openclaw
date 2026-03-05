@@ -213,7 +213,7 @@ export async function extractTagsOnly(
 
   const messages = [
     { role: "system", content: RETROACTIVE_TAGGING_SYSTEM },
-    { role: "user", content: text },
+    { role: "user", content: sanitizeMemoryText(text) },
   ];
 
   let content: string | null;
@@ -504,7 +504,10 @@ If they don't actually conflict (they cover different aspects or are both valid)
 
 Return JSON: {"keep": "a"|"b"|"both", "reason": "brief explanation"}`,
         },
-        { role: "user", content: `Memory A: "${memA}"\nMemory B: "${memB}"` },
+        {
+          role: "user",
+          content: `Memory A: "${sanitizeMemoryText(memA)}"\nMemory B: "${sanitizeMemoryText(memB)}"`,
+        },
       ],
       abortSignal,
     );
@@ -594,6 +597,20 @@ export async function runBackgroundExtraction(
       return { success: true, memoryId };
     }
 
+    // Quality gate FIRST: check if this auto-captured memory should be invalidated
+    // before writing the entity graph. An invalidated memory with graph edges
+    // pollutes graphSearch results.
+    if (result.category === "decision" || result.category === "other") {
+      const source = await db.getMemoryField(memoryId, "source");
+      if (source === "auto-capture") {
+        await db.invalidateMemory(memoryId);
+        logger.info(
+          `memory-neo4j: post-extraction gate — invalidated auto-capture "${text.slice(0, 60)}..." (category=${result.category})`,
+        );
+        return { success: true, memoryId };
+      }
+    }
+
     // Batch all entity operations into a single transaction:
     // entity merges, mentions, relationships, tags, category, and extraction status
     await db.batchEntityOperations(
@@ -615,20 +632,6 @@ export async function runBackgroundExtraction(
         `${result.entities.length} entities, ${result.relationships.length} rels, ${result.tags.length} tags` +
         (result.category ? `, category=${result.category}` : ""),
     );
-
-    // Post-extraction quality gate: auto-captured user messages classified as
-    // "decision" or "other" are almost always contextual instructions (e.g.,
-    // "Can you fix the dashboard"), not reusable knowledge. Invalidate them.
-    if (result.category === "decision" || result.category === "other") {
-      const source = await db.getMemoryField(memoryId, "source");
-      if (source === "auto-capture") {
-        await db.invalidateMemory(memoryId);
-        logger.info(
-          `memory-neo4j: post-extraction gate — invalidated auto-capture "${text.slice(0, 60)}..." (category=${result.category})`,
-        );
-        return { success: true, memoryId };
-      }
-    }
 
     return { success: true, memoryId };
   } catch (err) {
@@ -690,16 +693,24 @@ Return JSON: {"score": N, "reason": "brief explanation"}`;
  * Rate the long-term importance of a text using an LLM.
  * Returns a value between 0.1 and 1.0, or 0.5 on any failure.
  */
-export async function rateImportance(text: string, config: ExtractionConfig): Promise<number> {
+export async function rateImportance(
+  text: string,
+  config: ExtractionConfig,
+  abortSignal?: AbortSignal,
+): Promise<number> {
   if (!config.enabled) {
     return 0.5;
   }
 
   try {
-    const content = await callOpenRouter(config, [
-      { role: "system", content: IMPORTANCE_RATING_SYSTEM },
-      { role: "user", content: text },
-    ]);
+    const content = await callOpenRouter(
+      config,
+      [
+        { role: "system", content: IMPORTANCE_RATING_SYSTEM },
+        { role: "user", content: sanitizeMemoryText(text) },
+      ],
+      abortSignal,
+    );
     if (!content) {
       return 0.5;
     }
@@ -775,7 +786,7 @@ When in doubt, choose "lasting". It is far better to keep a slightly stale memor
 
 Return JSON: {"classification": "stale"|"lasting", "reason": "brief explanation"}`,
         },
-        { role: "user", content: memoryText },
+        { role: "user", content: sanitizeMemoryText(memoryText) },
       ],
       abortSignal,
     );
@@ -848,7 +859,10 @@ export async function isSemanticDuplicate(
       config,
       [
         { role: "system", content: SEMANTIC_DEDUP_SYSTEM },
-        { role: "user", content: `Existing memory: "${existingText}"\nNew text: "${newText}"` },
+        {
+          role: "user",
+          content: `Existing memory: "${sanitizeMemoryText(existingText)}"\nNew text: "${sanitizeMemoryText(newText)}"`,
+        },
       ],
       abortSignal,
     );

@@ -41,9 +41,36 @@ export function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> 
  * Decision is based solely on the resolved baseUrl — if it points to
  * api.anthropic.com, use native Anthropic format. Everything else
  * (OpenRouter, Ollama, custom endpoints) uses OpenAI-compatible format.
+ *
+ * Uses hostname matching (not substring) to avoid matching proxy URLs
+ * that contain "anthropic.com" in the path.
  */
 function isAnthropicNative(config: ExtractionConfig): boolean {
-  return config.baseUrl.includes("anthropic.com");
+  try {
+    const hostname = new URL(config.baseUrl).hostname;
+    return (
+      hostname === "anthropic.com" ||
+      hostname === "api.anthropic.com" ||
+      hostname.endsWith(".anthropic.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Detect whether the provider at baseUrl supports response_format: json_object.
+ * Local providers (Ollama, LM Studio) often return HTTP 400 on this parameter.
+ * Cloud providers are assumed to support it.
+ */
+function supportsJsonMode(baseUrl: string): boolean {
+  try {
+    const { hostname } = new URL(baseUrl);
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") return false;
+    return true;
+  } catch {
+    return true;
+  }
 }
 
 /**
@@ -87,6 +114,10 @@ async function readSSEStream(
     }
 
     const { done, value } = await reader.read();
+    if (abortSignal?.aborted) {
+      reader.cancel().catch(() => {});
+      return false;
+    }
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
@@ -161,10 +192,9 @@ async function anthropicRequest(
       if (attempt >= config.maxRetries) {
         throw err;
       }
-      await abortableDelay(500 * 2 ** attempt, abortSignal);
+      await abortableDelay(500 * 2 ** attempt * (0.75 + Math.random() * 0.5), abortSignal);
     }
   }
-  return null;
 }
 
 /**
@@ -237,10 +267,9 @@ async function anthropicStreamRequest(
       if (attempt >= config.maxRetries) {
         throw err;
       }
-      await abortableDelay(500 * 2 ** attempt, abortSignal);
+      await abortableDelay(500 * 2 ** attempt * (0.75 + Math.random() * 0.5), abortSignal);
     }
   }
-  return null;
 }
 
 // ── OpenAI-compatible API ───────────────────────────────────────────────────
@@ -269,7 +298,9 @@ async function openAIRequest(
           model: config.model,
           messages,
           temperature: config.temperature,
-          response_format: { type: "json_object" },
+          // Only send response_format for providers known to support it;
+          // local providers (Ollama, LM Studio) return HTTP 400 on this param.
+          ...(supportsJsonMode(config.baseUrl) ? { response_format: { type: "json_object" } } : {}),
           ...(stream ? { stream: true } : {}),
         }),
         signal,
@@ -285,10 +316,9 @@ async function openAIRequest(
       if (attempt >= config.maxRetries) {
         throw err;
       }
-      await abortableDelay(500 * 2 ** attempt, abortSignal);
+      await abortableDelay(500 * 2 ** attempt * (0.75 + Math.random() * 0.5), abortSignal);
     }
   }
-  return null;
 }
 
 export async function parseNonStreaming(response: Response): Promise<string | null> {
@@ -388,6 +418,8 @@ export function isTransientError(err: unknown): boolean {
     msg.includes("fetch failed") ||
     msg.includes("socket hang up") ||
     msg.includes("api error 429") ||
+    msg.includes("api error 500") ||
+    msg.includes("status 500") ||
     msg.includes("api error 502") ||
     msg.includes("api error 503") ||
     msg.includes("api error 504")
