@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ExtractionConfig } from "./config.js";
-import { classifyTaskMemory } from "./sleep-cycle.js";
+import { classifyTaskMemory } from "./sleep-phases-tasks.js";
 
 // --------------------------------------------------------------------------
 // Mock the LLM client so we don't make real API calls

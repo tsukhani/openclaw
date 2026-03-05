@@ -9,7 +9,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ExtractionConfig } from "./config.js";
 import type { Logger } from "./schema.js";
-import { CREDENTIAL_PATTERNS, detectCredential, runSleepCycle } from "./sleep-cycle.js";
+import { CREDENTIAL_PATTERNS, detectCredential } from "./sleep-cycle-types.js";
+import { runSleepCycle } from "./sleep-cycle.js";
 
 describe("Credential Detection", () => {
   // --------------------------------------------------------------------------

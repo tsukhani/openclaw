@@ -17,7 +17,7 @@ import * as Search from "./neo4j-client-search.js";
 import * as Sleep from "./neo4j-client-sleep.js";
 import type { ExtractionStatus, Logger, SearchSignalResult, StoreMemoryInput } from "./schema.js";
 import { escapeLucene } from "./schema.js";
-import { detectCredential } from "./sleep-cycle.js";
+import { detectCredential } from "./sleep-cycle-types.js";
 
 // Retry configuration for transient Neo4j errors (deadlocks, etc.)
 const TRANSIENT_RETRY_ATTEMPTS = 3;
