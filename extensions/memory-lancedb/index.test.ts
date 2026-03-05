@@ -113,7 +113,8 @@ describe("memory plugin e2e", () => {
     }));
     const toArray = vi.fn(async () => []);
     const limit = vi.fn(() => ({ toArray }));
-    const vectorSearch = vi.fn(() => ({ limit }));
+    const where = vi.fn(() => ({ limit }));
+    const vectorSearch = vi.fn(() => ({ limit, where }));
 
     vi.resetModules();
     vi.doMock("openai", () => ({
@@ -160,7 +161,12 @@ describe("memory plugin e2e", () => {
           debug: vi.fn(),
         },
         // oxlint-disable-next-line typescript/no-explicit-any
-        registerTool: (tool: any, opts: any) => {
+        registerTool: (toolOrFactory: any, opts: any) => {
+          // registerTool accepts either a tool object or a factory function (ctx) => tool
+          const tool =
+            typeof toolOrFactory === "function"
+              ? toolOrFactory({ agentId: "main", sessionKey: "test" })
+              : toolOrFactory;
           registeredTools.push({ tool, opts });
         },
         // oxlint-disable-next-line typescript/no-explicit-any
@@ -244,7 +250,11 @@ describeLive("memory plugin live tests", () => {
         debug: (msg: string) => logs.push(`[debug] ${msg}`),
       },
       // oxlint-disable-next-line typescript/no-explicit-any
-      registerTool: (tool: any, opts: any) => {
+      registerTool: (toolOrFactory: any, opts: any) => {
+        const tool =
+          typeof toolOrFactory === "function"
+            ? toolOrFactory({ agentId: "main", sessionKey: "test" })
+            : toolOrFactory;
         registeredTools.push({ tool, opts });
       },
       // oxlint-disable-next-line typescript/no-explicit-any
