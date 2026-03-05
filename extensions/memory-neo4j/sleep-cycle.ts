@@ -1123,10 +1123,17 @@ export async function runSleepCycle(
 
         const outcomes = await Promise.allSettled(
           chunk.map((mem) =>
-            db.detectConflicts(mem.id, mem.text, mem.embedding, agentId ?? "default", config, {
-              similarityThreshold: conflictSimilarityThreshold,
-              maxCandidates: conflictMaxCandidates,
-            }),
+            db.detectConflicts(
+              mem.id,
+              mem.text,
+              mem.embedding ?? [],
+              agentId ?? "default",
+              config,
+              {
+                similarityThreshold: conflictSimilarityThreshold,
+                maxCandidates: conflictMaxCandidates,
+              },
+            ),
           ),
         );
 

@@ -6,6 +6,14 @@
 
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 
+// Helper: create a mock embedding vector of the correct dimension for a model.
+// Embeddings.validateDimensions() checks that returned vectors match the model's
+// expected dims — mocks must return correctly-sized arrays to avoid test failures.
+const mockVec = (dims: number, fill = 0.1): number[] => Array(dims).fill(fill);
+const MXBAI_DIMS = 1024; // mxbai-embed-large
+const NOMIC_DIMS = 768; // nomic-embed-text
+const OAI_SMALL_DIMS = 1536; // text-embedding-3-small
+
 // ============================================================================
 // Constructor
 // ============================================================================
@@ -38,7 +46,7 @@ describe("Embeddings - Ollama provider", () => {
 
   it("should call Ollama API with correct request body", async () => {
     const { Embeddings } = await import("./embeddings.js");
-    const mockVector = [0.1, 0.2, 0.3, 0.4];
+    const mockVector = mockVec(MXBAI_DIMS);
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ embeddings: [mockVector] }),
@@ -63,10 +71,9 @@ describe("Embeddings - Ollama provider", () => {
 
   it("should use custom baseUrl for Ollama", async () => {
     const { Embeddings } = await import("./embeddings.js");
-    const mockVector = [0.5, 0.6];
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ embeddings: [mockVector] }),
+      json: () => Promise.resolve({ embeddings: [mockVec(MXBAI_DIMS)] }),
     });
 
     const emb = new Embeddings(undefined, "mxbai-embed-large", "ollama", "http://my-host:11434");
@@ -80,10 +87,9 @@ describe("Embeddings - Ollama provider", () => {
 
   it("should strip trailing slashes from baseUrl", async () => {
     const { Embeddings } = await import("./embeddings.js");
-    const mockVector = [0.1, 0.2];
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ embeddings: [mockVector] }),
+      json: () => Promise.resolve({ embeddings: [mockVec(MXBAI_DIMS)] }),
     });
 
     const emb = new Embeddings(undefined, "mxbai-embed-large", "ollama", "http://my-host:11434/");
@@ -97,10 +103,9 @@ describe("Embeddings - Ollama provider", () => {
 
   it("should strip multiple trailing slashes from baseUrl", async () => {
     const { Embeddings } = await import("./embeddings.js");
-    const mockVector = [0.1, 0.2];
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ embeddings: [mockVector] }),
+      json: () => Promise.resolve({ embeddings: [mockVec(MXBAI_DIMS)] }),
     });
 
     const emb = new Embeddings(undefined, "mxbai-embed-large", "ollama", "http://my-host:11434///");
@@ -205,9 +210,10 @@ describe("Embeddings - embedBatch", () => {
     let callCount = 0;
     globalThis.fetch = vi.fn().mockImplementation(() => {
       callCount++;
+      // Return correctly-sized vectors (1024 dims for mxbai-embed-large)
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ embeddings: [[callCount * 0.1, callCount * 0.2]] }),
+        json: () => Promise.resolve({ embeddings: [mockVec(MXBAI_DIMS, callCount * 0.1)] }),
       });
     });
 
@@ -217,10 +223,10 @@ describe("Embeddings - embedBatch", () => {
     // Should make 3 separate calls
     expect(globalThis.fetch).toHaveBeenCalledTimes(3);
     expect(results).toHaveLength(3);
-    // Each result should be a vector
+    // Each result should be a correctly-sized vector
     for (const r of results) {
       expect(Array.isArray(r)).toBe(true);
-      expect(r.length).toBe(2);
+      expect(r.length).toBe(MXBAI_DIMS);
     }
   });
 });
@@ -233,9 +239,11 @@ describe("Embeddings - Ollama context-length truncation", () => {
   const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
+    // Default mock returns mxbai-embed-large sized vectors; tests using
+    // nomic-embed-text override fetch individually to return NOMIC_DIMS vectors.
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ embeddings: [[0.1, 0.2, 0.3]] }),
+      json: () => Promise.resolve({ embeddings: [mockVec(MXBAI_DIMS)] }),
     });
   });
 
@@ -297,6 +305,11 @@ describe("Embeddings - Ollama context-length truncation", () => {
   it("should use model-specific context length for truncation", async () => {
     const { Embeddings } = await import("./embeddings.js");
     // nomic-embed-text has context length 8192, maxChars = 8192 * 3 = 24576
+    // Override the beforeEach mock to return NOMIC_DIMS (768) vectors
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ embeddings: [mockVec(NOMIC_DIMS)] }),
+    });
     const emb = new Embeddings(undefined, "nomic-embed-text", "ollama");
 
     // Create text that exceeds mxbai limit (1536) but fits nomic limit (24576)
@@ -347,8 +360,9 @@ describe("Embeddings - OpenAI functional", () => {
   });
 
   it("embed() should call OpenAI API with correct model and input", async () => {
+    const mockEmbedding = mockVec(OAI_SMALL_DIMS);
     const mockCreate = vi.fn().mockResolvedValue({
-      data: [{ index: 0, embedding: [0.1, 0.2, 0.3] }],
+      data: [{ index: 0, embedding: mockEmbedding }],
     });
 
     // Mock the openai module
@@ -362,20 +376,24 @@ describe("Embeddings - OpenAI functional", () => {
     const emb = new Embeddings("sk-test-key", "text-embedding-3-small", "openai");
     const result = await emb.embed("hello world");
 
-    expect(result).toEqual([0.1, 0.2, 0.3]);
+    expect(result).toEqual(mockEmbedding);
     expect(mockCreate).toHaveBeenCalledWith({
       model: "text-embedding-3-small",
       input: "hello world",
+      dimensions: OAI_SMALL_DIMS,
     });
   });
 
   it("embedBatch() should send all texts in a single API call and return correctly ordered results", async () => {
+    const vec0 = mockVec(OAI_SMALL_DIMS, 0.1);
+    const vec1 = mockVec(OAI_SMALL_DIMS, 0.4);
+    const vec2 = mockVec(OAI_SMALL_DIMS, 0.7);
     const mockCreate = vi.fn().mockResolvedValue({
       // Return out-of-order to verify sorting by index
       data: [
-        { index: 2, embedding: [0.7, 0.8, 0.9] },
-        { index: 0, embedding: [0.1, 0.2, 0.3] },
-        { index: 1, embedding: [0.4, 0.5, 0.6] },
+        { index: 2, embedding: vec2 },
+        { index: 0, embedding: vec0 },
+        { index: 1, embedding: vec1 },
       ],
     });
 
@@ -394,14 +412,11 @@ describe("Embeddings - OpenAI functional", () => {
     expect(mockCreate).toHaveBeenCalledWith({
       model: "text-embedding-3-small",
       input: ["first", "second", "third"],
+      dimensions: OAI_SMALL_DIMS,
     });
 
     // Results should be sorted by index (0, 1, 2)
-    expect(results).toEqual([
-      [0.1, 0.2, 0.3],
-      [0.4, 0.5, 0.6],
-      [0.7, 0.8, 0.9],
-    ]);
+    expect(results).toEqual([vec0, vec1, vec2]);
   });
 
   it("embed() should propagate OpenAI API errors", async () => {
@@ -420,8 +435,9 @@ describe("Embeddings - OpenAI functional", () => {
   });
 
   it("embed() should return cached result on second call for same text", async () => {
+    const mockEmbedding = mockVec(OAI_SMALL_DIMS);
     const mockCreate = vi.fn().mockResolvedValue({
-      data: [{ index: 0, embedding: [0.1, 0.2, 0.3] }],
+      data: [{ index: 0, embedding: mockEmbedding }],
     });
 
     vi.doMock("openai", () => ({
@@ -436,20 +452,22 @@ describe("Embeddings - OpenAI functional", () => {
     const result1 = await emb.embed("cached text");
     const result2 = await emb.embed("cached text");
 
-    expect(result1).toEqual([0.1, 0.2, 0.3]);
-    expect(result2).toEqual([0.1, 0.2, 0.3]);
+    expect(result1).toEqual(mockEmbedding);
+    expect(result2).toEqual(mockEmbedding);
     // Should only make one API call — second call uses cache
     expect(mockCreate).toHaveBeenCalledTimes(1);
   });
 
   it("embedBatch() should use cache for previously embedded texts", async () => {
+    const alphaVec = mockVec(OAI_SMALL_DIMS, 0.1);
+    const betaVec = mockVec(OAI_SMALL_DIMS, 0.7);
     const mockCreate = vi
       .fn()
       .mockResolvedValueOnce({
-        data: [{ index: 0, embedding: [0.1, 0.2, 0.3] }],
+        data: [{ index: 0, embedding: alphaVec }],
       })
       .mockResolvedValueOnce({
-        data: [{ index: 0, embedding: [0.7, 0.8, 0.9] }],
+        data: [{ index: 0, embedding: betaVec }],
       });
 
     vi.doMock("openai", () => ({
@@ -472,10 +490,11 @@ describe("Embeddings - OpenAI functional", () => {
     expect(mockCreate).toHaveBeenLastCalledWith({
       model: "text-embedding-3-small",
       input: ["beta"],
+      dimensions: OAI_SMALL_DIMS,
     });
     expect(results).toEqual([
-      [0.1, 0.2, 0.3], // cached
-      [0.7, 0.8, 0.9], // freshly computed
+      alphaVec, // cached
+      betaVec, // freshly computed
     ]);
   });
 });
