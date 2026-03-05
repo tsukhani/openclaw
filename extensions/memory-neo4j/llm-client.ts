@@ -288,13 +288,18 @@ async function openAIRequest(
   return null;
 }
 
-function parseNonStreaming(response: Response): Promise<string | null> {
-  return response.json().then((data: unknown) => {
-    const typed = data as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    return typed.choices?.[0]?.message?.content ?? null;
-  });
+export async function parseNonStreaming(response: Response): Promise<string | null> {
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch {
+    // Non-JSON body (e.g., HTML 502 from proxy)
+    return null;
+  }
+  const typed = data as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  return typed.choices?.[0]?.message?.content ?? null;
 }
 
 async function parseStreaming(

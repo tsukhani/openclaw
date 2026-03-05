@@ -326,8 +326,10 @@ export async function hybridSearch(
   // retrieval-based importance adjustment.
   if (results.length > 0) {
     const memoryIds = results.map((r) => r.id);
-    db.recordRetrievals(memoryIds).catch(() => {
-      // Silently ignore - retrieval tracking is non-critical
+    db.recordRetrievals(memoryIds).catch((err) => {
+      logger?.debug?.(
+        `memory-neo4j: recordRetrievals failed (non-critical): ${err instanceof Error ? err.message : String(err)}`,
+      );
     });
   }
 

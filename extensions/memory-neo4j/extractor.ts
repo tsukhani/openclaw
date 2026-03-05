@@ -550,7 +550,11 @@ export async function runBackgroundExtraction(
   abortSignal?: AbortSignal,
 ): Promise<{ success: boolean; memoryId: string }> {
   if (!config.enabled) {
-    await db.updateExtractionStatus(memoryId, "skipped").catch(() => {});
+    await db.updateExtractionStatus(memoryId, "skipped").catch((err) => {
+      logger?.debug?.(
+        `memory-neo4j: updateExtractionStatus failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
     return { success: true, memoryId };
   }
 
@@ -636,12 +640,18 @@ export async function runBackgroundExtraction(
       );
       await db
         .updateExtractionStatus(memoryId, "pending", { incrementRetries: true })
-        .catch(() => {});
+        .catch((e) => {
+          logger?.debug?.(
+            `memory-neo4j: updateExtractionStatus failed: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        });
     } else {
       logger.warn(`memory-neo4j: extraction failed for ${memoryId.slice(0, 8)}: ${String(err)}`);
-      await db
-        .updateExtractionStatus(memoryId, "failed", { incrementRetries: true })
-        .catch(() => {});
+      await db.updateExtractionStatus(memoryId, "failed", { incrementRetries: true }).catch((e) => {
+        logger?.debug?.(
+          `memory-neo4j: updateExtractionStatus failed: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      });
     }
     return { success: false, memoryId };
   }

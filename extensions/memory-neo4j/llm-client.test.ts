@@ -1,9 +1,9 @@
 /**
- * Tests for abortableDelay in llm-client.ts (CR-003).
+ * Tests for abortableDelay and parseNonStreaming in llm-client.ts (CR-003, CR-013).
  */
 
 import { describe, it, expect } from "vitest";
-import { abortableDelay } from "./llm-client.js";
+import { abortableDelay, parseNonStreaming } from "./llm-client.js";
 
 describe("abortableDelay", () => {
   it("resolves after the given delay when no signal is provided", async () => {
@@ -33,5 +33,35 @@ describe("abortableDelay", () => {
   it("resolves normally when signal is provided but never aborted", async () => {
     const controller = new AbortController();
     await expect(abortableDelay(20, controller.signal)).resolves.toBeUndefined();
+  });
+});
+
+// ============================================================================
+// parseNonStreaming() — CR-013
+// ============================================================================
+
+describe("parseNonStreaming", () => {
+  it("returns content from a valid JSON response", async () => {
+    const body = JSON.stringify({
+      choices: [{ message: { content: "hello world" } }],
+    });
+    const response = new Response(body, {
+      headers: { "Content-Type": "application/json" },
+    });
+    await expect(parseNonStreaming(response)).resolves.toBe("hello world");
+  });
+
+  it("returns null for a non-JSON body (e.g. HTML 502 from proxy)", async () => {
+    const response = new Response("<html><body>502 Bad Gateway</body></html>", {
+      headers: { "Content-Type": "text/html" },
+    });
+    await expect(parseNonStreaming(response)).resolves.toBeNull();
+  });
+
+  it("returns null when choices array is empty", async () => {
+    const response = new Response(JSON.stringify({ choices: [] }), {
+      headers: { "Content-Type": "application/json" },
+    });
+    await expect(parseNonStreaming(response)).resolves.toBeNull();
   });
 });

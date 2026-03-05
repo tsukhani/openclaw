@@ -311,7 +311,10 @@ export function isRelatedToCompletedTask(
 
     let matchCount = 0;
     for (const keyword of task.keywords) {
-      if (lowerText.includes(keyword)) {
+      // For TASK-NNN format, also match "task NNN" (space instead of dash)
+      const taskIdMatch = keyword.match(/^task-(\d+)$/);
+      const spaceVariant = taskIdMatch ? `task ${taskIdMatch[1]}` : null;
+      if (lowerText.includes(keyword) || (spaceVariant && lowerText.includes(spaceVariant))) {
         matchCount++;
         if (matchCount >= MIN_KEYWORD_MATCHES) {
           return true;

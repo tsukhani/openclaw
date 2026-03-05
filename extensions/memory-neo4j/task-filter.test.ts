@@ -280,6 +280,28 @@ describe("isRelatedToCompletedTask", () => {
     expect(isRelatedToCompletedTask("Completed TASK-099", tasksNoKeywords)).toBe(true);
     expect(isRelatedToCompletedTask("Some random memory", tasksNoKeywords)).toBe(false);
   });
+
+  // --- CR-017: space variant for TASK-NNN keyword ---
+
+  it("matches 'task 001' (space) when keyword is 'task-001' (dash)", () => {
+    // Keywords derived from a task title containing "TASK-001" become "task-001"
+    // after extractSignificantKeywords lowercasing. The space variant "task 001"
+    // should also match so text like "working on task 001" is caught.
+    const tasksWithId: CompletedTaskInfo[] = [
+      { id: "TASK-001", keywords: ["task-001", "deploy", "production"] },
+    ];
+    expect(isRelatedToCompletedTask("Completed task 001 deploy to production", tasksWithId)).toBe(
+      true,
+    );
+  });
+
+  it("does NOT match 'task 001' for unrelated task ID", () => {
+    const tasksWithId: CompletedTaskInfo[] = [
+      { id: "TASK-005", keywords: ["task-005", "billing", "invoice"] },
+    ];
+    // "task 001" should not match task-005
+    expect(isRelatedToCompletedTask("task 001 was completed earlier", tasksWithId)).toBe(false);
+  });
 });
 
 // ============================================================================
