@@ -948,14 +948,25 @@ describe("Neo4jMemoryClient", () => {
       );
     });
 
-    it("should limit results to 50 pairs", async () => {
+    it("should limit results to 50 pairs by default", async () => {
       mockSession.run.mockResolvedValue({ records: [] });
 
       await client.findConflictingMemories();
 
       expect(mockSession.run).toHaveBeenCalledWith(
-        expect.stringContaining("LIMIT 50"),
-        expect.any(Object),
+        expect.stringContaining("LIMIT $limit"),
+        expect.objectContaining({ limit: 50 }),
+      );
+    });
+
+    it("should respect custom conflictDetectionBatchSize", async () => {
+      mockSession.run.mockResolvedValue({ records: [] });
+
+      await client.findConflictingMemories(undefined, 100);
+
+      expect(mockSession.run).toHaveBeenCalledWith(
+        expect.stringContaining("LIMIT $limit"),
+        expect.objectContaining({ limit: 100 }),
       );
     });
   });
