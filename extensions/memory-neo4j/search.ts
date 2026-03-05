@@ -39,19 +39,15 @@ export function classifyQuery(query: string): QueryType {
   const words = query.trim().split(/\s+/);
   const wordCount = words.length;
 
-  // Entity detection: check for capitalized words (proper nouns)
-  // Runs before word count so "John" or "TypeScript" are classified as entity
   const commonWords =
     /^(I|A|An|The|Is|Are|Was|Were|What|Who|Where|When|How|Why|Do|Does|Did|Find|Show|Get|Tell|Me|My|About|For)$/;
   const capitalizedWords = words.filter((w) => /^[A-Z]/.test(w) && !commonWords.test(w));
 
-  if (capitalizedWords.length > 0) {
-    return "entity";
-  }
-
-  // Short queries: 1-2 words → boost BM25
+  // Short queries: 1-2 words → boost BM25, but promote to entity if proper noun detected.
+  // Gate entity detection behind word count so longer technical queries like
+  // "TypeScript best practices" don't falsely trigger entity/graph boost.
   if (wordCount <= 2) {
-    return "short";
+    return capitalizedWords.length > 0 ? "entity" : "short";
   }
 
   // Question patterns targeting entities (3-4 word queries only,

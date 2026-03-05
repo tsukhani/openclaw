@@ -39,12 +39,14 @@ describe("classifyQuery", () => {
     it("should classify a single capitalized word as 'entity' (proper noun detection)", () => {
       expect(classifyQuery("TypeScript")).toBe("entity");
     });
-    it("should classify query with proper noun as 'entity'", () => {
-      expect(classifyQuery("tell me about Tarun")).toBe("entity");
+    it("should classify short query with proper noun as 'entity'", () => {
+      // 4 words with no question pattern → entity gate doesn't fire → default
+      expect(classifyQuery("tell me about Tarun")).toBe("default");
     });
 
-    it("should classify query with organization name as 'entity'", () => {
-      expect(classifyQuery("what about Google")).toBe("entity");
+    it("should classify short query with organization name as 'entity'", () => {
+      // 3 words but "what about" doesn't match who/where/what + is/does pattern → default
+      expect(classifyQuery("what about Google")).toBe("default");
     });
 
     it("should classify question patterns targeting entities", () => {
@@ -87,6 +89,32 @@ describe("classifyQuery", () => {
 
     it("should classify a 4-word lowercase query as 'default'", () => {
       expect(classifyQuery("best practices for testing")).toBe("default");
+    });
+  });
+
+  describe("CR-006: entity classification gated behind word count", () => {
+    it("'TypeScript' (1 word, capitalized) → entity", () => {
+      expect(classifyQuery("TypeScript")).toBe("entity");
+    });
+
+    it("'TypeScript best practices' (3 words) → default, not entity", () => {
+      expect(classifyQuery("TypeScript best practices")).toBe("default");
+    });
+
+    it("'how to use Redis effectively in production' (7 words) → long, not entity", () => {
+      expect(classifyQuery("how to use Redis effectively in production")).toBe("long");
+    });
+
+    it("'What is Docker' (3 words, question pattern) → entity", () => {
+      expect(classifyQuery("What is Docker")).toBe("entity");
+    });
+
+    it("'John' (1 word, proper noun) → entity", () => {
+      expect(classifyQuery("John")).toBe("entity");
+    });
+
+    it("'hello world' (2 words, no capitals) → short", () => {
+      expect(classifyQuery("hello world")).toBe("short");
     });
   });
 
