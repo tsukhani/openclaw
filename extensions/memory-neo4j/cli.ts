@@ -445,7 +445,10 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
                     noiseCleanup: "Phase 5: Noise Cleanup",
                     credentialScan: "Phase 5b: Credential Scan",
                     taskLedger: "Phase 6: Task Ledger Cleanup",
+                    taskMemoryCleanup: "Phase 7: Task-Memory Cleanup",
                     tipGeneration: "Phase 8: Tip Generation",
+                    temporalStaleness: "Phase 3b: Temporal Staleness Check",
+                    retroactiveConflictScan: "Phase 3c: Retroactive Conflict Scan",
                   };
                   console.log(`\n▶ ${phaseNames[phase] ?? phase}`);
                   console.log("─────────────────────────────────────────────────────────────");

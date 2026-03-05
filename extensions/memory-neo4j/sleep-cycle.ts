@@ -262,6 +262,12 @@ export const CREDENTIAL_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
 
   // OpenAI project keys
   { pattern: /\bsk-proj-[A-Za-z0-9_-]{20,}/i, label: "OpenAI project key" },
+
+  // HuggingFace Access Tokens
+  { pattern: /\bhf_[a-zA-Z0-9]{34,}/i, label: "HuggingFace token" },
+
+  // Stripe API keys
+  { pattern: /\bsk_(?:live|test)_[a-zA-Z0-9]{20,}/i, label: "Stripe API key" },
 ];
 
 /**
