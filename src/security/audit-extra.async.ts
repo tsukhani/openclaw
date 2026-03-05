@@ -1246,6 +1246,10 @@ export async function collectInstalledSkillsCodeSafetyFindings(params: {
   const findings: SecurityAuditFinding[] = [];
   const pluginExtensionsDir = path.join(params.stateDir, "extensions");
   const scannedSkillDirs = new Set<string>();
+  // Dedup findings across all skill scans by (ruleId, evidence) to avoid
+  // reporting the same flagged line multiple times for skills installed at
+  // different paths with identical content.
+  const seenFindingKeys = new Set<string>();
   const workspaceDirs = listAgentWorkspaceDirs(params.cfg);
 
   for (const workspaceDir of workspaceDirs) {
@@ -1284,26 +1288,35 @@ export async function collectInstalledSkillsCodeSafetyFindings(params: {
         continue;
       }
 
-      if (summary.critical > 0) {
-        const criticalFindings = summary.findings.filter(
-          (finding) => finding.severity === "critical",
-        );
-        const details = formatCodeSafetyDetails(criticalFindings, skillDir);
+      // Deduplicate findings against globally seen (ruleId, evidence) keys
+      const dedupedFindings = summary.findings.filter((f) => {
+        const key = `${f.ruleId}::${f.evidence}`;
+        if (seenFindingKeys.has(key)) {
+          return false;
+        }
+        seenFindingKeys.add(key);
+        return true;
+      });
+
+      const dedupedCritical = dedupedFindings.filter((f) => f.severity === "critical");
+      const dedupedWarn = dedupedFindings.filter((f) => f.severity === "warn");
+
+      if (dedupedCritical.length > 0) {
+        const details = formatCodeSafetyDetails(dedupedCritical, skillDir);
         findings.push({
           checkId: "skills.code_safety",
           severity: "critical",
           title: `Skill "${skillName}" contains dangerous code patterns`,
-          detail: `Found ${summary.critical} critical issue(s) in ${summary.scannedFiles} scanned file(s) under ${skillDir}:\n${details}`,
+          detail: `Found ${dedupedCritical.length} critical issue(s) in ${summary.scannedFiles} scanned file(s) under ${skillDir}:\n${details}`,
           remediation: `Review the skill source code before use. If untrusted, remove "${skillDir}".`,
         });
-      } else if (summary.warn > 0) {
-        const warnFindings = summary.findings.filter((finding) => finding.severity === "warn");
-        const details = formatCodeSafetyDetails(warnFindings, skillDir);
+      } else if (dedupedWarn.length > 0) {
+        const details = formatCodeSafetyDetails(dedupedWarn, skillDir);
         findings.push({
           checkId: "skills.code_safety",
           severity: "warn",
           title: `Skill "${skillName}" contains suspicious code patterns`,
-          detail: `Found ${summary.warn} warning(s) in ${summary.scannedFiles} scanned file(s) under ${skillDir}:\n${details}`,
+          detail: `Found ${dedupedWarn.length} warning(s) in ${summary.scannedFiles} scanned file(s) under ${skillDir}:\n${details}`,
           remediation: "Review flagged lines to ensure the behavior is intentional and safe.",
         });
       }

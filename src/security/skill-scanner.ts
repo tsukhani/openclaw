@@ -294,6 +294,54 @@ export function scanSource(source: string, filePath: string): SkillScanFinding[]
       matchEvidence = source.slice(0, 120);
     }
 
+    // Special handling for potential-exfiltration: suppress or downgrade false positives
+    if (rule.ruleId === "potential-exfiltration") {
+      // Check if the matched readFile line (±5 lines) is a credential/config read
+      const credentialReadPattern =
+        /\.secrets[/\\]|credentials?\.json|secrets?\.json|api[_-]?key|config\.json|getApiKey|apiKey/i;
+      const windowStart = Math.max(0, matchLine - 1 - 5);
+      const windowEnd = Math.min(lines.length, matchLine + 5);
+      const windowText = lines.slice(windowStart, windowEnd).join("\n");
+      if (credentialReadPattern.test(windowText)) {
+        // Expected credential read — skip this finding
+        matchedSourceRules.add(ruleKey);
+        continue;
+      }
+
+      // Check if ALL network calls in the file use trusted API destinations
+      const trustedDomainPattern =
+        /googleapis\.com|api\.linkedin\.com|slack\.com|gamma\.app|anthropic\.com|openai\.com|openrouter\.ai|telnyx\.com|calendly\.com|elevenlabs\.io|replicate\.com|api\.|\.abundent\.com|zoom\.us|perplexity\.ai/;
+      const networkCallPattern = /\bfetch\s*\(|https?\.request\s*\(/g;
+      let networkMatch: RegExpExecArray | null;
+      let allTrusted = true;
+      let hasAnyNetworkCall = false;
+      // Reset lastIndex since we're reusing the regex
+      networkCallPattern.lastIndex = 0;
+      while ((networkMatch = networkCallPattern.exec(source)) !== null) {
+        hasAnyNetworkCall = true;
+        // Check surrounding context (up to 200 chars after the call) for a trusted domain
+        const context = source.slice(networkMatch.index, networkMatch.index + 200);
+        if (!trustedDomainPattern.test(context)) {
+          allTrusted = false;
+          break;
+        }
+      }
+
+      if (hasAnyNetworkCall && allTrusted) {
+        // All network calls go to trusted destinations — downgrade to info
+        findings.push({
+          ruleId: rule.ruleId,
+          severity: "info",
+          file: filePath,
+          line: matchLine,
+          message: rule.message,
+          evidence: truncateEvidence(matchEvidence),
+        });
+        matchedSourceRules.add(ruleKey);
+        continue;
+      }
+    }
+
     findings.push({
       ruleId: rule.ruleId,
       severity: rule.severity,

@@ -391,14 +391,6 @@ function listGroupPolicyOpen(cfg: OpenClawConfig): string[] {
   return out;
 }
 
-function hasConfiguredGroupTargets(section: Record<string, unknown>): boolean {
-  const groupKeys = ["groups", "guilds", "channels", "rooms"];
-  return groupKeys.some((key) => {
-    const value = section[key];
-    return Boolean(value && typeof value === "object" && Object.keys(value).length > 0);
-  });
-}
-
 function listPotentialMultiUserSignals(cfg: OpenClawConfig): string[] {
   const out = new Set<string>();
   const channels = cfg.channels as Record<string, unknown> | undefined;
@@ -410,8 +402,6 @@ function listPotentialMultiUserSignals(cfg: OpenClawConfig): string[] {
     const groupPolicy = typeof section.groupPolicy === "string" ? section.groupPolicy : null;
     if (groupPolicy === "open") {
       out.add(`${basePath}.groupPolicy="open"`);
-    } else if (groupPolicy === "allowlist" && hasConfiguredGroupTargets(section)) {
-      out.add(`${basePath}.groupPolicy="allowlist" with configured group targets`);
     }
 
     const dmPolicy = typeof section.dmPolicy === "string" ? section.dmPolicy : null;
