@@ -253,10 +253,14 @@ export class Embeddings {
     if (!this.client) {
       throw new Error("OpenAI client not initialized");
     }
+    // The `dimensions` param (Matryoshka representation) is only supported by
+    // text-embedding-3-* models. Sending it to ada-002 or compatible servers
+    // that don't implement it causes 400/422 errors.
+    const supportsCustomDimensions = this.model.startsWith("text-embedding-3");
     const response = await this.client.embeddings.create({
       model: this.model,
       input: text,
-      dimensions: this.expectedDimensions,
+      ...(supportsCustomDimensions ? { dimensions: this.expectedDimensions } : {}),
     });
     return response.data[0].embedding;
   }
@@ -265,10 +269,12 @@ export class Embeddings {
     if (!this.client) {
       throw new Error("OpenAI client not initialized");
     }
+    // Same guard as embedOpenAI — only text-embedding-3-* supports `dimensions`.
+    const supportsCustomDimensions = this.model.startsWith("text-embedding-3");
     const response = await this.client.embeddings.create({
       model: this.model,
       input: texts,
-      dimensions: this.expectedDimensions,
+      ...(supportsCustomDimensions ? { dimensions: this.expectedDimensions } : {}),
     });
     // Sort by index to ensure correct order
     return [...response.data].sort((a, b) => a.index - b.index).map((d) => d.embedding);

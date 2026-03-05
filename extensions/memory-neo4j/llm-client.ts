@@ -125,7 +125,9 @@ async function anthropicRequest(
       const signal = buildSignal(abortSignal);
       const model = stripAnthropicPrefix(config.model);
 
-      const response = await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
+      // Use config.baseUrl so Anthropic-compatible proxies are honoured.
+      // ANTHROPIC_BASE_URL is only the default value set in config.
+      const response = await fetch(`${config.baseUrl}/v1/messages`, {
         method: "POST",
         headers: {
           "x-api-key": config.apiKey,
@@ -182,7 +184,8 @@ async function anthropicStreamRequest(
       const signal = buildSignal(abortSignal);
       const model = stripAnthropicPrefix(config.model);
 
-      const response = await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
+      // Use config.baseUrl so Anthropic-compatible proxies are honoured.
+      const response = await fetch(`${config.baseUrl}/v1/messages`, {
         method: "POST",
         headers: {
           "x-api-key": config.apiKey,

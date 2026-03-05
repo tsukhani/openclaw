@@ -347,6 +347,98 @@ describe("Embeddings - Ollama context-length truncation", () => {
 });
 
 // ============================================================================
+// OpenAI embed — dimensions param gating by model
+// ============================================================================
+
+describe("Embeddings - OpenAI dimensions param gating", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("embed() should NOT send dimensions for text-embedding-ada-002", async () => {
+    // ada-002 is not in the known-dimensions table so the Embeddings class defaults
+    // to 1024; the mock must return vectors of that size to pass validateDimensions.
+    // The key assertion is that `dimensions` is absent from the API call.
+    const ADA_DIMS = 1024; // DEFAULT_EMBEDDING_DIMS fallback (ada-002 not in config map)
+    const mockEmbedding = mockVec(ADA_DIMS);
+    const mockCreate = vi.fn().mockResolvedValue({
+      data: [{ index: 0, embedding: mockEmbedding }],
+    });
+
+    vi.doMock("openai", () => ({
+      default: class MockOpenAI {
+        embeddings = { create: mockCreate };
+      },
+    }));
+
+    const { Embeddings } = await import("./embeddings.js");
+    const emb = new Embeddings("sk-test-key", "text-embedding-ada-002", "openai");
+    const result = await emb.embed("hello");
+
+    expect(result).toEqual(mockEmbedding);
+    // dimensions must NOT appear in the call for non-3.x models
+    expect(mockCreate).toHaveBeenCalledWith({
+      model: "text-embedding-ada-002",
+      input: "hello",
+    });
+    expect(mockCreate.mock.calls[0][0]).not.toHaveProperty("dimensions");
+  });
+
+  it("embedBatch() should NOT send dimensions for text-embedding-ada-002", async () => {
+    const ADA_DIMS = 1024; // DEFAULT_EMBEDDING_DIMS fallback
+    const vec0 = mockVec(ADA_DIMS, 0.1);
+    const vec1 = mockVec(ADA_DIMS, 0.4);
+    const mockCreate = vi.fn().mockResolvedValue({
+      data: [
+        { index: 0, embedding: vec0 },
+        { index: 1, embedding: vec1 },
+      ],
+    });
+
+    vi.doMock("openai", () => ({
+      default: class MockOpenAI {
+        embeddings = { create: mockCreate };
+      },
+    }));
+
+    const { Embeddings } = await import("./embeddings.js");
+    const emb = new Embeddings("sk-test-key", "text-embedding-ada-002", "openai");
+    const results = await emb.embedBatch(["first", "second"]);
+
+    expect(results).toEqual([vec0, vec1]);
+    expect(mockCreate).toHaveBeenCalledWith({
+      model: "text-embedding-ada-002",
+      input: ["first", "second"],
+    });
+    expect(mockCreate.mock.calls[0][0]).not.toHaveProperty("dimensions");
+  });
+
+  it("embed() should send dimensions for text-embedding-3-large", async () => {
+    // text-embedding-3-large supports Matryoshka dimensions (default 3072)
+    const mockEmbedding = mockVec(3072);
+    const mockCreate = vi.fn().mockResolvedValue({
+      data: [{ index: 0, embedding: mockEmbedding }],
+    });
+
+    vi.doMock("openai", () => ({
+      default: class MockOpenAI {
+        embeddings = { create: mockCreate };
+      },
+    }));
+
+    const { Embeddings } = await import("./embeddings.js");
+    const emb = new Embeddings("sk-test-key", "text-embedding-3-large", "openai");
+    await emb.embed("hello");
+
+    expect(mockCreate.mock.calls[0][0]).toHaveProperty("dimensions");
+  });
+});
+
+// ============================================================================
 // OpenAI embed — functional tests with mocked OpenAI client
 // ============================================================================
 
