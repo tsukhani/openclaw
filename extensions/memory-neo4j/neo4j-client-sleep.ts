@@ -53,7 +53,10 @@ export async function findDuplicateClusters(
   {
     const session = driver.session();
     try {
-      const agentFilter = agentId ? "WHERE m.agentId = $agentId" : "";
+      // SC-P0-1: exclude core memories — they are user-curated and must never be dedup-deleted
+      const agentFilter = agentId
+        ? "WHERE m.agentId = $agentId AND m.category <> 'core'"
+        : "WHERE m.category <> 'core'";
       const allResult = await session.run(
         `MATCH (m:Memory) ${agentFilter}
          RETURN m.id AS id, m.importance AS importance`,
@@ -124,7 +127,7 @@ export async function findDuplicateClusters(
               `MATCH (src:Memory {id: $id})
                CALL db.index.vector.queryNodes('memory_embedding_index', $k, src.embedding)
                YIELD node, score
-               WHERE node.id <> $id AND score >= $threshold
+               WHERE node.id <> $id AND score >= $threshold AND node.category <> 'core'
                RETURN node.id AS matchId, score`,
               { id, k: neo4j.int(10), threshold },
             );
@@ -649,16 +652,24 @@ export async function supersedeMemory(
  * @returns Number of memories updated
  */
 export async function migrateTemporalFields(session: Session): Promise<number> {
-  const result = await session.run(
-    `MATCH (m:Memory)
-     WHERE m.validFrom IS NULL
-     SET m.validFrom = COALESCE(m.originalCreatedAt, m.createdAt),
-         m.validUntil = null,
-         m.supersededBy = null
-     RETURN count(m) AS updated`,
-  );
-  const updated = result.records[0]?.get("updated");
-  return typeof updated === "number" ? updated : Number(updated ?? 0);
+  // SC-P1-7: batch in groups of 1000 to avoid unbounded single transaction on large graphs
+  let totalUpdated = 0;
+  let batchUpdated: number;
+  do {
+    const result = await session.run(
+      `MATCH (m:Memory)
+       WHERE m.validFrom IS NULL
+       WITH m LIMIT 1000
+       SET m.validFrom = COALESCE(m.originalCreatedAt, m.createdAt),
+           m.validUntil = null,
+           m.supersededBy = null
+       RETURN count(m) AS updated`,
+    );
+    const raw = result.records[0]?.get("updated");
+    batchUpdated = typeof raw === "number" ? raw : Number(raw ?? 0);
+    totalUpdated += batchUpdated;
+  } while (batchUpdated > 0);
+  return totalUpdated;
 }
 
 /**

@@ -230,8 +230,8 @@ export function findStaleTasks(
 
     const lastUpdate = task.updated || task.started;
     if (!lastUpdate) {
-      // No date info — consider stale if we can't determine age
-      return true;
+      // PL-P1-2: No date = no proof of age — do not archive (false positive risk)
+      return false;
     }
 
     const date = parseTaskDate(lastUpdate);
@@ -393,9 +393,11 @@ export async function reviewAndArchiveStaleTasks(
     archivedIds.push(task.id);
   }
 
-  // Write back
+  // PL-P1-3: Write atomically via temp-file + rename to prevent data loss on crash
   const updated = serializeTaskLedger(ledger);
-  await fs.writeFile(tasksPath, updated, "utf-8");
+  const tmp = `${tasksPath}.tmp`;
+  await fs.writeFile(tmp, updated, "utf-8");
+  await fs.rename(tmp, tasksPath);
 
   return {
     staleCount: staleTasks.length,

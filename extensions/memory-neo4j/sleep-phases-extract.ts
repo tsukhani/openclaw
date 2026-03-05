@@ -220,14 +220,18 @@ export async function runRetroactiveTagging(
               });
             }
           } else {
-            result.retroactiveTagging.failed++;
-            // Increment retry counter so this memory is eventually skipped
-            // after maxRetries (default 3), preventing infinite loops.
-            await db.incrementTaggingRetries(memory.id).catch((retryErr) => {
-              logger.warn(
-                `memory-neo4j: [sleep] incrementTaggingRetries failed for ${memory.id.slice(0, 8)}: ${String(retryErr)}`,
-              );
-            });
+            // SC-P1-5: only burn retry counters when extraction genuinely failed,
+            // not when the abort signal fired (which returns empty without attempting).
+            if (!abortSignal?.aborted) {
+              result.retroactiveTagging.failed++;
+              // Increment retry counter so this memory is eventually skipped
+              // after maxRetries (default 3), preventing infinite loops.
+              await db.incrementTaggingRetries(memory.id).catch((retryErr) => {
+                logger.warn(
+                  `memory-neo4j: [sleep] incrementTaggingRetries failed for ${memory.id.slice(0, 8)}: ${String(retryErr)}`,
+                );
+              });
+            }
           }
         }
       }

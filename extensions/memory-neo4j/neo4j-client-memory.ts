@@ -12,22 +12,23 @@ import { escapeLucene } from "./schema.js";
  */
 export async function storeMemory(session: Session, input: StoreMemoryInput): Promise<string> {
   const now = new Date().toISOString();
-  // Layer 3: taskId is optional — only set on the node when provided
-  const taskIdClause = input.taskId ? ", taskId: $taskId" : "";
+  // DL-P1-2: MERGE instead of CREATE so retries after transient failure are safe
   const validFrom = input.validFrom ?? now;
   const result = await session.run(
-    `CREATE (m:Memory {
-      id: $id, text: $text, embedding: $embedding,
-      importance: $importance, category: $category,
-      source: $source, extractionStatus: $extractionStatus,
-      agentId: $agentId, sessionKey: $sessionKey,
-      createdAt: $createdAt, updatedAt: $updatedAt,
-      originalCreatedAt: $originalCreatedAt,
-      retrievalCount: $retrievalCount, lastRetrievedAt: $lastRetrievedAt,
-      extractionRetries: $extractionRetries,
-      validFrom: $validFrom, validUntil: null, supersededBy: null${taskIdClause}
-    })
-    RETURN m.id AS id`,
+    `MERGE (m:Memory {id: $id})
+     ON CREATE SET
+       m.text = $text, m.embedding = $embedding,
+       m.importance = $importance, m.category = $category,
+       m.source = $source, m.extractionStatus = $extractionStatus,
+       m.agentId = $agentId, m.sessionKey = $sessionKey,
+       m.taskId = $taskId,
+       m.createdAt = $createdAt, m.updatedAt = $updatedAt,
+       m.originalCreatedAt = $originalCreatedAt,
+       m.retrievalCount = $retrievalCount, m.lastRetrievedAt = $lastRetrievedAt,
+       m.extractionRetries = $extractionRetries,
+       m.validFrom = $validFrom, m.validUntil = null, m.supersededBy = null
+     ON MATCH SET m.updatedAt = $updatedAt
+     RETURN m.id AS id`,
     {
       ...input,
       sessionKey: input.sessionKey ?? null,
@@ -77,20 +78,22 @@ export async function storeManyMemories(
     lastRetrievedAt: null,
     extractionRetries: 0,
   }));
+  // DL-P1-2: MERGE instead of CREATE so batch retries after transient failure are safe
   const result = await session.run(
     `UNWIND $items AS m
-     CREATE (n:Memory {
-       id: m.id, text: m.text, embedding: m.embedding,
-       importance: m.importance, category: m.category,
-       source: m.source, extractionStatus: m.extractionStatus,
-       agentId: m.agentId, sessionKey: m.sessionKey,
-       taskId: m.taskId,
-       createdAt: m.createdAt, updatedAt: m.updatedAt,
-       originalCreatedAt: m.originalCreatedAt,
-       retrievalCount: m.retrievalCount, lastRetrievedAt: m.lastRetrievedAt,
-       extractionRetries: m.extractionRetries,
-       validFrom: m.validFrom, validUntil: null, supersededBy: null
-     })
+     MERGE (n:Memory {id: m.id})
+     ON CREATE SET
+       n.text = m.text, n.embedding = m.embedding,
+       n.importance = m.importance, n.category = m.category,
+       n.source = m.source, n.extractionStatus = m.extractionStatus,
+       n.agentId = m.agentId, n.sessionKey = m.sessionKey,
+       n.taskId = m.taskId,
+       n.createdAt = m.createdAt, n.updatedAt = m.updatedAt,
+       n.originalCreatedAt = m.originalCreatedAt,
+       n.retrievalCount = m.retrievalCount, n.lastRetrievedAt = m.lastRetrievedAt,
+       n.extractionRetries = m.extractionRetries,
+       n.validFrom = m.validFrom, n.validUntil = null, n.supersededBy = null
+     ON MATCH SET n.updatedAt = m.updatedAt
      RETURN count(*) AS stored`,
     { items },
   );
@@ -274,9 +277,17 @@ export async function clearTaskIdFromMemories(
  * @returns Number of memories deleted
  */
 export async function deleteMemoriesByIds(session: Session, ids: string[]): Promise<number> {
+  // DL-P1-3: decrement entity mentionCount before deleting, matching deleteMemory behaviour
   const result = await session.run(
     `UNWIND $ids AS id
      MATCH (m:Memory {id: id})
+     OPTIONAL MATCH (m)-[:MENTIONS]->(e:Entity)
+     WITH m, collect(e) AS entities
+     FOREACH (e IN entities |
+       SET e.mentionCount = CASE WHEN coalesce(e.mentionCount, 1) > 1
+                                  THEN e.mentionCount - 1 ELSE 0 END
+     )
+     WITH m
      DETACH DELETE m
      RETURN count(*) AS removed`,
     { ids },

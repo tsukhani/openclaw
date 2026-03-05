@@ -308,7 +308,10 @@ export async function runTipGeneration(
           let tipEmbeddings: number[][];
           try {
             tipEmbeddings = await embeddings.embedBatch(collectedTips.map((t) => t.text));
-          } catch {
+          } catch (embedErr) {
+            logger.warn(
+              `memory-neo4j: [sleep] Phase 8: embedBatch failed — tips not stored this cycle: ${String(embedErr)}`,
+            );
             tipEmbeddings = [];
           }
 
