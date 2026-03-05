@@ -47,48 +47,83 @@ export async function runDedup(
     // Fetch clusters at 0.75 threshold with similarity scores
     const allClusters = await db.findDuplicateClusters(0.75, agentId, true);
 
-    // Separate clusters into high-similarity (>=0.95) and medium-similarity (0.75-0.95)
-    const highSimClusters: typeof allClusters = [];
-    const mediumSimClusters: typeof allClusters = [];
+    // Classify pairs individually: high-sim (>=threshold) go to vector merge,
+    // medium-sim (0.75–threshold) go to semantic dedup. This prevents a cluster
+    // with one high-sim pair (A≈B 0.97) from pulling in loosely-related members
+    // (C at 0.80) and merging them all unconditionally.
+    type DedupPair = {
+      textA: string;
+      textB: string;
+      idA: string;
+      idB: string;
+      importanceA: number;
+      importanceB: number;
+      similarity?: number;
+    };
+
+    // id → {importance, text} for building merge calls from connected components
+    const idToMeta = new Map<string, { importance: number; text: string }>();
+    const highSimEdges: Array<[string, string]> = [];
+    const mediumSimPairs: DedupPair[] = [];
 
     for (const cluster of allClusters) {
       if (abortSignal?.aborted) break;
       if (!cluster.similarities || cluster.memoryIds.length < 2) continue;
 
-      // Check if ANY pair in this cluster has similarity >= dedupThreshold
-      let hasHighSim = false;
-      for (const [, score] of cluster.similarities.entries()) {
-        if (score >= dedupThreshold) {
-          hasHighSim = true;
-          break;
+      // Record metadata for every member in this cluster
+      for (let i = 0; i < cluster.memoryIds.length; i++) {
+        if (!idToMeta.has(cluster.memoryIds[i])) {
+          idToMeta.set(cluster.memoryIds[i], {
+            importance: cluster.importances[i],
+            text: cluster.texts[i],
+          });
         }
       }
 
-      if (hasHighSim) {
-        // If a cluster has ANY high-sim pair, treat the whole cluster as high-sim
-        // (matches old behavior where Phase 1 would merge them all)
-        highSimClusters.push(cluster);
-      } else {
-        mediumSimClusters.push(cluster);
+      // Classify each pair individually by its pairwise similarity
+      for (let i = 0; i < cluster.memoryIds.length - 1; i++) {
+        for (let j = i + 1; j < cluster.memoryIds.length; j++) {
+          const pairKey = makePairKey(cluster.memoryIds[i], cluster.memoryIds[j]);
+          const sim = cluster.similarities.get(pairKey);
+          if (sim === undefined) continue;
+          if (sim >= dedupThreshold) {
+            // Only this specific pair qualifies for unconditional vector merge
+            highSimEdges.push([cluster.memoryIds[i], cluster.memoryIds[j]]);
+          } else {
+            mediumSimPairs.push({
+              textA: cluster.texts[i],
+              textB: cluster.texts[j],
+              idA: cluster.memoryIds[i],
+              idB: cluster.memoryIds[j],
+              importanceA: cluster.importances[i],
+              importanceB: cluster.importances[j],
+              similarity: sim,
+            });
+          }
+        }
       }
     }
 
-    // Part 1a: Vector merge for high-similarity clusters (>=0.95)
-    result.dedup.clustersFound = highSimClusters.length;
+    // Build connected components from high-sim edges so that only transitively
+    // high-sim nodes are merged together (e.g. A≈B≈C all at 0.97 → one cluster).
+    const highSimComponents = buildConnectedComponents(highSimEdges, idToMeta);
 
-    for (const cluster of highSimClusters) {
+    // Part 1a: Vector merge for high-similarity connected components (>=dedupThreshold)
+    result.dedup.clustersFound = highSimComponents.length;
+
+    for (const component of highSimComponents) {
       if (abortSignal?.aborted) break;
 
-      const { deletedCount } = await db.mergeMemoryCluster(cluster.memoryIds, cluster.importances);
+      const { deletedCount } = await db.mergeMemoryCluster(component.ids, component.importances);
       result.dedup.memoriesMerged += deletedCount;
-      onProgress?.("dedup", `Merged cluster of ${cluster.memoryIds.length} -> 1 (vector)`);
+      onProgress?.("dedup", `Merged cluster of ${component.ids.length} -> 1 (vector)`);
     }
 
     logger.info(
       `memory-neo4j: [sleep] Phase 1a (vector) complete — ${result.dedup.clustersFound} clusters, ${result.dedup.memoriesMerged} merged`,
     );
 
-    // Part 1b: Semantic dedup for medium-similarity clusters (0.75-0.95)
+    // Part 1b: Semantic dedup for medium-similarity pairs (0.75–dedupThreshold)
     if (skipSemanticDedup) {
       onPhaseStart?.("semanticDedup");
       logger.info("memory-neo4j: [sleep] Phase 1b: Skipped (--skip-semantic)");
@@ -97,35 +132,8 @@ export async function runDedup(
       onPhaseStart?.("semanticDedup");
       logger.info("memory-neo4j: [sleep] Phase 1b: Semantic Deduplication (0.75-0.95 band)");
 
-      // Collect all candidate pairs upfront (with pairwise similarity for pre-screening)
-      type DedupPair = {
-        textA: string;
-        textB: string;
-        idA: string;
-        idB: string;
-        importanceA: number;
-        importanceB: number;
-        similarity?: number;
-      };
-      const allPairs: DedupPair[] = [];
-
-      for (const cluster of mediumSimClusters) {
-        if (cluster.memoryIds.length < 2) continue;
-        for (let i = 0; i < cluster.memoryIds.length - 1; i++) {
-          for (let j = i + 1; j < cluster.memoryIds.length; j++) {
-            const pairKey = makePairKey(cluster.memoryIds[i], cluster.memoryIds[j]);
-            allPairs.push({
-              textA: cluster.texts[i],
-              textB: cluster.texts[j],
-              idA: cluster.memoryIds[i],
-              idB: cluster.memoryIds[j],
-              importanceA: cluster.importances[i],
-              importanceB: cluster.importances[j],
-              similarity: cluster.similarities?.get(pairKey),
-            });
-          }
-        }
-      }
+      // allPairs is now built directly from the medium-sim pair list
+      const allPairs: DedupPair[] = mediumSimPairs;
 
       // Cap the number of LLM-checked pairs to prevent sleep cycle timeouts.
       // Sort by similarity descending so higher-similarity pairs (more likely
@@ -177,8 +185,12 @@ export async function runDedup(
             const removeId = keepId === pair.idA ? pair.idB : pair.idA;
             const keepText = keepId === pair.idA ? pair.textA : pair.textB;
             const removeText = removeId === pair.idA ? pair.textA : pair.textB;
+            const keepImportance = keepId === pair.idA ? pair.importanceA : pair.importanceB;
+            const removeImportance = removeId === pair.idA ? pair.importanceA : pair.importanceB;
 
-            await db.invalidateMemories([removeId]);
+            // Use mergeMemoryCluster (not invalidateMemories) so that MENTIONS/TAGGED
+            // relationships on the removed node are transferred to the survivor first.
+            await db.mergeMemoryCluster([keepId, removeId], [keepImportance, removeImportance]);
             invalidatedIds.add(removeId);
             result.semanticDedup.duplicatesMerged++;
 
@@ -197,6 +209,58 @@ export async function runDedup(
   } catch (err) {
     logger.warn(`memory-neo4j: [sleep] Phase 1 error: ${String(err)}`);
   }
+}
+
+// ============================================================================
+// Helper: union-find connected components for high-sim pair merging
+// ============================================================================
+
+/**
+ * Groups a set of edges into connected components using union-find.
+ * Returns only components with ≥2 members (singletons are not merge targets).
+ */
+function buildConnectedComponents(
+  edges: Array<[string, string]>,
+  idToMeta: Map<string, { importance: number; text: string }>,
+): Array<{ ids: string[]; importances: number[] }> {
+  const parent = new Map<string, string>();
+
+  function find(x: string): string {
+    if (!parent.has(x)) parent.set(x, x);
+    const p = parent.get(x)!;
+    if (p !== x) {
+      // Path compression
+      const root = find(p);
+      parent.set(x, root);
+      return root;
+    }
+    return x;
+  }
+
+  function union(x: string, y: string): void {
+    const px = find(x);
+    const py = find(y);
+    if (px !== py) parent.set(px, py);
+  }
+
+  for (const [a, b] of edges) {
+    union(a, b);
+  }
+
+  // Group all known nodes by their root
+  const groups = new Map<string, string[]>();
+  for (const id of parent.keys()) {
+    const root = find(id);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root)!.push(id);
+  }
+
+  return [...groups.values()]
+    .filter((ids) => ids.length >= 2)
+    .map((ids) => ({
+      ids,
+      importances: ids.map((id) => idToMeta.get(id)?.importance ?? 0),
+    }));
 }
 
 // ============================================================================

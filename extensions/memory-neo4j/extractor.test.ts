@@ -2060,8 +2060,10 @@ describe("runSleepCycle", () => {
 
       await runSleepCycle(mockDb, mockEmbeddings, mockConfig, mockLogger);
 
-      // Should invalidate "low" (lower importance)
-      expect(mockDb.invalidateMemories).toHaveBeenCalledWith(["low"]);
+      // Should merge via mergeMemoryCluster (not invalidateMemories) so that
+      // MENTIONS/TAGGED relationships are transferred to the survivor.
+      expect(mockDb.mergeMemoryCluster).toHaveBeenCalledWith(["high", "low"], [0.9, 0.3]);
+      expect(mockDb.invalidateMemories).not.toHaveBeenCalled();
     });
 
     it("should report correct pair counts", async () => {
