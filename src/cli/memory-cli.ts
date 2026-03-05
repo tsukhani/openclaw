@@ -450,8 +450,14 @@ export async function runMemoryStatus(opts: MemoryCommandOptions) {
 
     // Skip agents with no indexed content (0 files, 0 chunks, no source files, no errors).
     // These agents aren't using the core memory search system — no need to show them.
+    // Always show agents with vector load errors so problems are surfaced.
+    const hasVectorError = status.vector?.enabled && status.vector.loadError;
     const isEmpty =
-      status.files === 0 && status.chunks === 0 && (totalFiles ?? 0) === 0 && !indexError;
+      status.files === 0 &&
+      status.chunks === 0 &&
+      (totalFiles ?? 0) === 0 &&
+      !indexError &&
+      !hasVectorError;
     if (isEmpty) {
       emptyAgentIds.push(agentId);
       continue;

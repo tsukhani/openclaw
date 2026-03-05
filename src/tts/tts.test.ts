@@ -135,11 +135,13 @@ describe("tts", () => {
     });
 
     it("rejects invalid voice names", () => {
-      expect(isValidOpenAIVoice("invalid")).toBe(false);
-      expect(isValidOpenAIVoice("")).toBe(false);
-      expect(isValidOpenAIVoice("ALLOY")).toBe(false);
-      expect(isValidOpenAIVoice("alloy ")).toBe(false);
-      expect(isValidOpenAIVoice(" alloy")).toBe(false);
+      withEnv({ OPENAI_TTS_BASE_URL: undefined }, () => {
+        expect(isValidOpenAIVoice("invalid")).toBe(false);
+        expect(isValidOpenAIVoice("")).toBe(false);
+        expect(isValidOpenAIVoice("ALLOY")).toBe(false);
+        expect(isValidOpenAIVoice("alloy ")).toBe(false);
+        expect(isValidOpenAIVoice(" alloy")).toBe(false);
+      });
     });
 
     it("treats the default endpoint with trailing slash as the default endpoint", () => {
@@ -163,9 +165,11 @@ describe("tts", () => {
         { model: "", expected: false },
         { model: "gpt-4", expected: false },
       ] as const;
-      for (const testCase of cases) {
-        expect(isValidOpenAIModel(testCase.model), testCase.model).toBe(testCase.expected);
-      }
+      withEnv({ OPENAI_TTS_BASE_URL: undefined }, () => {
+        for (const testCase of cases) {
+          expect(isValidOpenAIModel(testCase.model), testCase.model).toBe(testCase.expected);
+        }
+      });
     });
 
     it("treats the default endpoint with trailing slash as the default endpoint", () => {

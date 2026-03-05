@@ -404,6 +404,19 @@ function listPotentialMultiUserSignals(cfg: OpenClawConfig): string[] {
       out.add(`${basePath}.groupPolicy="open"`);
     }
 
+    // allowlist with configured group targets indicates multiple distinct groups/guilds are
+    // explicitly allowed, which is a multi-user signal (different users per group).
+    if (groupPolicy === "allowlist") {
+      const guilds = section.guilds;
+      const groups = section.groups;
+      const hasGroupTargets =
+        (guilds && typeof guilds === "object" && Object.keys(guilds).length > 0) ||
+        (groups && typeof groups === "object" && Object.keys(groups).length > 0);
+      if (hasGroupTargets) {
+        out.add(`${basePath}.groupPolicy="allowlist" with configured group targets`);
+      }
+    }
+
     const dmPolicy = typeof section.dmPolicy === "string" ? section.dmPolicy : null;
     if (dmPolicy === "open") {
       out.add(`${basePath}.dmPolicy="open"`);

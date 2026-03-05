@@ -25,6 +25,7 @@ describe("formatCliBannerLine", () => {
 
     const line = formatCliBannerLine("2026.3.7", {
       commit: "abc1234",
+      upstreamCommit: "abc1234",
       richTty: false,
     });
 
@@ -38,6 +39,7 @@ describe("formatCliBannerLine", () => {
 
     const line = formatCliBannerLine("2026.3.7", {
       commit: "abc1234",
+      upstreamCommit: "abc1234",
       richTty: false,
     });
 
@@ -51,6 +53,7 @@ describe("formatCliBannerLine", () => {
 
     const line = formatCliBannerLine("2026.3.7", {
       commit: "abc1234",
+      upstreamCommit: "abc1234",
       richTty: false,
       mode: "default",
     });
