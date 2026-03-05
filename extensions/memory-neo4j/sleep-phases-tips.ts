@@ -10,6 +10,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import { stripCodeFences } from "./extractor.js";
 import { callOpenRouter } from "./llm-client.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger } from "./schema.js";
@@ -265,7 +266,9 @@ export async function runTipGeneration(
 
             if (!content) continue;
 
-            const parsed = JSON.parse(content) as { tips?: unknown };
+            // Use stripCodeFences before JSON.parse — some models wrap JSON in ``` fences.
+            // Without this, a SyntaxError would be silently swallowed and the whole batch dropped.
+            const parsed = JSON.parse(stripCodeFences(content)) as { tips?: unknown };
             const rawTips = Array.isArray(parsed.tips) ? parsed.tips : [];
 
             for (const tip of rawTips) {
@@ -288,8 +291,11 @@ export async function runTipGeneration(
 
               collectedTips.push({ text, importance });
             }
-          } catch {
-            // Skip batch on LLM/parse failure
+          } catch (err) {
+            // Log parse/LLM failures so dropped batches are visible in logs
+            logger.warn(
+              `memory-neo4j: [sleep] Phase 8: tip batch failed (batch ${Math.floor(i / BATCH_SIZE) + 1}): ${String(err)}`,
+            );
           }
         }
 

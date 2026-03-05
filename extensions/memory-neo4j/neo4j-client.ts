@@ -818,7 +818,10 @@ export class Neo4jMemoryClient {
    * These are candidates for conflict resolution — the LLM decides if they truly conflict.
    * Excludes core memories (those are user-curated).
    */
-  async findConflictingMemories(agentId?: string): Promise<
+  async findConflictingMemories(
+    agentId?: string,
+    limit: number = 50,
+  ): Promise<
     Array<{
       memoryA: { id: string; text: string; importance: number; createdAt: string };
       memoryB: { id: string; text: string; importance: number; createdAt: string };
@@ -827,7 +830,7 @@ export class Neo4jMemoryClient {
     await this.ensureInitialized();
     const session = this.driver!.session();
     try {
-      return await Sleep.findConflictingMemories(session, agentId);
+      return await Sleep.findConflictingMemories(session, agentId, limit);
     } finally {
       await session.close();
     }
@@ -1105,18 +1108,25 @@ export class Neo4jMemoryClient {
 
   /**
    * Fetch a paginated batch of memories for credential scanning.
-   * Uses cursor-based pagination instead of SKIP (Perf-6).
-   * Pass cursor="" for the first page.
+   * Uses composite cursor-based pagination (createdAt, id) instead of SKIP (Perf-6).
+   * Pass cursorTs="" and cursorId="" for the first page.
    */
   async fetchMemoriesForCredentialScan(
-    cursor: string,
+    cursorTs: string,
+    cursorId: string,
     limit: number,
     agentId?: string,
   ): Promise<Array<{ id: string; text: string; createdAt: string }>> {
     await this.ensureInitialized();
     const session = this.driver!.session();
     try {
-      return await Sleep.fetchMemoriesForCredentialScan(session, cursor, limit, agentId);
+      return await Sleep.fetchMemoriesForCredentialScan(
+        session,
+        cursorTs,
+        cursorId,
+        limit,
+        agentId,
+      );
     } finally {
       await session.close();
     }

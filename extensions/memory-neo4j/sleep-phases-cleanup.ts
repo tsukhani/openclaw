@@ -139,16 +139,18 @@ export async function runCredentialScan(
 
   try {
     const CREDENTIAL_SCAN_BATCH = 200;
-    // Cursor-based pagination: start before the earliest possible timestamp.
-    // Each page fetches records where createdAt > lastSeen, avoiding the
-    // O(N²) re-scan from the start that SKIP-based pagination causes (Perf-6).
-    let lastSeen = "";
+    // Composite cursor-based pagination: track both (createdAt, id) to correctly
+    // handle batch-stored memories with identical timestamps. Start with empty strings
+    // to fetch from the beginning, avoiding O(N²) re-scanning (Perf-6).
+    let cursorTs = "";
+    let cursorId = "";
 
     while (true) {
       if (abortSignal?.aborted) break;
 
       const batch = await db.fetchMemoriesForCredentialScan(
-        lastSeen,
+        cursorTs,
+        cursorId,
         CREDENTIAL_SCAN_BATCH,
         agentId,
       );
@@ -178,8 +180,10 @@ export async function runCredentialScan(
       }
 
       if (batch.length < CREDENTIAL_SCAN_BATCH) break; // last page
-      // Advance cursor to the createdAt of the last record in this batch
-      lastSeen = batch[batch.length - 1].createdAt;
+      // Advance composite cursor to (createdAt, id) of the last record in this batch
+      const lastRecord = batch[batch.length - 1];
+      cursorTs = lastRecord.createdAt;
+      cursorId = lastRecord.id;
     }
 
     logger.info(

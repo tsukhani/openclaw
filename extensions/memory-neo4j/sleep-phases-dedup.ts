@@ -215,6 +215,7 @@ export async function runConflictDetection(
     abortSignal,
     skipSemanticDedup = false,
     llmConcurrency = 8,
+    conflictDetectionBatchSize = 50,
     onPhaseStart,
     onProgress,
   } = options;
@@ -225,7 +226,7 @@ export async function runConflictDetection(
   logger.info("memory-neo4j: [sleep] Phase 1c: Conflict Detection");
 
   try {
-    const pairs = await db.findConflictingMemories(agentId);
+    const pairs = await db.findConflictingMemories(agentId, conflictDetectionBatchSize);
     result.conflict.pairsFound = pairs.length;
 
     // Process conflict pairs in parallel chunks of llmConcurrency

@@ -110,6 +110,9 @@ export type SleepCycleOptions = {
   // Phase 1b: Semantic Dedup
   maxSemanticDedupPairs?: number; // Max LLM-checked pairs (default: 500)
 
+  // Phase 1c: Conflict Detection
+  conflictDetectionBatchSize?: number; // Max conflict pairs per sleep cycle (default: 50)
+
   // Concurrency
   llmConcurrency?: number; // Parallel LLM calls (default: 8, match OLLAMA_NUM_PARALLEL)
 

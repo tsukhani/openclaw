@@ -7,16 +7,10 @@
 
 import neo4j, { type Driver, type Session } from "neo4j-driver";
 import type { ExtractionConfig } from "./config.js";
+import { stripCodeFences } from "./extractor.js";
 import { callOpenRouter } from "./llm-client.js";
 import type { Logger } from "./schema.js";
 import { makePairKey } from "./schema.js";
-
-// Strip markdown code fences from LLM output (some providers wrap JSON in ```)
-function stripCodeFences(text: string): string {
-  const trimmed = text.trim();
-  const match = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/);
-  return match ? match[1].trim() : trimmed;
-}
 
 // --------------------------------------------------------------------------
 // Sleep Cycle: Deduplication
@@ -559,6 +553,7 @@ export async function findSingleUseTags(
 export async function findConflictingMemories(
   session: Session,
   agentId?: string,
+  limit: number = 50,
 ): Promise<
   Array<{
     memoryA: { id: string; text: string; importance: number; createdAt: string };
@@ -575,8 +570,8 @@ export async function findConflictingMemories(
      WHERE sharedEntities >= 1
      RETURN DISTINCT m1.id AS m1Id, m1.text AS m1Text, m1.importance AS m1Importance, m1.createdAt AS m1CreatedAt,
             m2.id AS m2Id, m2.text AS m2Text, m2.importance AS m2Importance, m2.createdAt AS m2CreatedAt
-     LIMIT 50`,
-    agentId ? { agentId } : {},
+     LIMIT $limit`,
+    agentId ? { agentId, limit } : { limit },
   );
 
   return result.records.map((r) => ({
@@ -869,25 +864,28 @@ export async function getDecayDistribution(
 
 /**
  * Fetch a paginated batch of memories (id + text + createdAt) for credential scanning.
- * Uses cursor-based pagination (WHERE m.createdAt > $cursor) instead of
- * SKIP to avoid O(N²) re-scanning from the beginning on each page (Perf-6).
- * Pass cursor="" for the first page; subsequent pages use the createdAt of
- * the last record from the previous batch.
+ * Uses composite cursor-based pagination (createdAt, id) instead of SKIP to avoid
+ * O(N²) re-scanning from the beginning on each page (Perf-6), and to correctly handle
+ * batch-stored memories that share an identical createdAt timestamp.
+ *
+ * Pass cursorTs="" and cursorId="" for the first page; subsequent pages use the
+ * createdAt and id of the last record from the previous batch.
  */
 export async function fetchMemoriesForCredentialScan(
   session: Session,
-  cursor: string,
+  cursorTs: string,
+  cursorId: string,
   limit: number,
   agentId?: string,
 ): Promise<Array<{ id: string; text: string; createdAt: string }>> {
   const result = await session.run(
     `MATCH (m:Memory)
      WHERE ($agentId IS NULL OR m.agentId = $agentId)
-       AND m.createdAt > $cursor
+       AND (m.createdAt > $cursorTs OR (m.createdAt = $cursorTs AND m.id > $cursorId))
      RETURN m.id AS id, m.text AS text, m.createdAt AS createdAt
-     ORDER BY m.createdAt ASC
+     ORDER BY m.createdAt ASC, m.id ASC
      LIMIT $limit`,
-    { agentId: agentId ?? null, cursor, limit },
+    { agentId: agentId ?? null, cursorTs, cursorId, limit },
   );
   return result.records.map((r) => ({
     id: r.get("id") as string,

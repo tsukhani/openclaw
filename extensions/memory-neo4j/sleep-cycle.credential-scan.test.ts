@@ -250,9 +250,9 @@ describe("Phase 5b: credential scan — paginated batch loop", () => {
 
     const result = await runSleepCycle(db, mockEmbeddings, mockConfig, mockLogger);
 
-    // Cursor-based: first call uses empty string cursor (not offset 0)
+    // Composite cursor-based: first call uses empty string for both cursorTs and cursorId
     expect(db.fetchMemoriesForCredentialScan).toHaveBeenCalledTimes(1);
-    expect(db.fetchMemoriesForCredentialScan).toHaveBeenCalledWith("", 200, undefined);
+    expect(db.fetchMemoriesForCredentialScan).toHaveBeenCalledWith("", "", 200, undefined);
     expect(db.deleteMemoriesByIds).toHaveBeenCalledWith(["cred-1"]);
     expect(result.credentialScan.memoriesScanned).toBe(2);
     expect(result.credentialScan.credentialsFound).toBe(1);
@@ -279,13 +279,14 @@ describe("Phase 5b: credential scan — paginated batch loop", () => {
     const result = await runSleepCycle(db, mockEmbeddings, mockConfig, mockLogger);
 
     expect(db.fetchMemoriesForCredentialScan).toHaveBeenCalledTimes(2);
-    // First call: empty cursor
-    expect(db.fetchMemoriesForCredentialScan).toHaveBeenNthCalledWith(1, "", 200, undefined);
-    // Second call: cursor = createdAt of last record in batch1
-    const expectedCursor = batch1[batch1.length - 1].createdAt;
+    // First call: empty composite cursor
+    expect(db.fetchMemoriesForCredentialScan).toHaveBeenNthCalledWith(1, "", "", 200, undefined);
+    // Second call: composite cursor = (createdAt, id) of last record in batch1
+    const lastRecord1 = batch1[batch1.length - 1];
     expect(db.fetchMemoriesForCredentialScan).toHaveBeenNthCalledWith(
       2,
-      expectedCursor,
+      lastRecord1.createdAt,
+      lastRecord1.id,
       200,
       undefined,
     );
@@ -311,11 +312,12 @@ describe("Phase 5b: credential scan — paginated batch loop", () => {
     const result = await runSleepCycle(db, mockEmbeddings, mockConfig, mockLogger);
 
     expect(db.fetchMemoriesForCredentialScan).toHaveBeenCalledTimes(2);
-    // Second call uses cursor (not numeric offset)
+    // Second call uses composite cursor (not numeric offset)
     const secondCallArgs = (db.fetchMemoriesForCredentialScan as ReturnType<typeof vi.fn>).mock
       .calls[1];
-    expect(typeof secondCallArgs[0]).toBe("string"); // cursor is a string
-    expect(secondCallArgs[1]).toBe(200);
+    expect(typeof secondCallArgs[0]).toBe("string"); // cursorTs is a string
+    expect(typeof secondCallArgs[1]).toBe("string"); // cursorId is a string
+    expect(secondCallArgs[2]).toBe(200);
     expect(result.credentialScan.memoriesScanned).toBe(200);
   });
 
@@ -340,10 +342,12 @@ describe("Phase 5b: credential scan — paginated batch loop", () => {
     await runSleepCycle(db, mockEmbeddings, mockConfig, mockLogger);
 
     const calls = (db.fetchMemoriesForCredentialScan as ReturnType<typeof vi.fn>).mock.calls;
-    // First call: cursor is empty string, not numeric 0
-    expect(calls[0][0]).toBe("");
-    // Second call: cursor is the createdAt of the last record in batch1, not 200
+    // First call: both cursors are empty string, not numeric 0
+    expect(calls[0][0]).toBe(""); // cursorTs starts empty
+    expect(calls[0][1]).toBe(""); // cursorId starts empty
+    // Second call: composite cursor = (createdAt, id) of the last record in batch1
     expect(calls[1][0]).toBe(batch1[batch1.length - 1].createdAt);
+    expect(calls[1][1]).toBe(batch1[batch1.length - 1].id);
     expect(typeof calls[1][0]).toBe("string");
     // Confirm it's NOT a number (the old SKIP offset pattern)
     expect(calls[0][0]).not.toBe(0);
@@ -360,8 +364,8 @@ describe("Phase 5b: credential scan — paginated batch loop", () => {
     const batch1 = Array.from({ length: 200 }, (_, i) => makeMem(i));
 
     const db = makeDb({
-      fetchMemoriesForCredentialScan: vi.fn().mockImplementation(async (cursor: string) => {
-        if (cursor === "") {
+      fetchMemoriesForCredentialScan: vi.fn().mockImplementation(async (cursorTs: string) => {
+        if (cursorTs === "") {
           // Abort the signal after returning the first full batch
           controller.abort();
           return batch1;
