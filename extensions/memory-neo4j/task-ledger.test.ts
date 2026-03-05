@@ -255,7 +255,7 @@ describe("findStaleTasks", () => {
     expect(stale).toHaveLength(1);
   });
 
-  it("marks tasks with no dates as stale", () => {
+  it("does NOT mark tasks with no dates as stale (PL-P1-2: absence of timestamp is not proof of age)", () => {
     const tasks = [
       {
         id: "TASK-001",
@@ -267,7 +267,7 @@ describe("findStaleTasks", () => {
     ];
 
     const stale = findStaleTasks(tasks, now, twentyFourHoursMs);
-    expect(stale).toHaveLength(1);
+    expect(stale).toHaveLength(0);
   });
 });
 

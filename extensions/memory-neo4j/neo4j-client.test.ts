@@ -94,7 +94,7 @@ describe("Neo4jMemoryClient", () => {
 
       expect(result).toBe("mem-1");
       expect(mockSession.run).toHaveBeenCalledWith(
-        expect.stringContaining("CREATE (m:Memory {"),
+        expect.stringContaining("MERGE (m:Memory {id: $id})"),
         expect.objectContaining({
           id: "mem-1",
           text: "test memory",
@@ -1510,7 +1510,7 @@ describe("Neo4jMemoryClient", () => {
       expect(item.taskId).toBeNull();
     });
 
-    it("should include taskId in the CREATE clause Cypher (CR-001)", async () => {
+    it("should include taskId in the MERGE clause Cypher (CR-001)", async () => {
       const input: StoreMemoryInput = {
         id: "mem-bulk-3",
         text: "another bulk memory",
@@ -1530,7 +1530,8 @@ describe("Neo4jMemoryClient", () => {
       await client.storeManyMemories([input]);
 
       const [query] = mockSession.run.mock.calls[0] as [string, unknown];
-      expect(query).toContain("taskId: m.taskId");
+      // MERGE syntax uses assignment form, not object literal
+      expect(query).toContain("n.taskId = m.taskId");
     });
   });
 
