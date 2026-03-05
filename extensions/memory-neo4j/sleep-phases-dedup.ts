@@ -290,7 +290,8 @@ export async function runEntityDedup(
 
   try {
     // Reconcile NULL mentionCounts before dedup so decisions are based on accurate counts
-    const reconciled = await db.reconcileEntityMentionCounts(agentId);
+    // reconcileEntityMentionCounts is intentionally global — Entity nodes have no agentId
+    const reconciled = await db.reconcileEntityMentionCounts();
     if (reconciled > 0) {
       logger.info(
         `memory-neo4j: [sleep] Phase 1d: Reconciled mentionCount for ${reconciled} entities`,

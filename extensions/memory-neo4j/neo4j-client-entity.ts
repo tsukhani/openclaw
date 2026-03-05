@@ -7,6 +7,15 @@ import neo4j, { type Session } from "neo4j-driver";
 import type { ExtractionStatus } from "./schema.js";
 import { ALLOWED_RELATIONSHIP_TYPES, validateRelationshipType } from "./schema.js";
 
+// Static assertion: relationship types must be safe identifiers for Cypher interpolation.
+// ALLOWED_RELATIONSHIP_TYPES is a hardcoded constant, but this guard catches any future
+// addition of a value that doesn't meet the /^[A-Z_]+$/ contract before it causes a runtime issue.
+for (const rt of ALLOWED_RELATIONSHIP_TYPES) {
+  if (!/^[A-Z_]+$/.test(rt)) {
+    throw new Error(`Unsafe relationship type for Cypher interpolation: ${rt}`);
+  }
+}
+
 /**
  * Update the extraction status of a Memory node.
  * Optionally increments the extractionRetries counter (for transient failure tracking).
@@ -327,9 +336,18 @@ export async function findDuplicateEntityPairs(
   // For each entity e1, db.index.fulltext.queryNodes uses the Lucene BM25
   // index to find a small candidate set e2, reducing complexity from
   // O(N²) to O(N × k) where k is the average candidate set size (~2–10).
+  // When agentId is provided, scope e1 candidates to entities mentioned by that agent's
+  // memories only — prevents cross-agent entity merges in multi-agent deployments.
+  // Entity nodes are intentionally global (no agentId property), so we scope via the
+  // Memory relationship instead.
+  const matchClause = agentId
+    ? `MATCH (e1:Entity)<-[:MENTIONS]-(:Memory {agentId: $agentId})
+       WHERE size(e1.name) > 2`
+    : `MATCH (e1:Entity)
+       WHERE size(e1.name) > 2`;
+
   const result = await session.run(
-    `MATCH (e1:Entity)
-     WHERE size(e1.name) > 2
+    `${matchClause}
      CALL db.index.fulltext.queryNodes('entity_fulltext_index', e1.name) YIELD node AS e2
      WHERE e2.id <> e1.id
        AND e1.name < e2.name
@@ -347,7 +365,7 @@ export async function findDuplicateEntityPairs(
      RETURN e1.id AS id1, e1.name AS name1, mc1,
             e2.id AS id2, e2.name AS name2, mc2
      LIMIT $limit`,
-    { limit: neo4j.int(limit) },
+    { limit: neo4j.int(limit), ...(agentId ? { agentId } : {}) },
   );
 
   return result.records.map((r) => {
@@ -384,18 +402,31 @@ export async function mergeEntityPair(
 ): Promise<boolean> {
   try {
     await session.executeWrite(async (tx) => {
-      // Transfer MENTIONS relationships from removed entity to kept entity
+      // Transfer MENTIONS relationships from removed entity to kept entity.
+      // Use ON CREATE to track only net-new relationships on keeper — when memory M
+      // already mentions both keeper and loser, MERGE is a no-op and we must NOT
+      // double-count that memory in the mentionCount increment.
       const transferred = await tx.run(
         `MATCH (remove:Entity {id: $removeId})<-[r:MENTIONS]-(m:Memory)
          MATCH (keep:Entity {id: $keepId})
-         MERGE (m)-[:MENTIONS]->(keep)
+         MERGE (m)-[newRel:MENTIONS]->(keep)
+         ON CREATE SET newRel.created = true
+         WITH m, remove, keep, newRel, r
          DELETE r
-         RETURN count(*) AS transferred`,
+         RETURN count(CASE WHEN newRel.created THEN 1 END) AS transferCount`,
         { removeId, keepId },
       );
-      const transferCount = (transferred.records[0]?.get("transferred") as number) ?? 0;
+      const transferCount = (transferred.records[0]?.get("transferCount") as number) ?? 0;
 
-      // Update kept entity's mention count
+      // Remove the temporary marker used to detect newly created relationships
+      await tx.run(
+        `MATCH (m:Memory)-[rel:MENTIONS]->(e:Entity {id: $keepId})
+         WHERE rel.created IS NOT NULL
+         REMOVE rel.created`,
+        { keepId },
+      );
+
+      // Update kept entity's mention count by the number of truly new MENTIONS only
       if (transferCount > 0) {
         await tx.run(
           `MATCH (e:Entity {id: $keepId})
@@ -505,27 +536,21 @@ export async function batchMergeEntityPairs(
  * Fixes entities with NULL or stale mentionCount values (e.g., entities created
  * before mentionCount tracking was added).
  *
+ * Intentionally global: Entity nodes have no agentId property — they are shared
+ * across all agents. mentionCount reflects total Memory→Entity mentions from ALL
+ * agents. Scoping by agentId would cause whichever agent runs last to overwrite
+ * the global count with only its own subset.
+ *
  * @returns Number of entities updated
  */
-export async function reconcileEntityMentionCounts(
-  session: Session,
-  agentId?: string,
-): Promise<number> {
+export async function reconcileEntityMentionCounts(session: Session): Promise<number> {
   const result = await session.run(
-    agentId != null
-      ? `MATCH (e:Entity)
-         WHERE (e.agentId = $agentId OR e.agentId IS NULL) AND e.mentionCount IS NULL
-         OPTIONAL MATCH (m:Memory {agentId: $agentId})-[:MENTIONS]->(e)
-         WITH e, count(m) AS actual
-         SET e.mentionCount = actual
-         RETURN count(e) AS updated`
-      : `MATCH (e:Entity)
-         WHERE e.mentionCount IS NULL
-         OPTIONAL MATCH (m:Memory)-[:MENTIONS]->(e)
-         WITH e, count(m) AS actual
-         SET e.mentionCount = actual
-         RETURN count(e) AS updated`,
-    { agentId: agentId ?? null },
+    `MATCH (e:Entity)
+     WHERE e.mentionCount IS NULL
+     OPTIONAL MATCH (m:Memory)-[:MENTIONS]->(e)
+     WITH e, count(m) AS actual
+     SET e.mentionCount = actual
+     RETURN count(e) AS updated`,
   );
   return (result.records[0]?.get("updated") as number) ?? 0;
 }

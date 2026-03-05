@@ -1210,11 +1210,11 @@ export class Neo4jMemoryClient {
    *
    * @returns Number of entities updated
    */
-  async reconcileEntityMentionCounts(agentId?: string): Promise<number> {
+  async reconcileEntityMentionCounts(): Promise<number> {
     await this.ensureInitialized();
     const session = this.driver!.session();
     try {
-      return await Entity.reconcileEntityMentionCounts(session, agentId);
+      return await Entity.reconcileEntityMentionCounts(session);
     } finally {
       await session.close();
     }

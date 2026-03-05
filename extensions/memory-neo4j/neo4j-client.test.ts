@@ -1528,7 +1528,7 @@ describe("Neo4jMemoryClient", () => {
   // ------------------------------------------------------------------------
 
   describe("reconcileEntityMentionCounts", () => {
-    it("should query without agentId filter when no agentId provided (CR-002)", async () => {
+    it("should query globally without any agentId filter (P2-3)", async () => {
       mockSession.run.mockResolvedValue({
         records: [{ get: vi.fn().mockReturnValue(3) }],
       });
@@ -1537,28 +1537,16 @@ describe("Neo4jMemoryClient", () => {
 
       expect(count).toBe(3);
       const [query] = mockSession.run.mock.calls[0] as [string, unknown];
-      // Without agentId, query should not contain agentId filter
-      expect(query).not.toContain("e.agentId = $agentId");
+      // Reconcile is intentionally global — Entity nodes have no agentId property.
+      // Last-agent-wins overwrite is prevented by always counting ALL Memory→Entity mentions.
+      expect(query).not.toContain("agentId");
+      expect(query).toContain("mentionCount IS NULL");
     });
 
-    it("should query with agentId filter when agentId provided (CR-002)", async () => {
-      mockSession.run.mockResolvedValue({
-        records: [{ get: vi.fn().mockReturnValue(5) }],
-      });
-
-      const count = await client.reconcileEntityMentionCounts("agent-42");
-
-      expect(count).toBe(5);
-      const [query, params] = mockSession.run.mock.calls[0] as [string, { agentId: string | null }];
-      expect(query).toContain("e.agentId = $agentId");
-      expect(query).toContain("Memory {agentId: $agentId}");
-      expect(params.agentId).toBe("agent-42");
-    });
-
-    it("should return 0 when no entities updated (CR-002)", async () => {
+    it("should return 0 when no entities updated (P2-3)", async () => {
       mockSession.run.mockResolvedValue({ records: [] });
 
-      const count = await client.reconcileEntityMentionCounts("agent-99");
+      const count = await client.reconcileEntityMentionCounts();
 
       expect(count).toBe(0);
     });

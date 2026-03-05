@@ -237,13 +237,19 @@ describe("Entity Deduplication", () => {
 
   describe("mergeEntityPair", () => {
     it("transfers MENTIONS and deletes source entity", async () => {
-      // mergeEntityPair uses executeWrite, so we need to set up the mock transaction
+      // mergeEntityPair uses executeWrite, so we need to set up the mock transaction.
+      // P2-2 fix: ON CREATE tracking means 4 tx calls: transfer, cleanup created markers,
+      // update mentionCount, delete.
       const mockTx = {
         run: vi
           .fn()
           .mockResolvedValueOnce({
-            // Transfer MENTIONS
-            records: [mockRecord({ transferred: 3 })],
+            // Transfer MENTIONS — 3 net-new relationships created
+            records: [mockRecord({ transferCount: 3 })],
+          })
+          .mockResolvedValueOnce({
+            // Cleanup temporary .created markers on relationships
+            records: [],
           })
           .mockResolvedValueOnce({
             // Update mentionCount
@@ -260,30 +266,42 @@ describe("Entity Deduplication", () => {
       const result = await client.mergeEntityPair("keep-id", "remove-id");
 
       expect(result).toBe(true);
-      // Should have been called 3 times: transfer, update count, delete
-      expect(mockTx.run).toHaveBeenCalledTimes(3);
+      // 4 calls: transfer (ON CREATE tracking), cleanup created markers, update count, delete
+      expect(mockTx.run).toHaveBeenCalledTimes(4);
 
-      // Verify transfer query
+      // Verify transfer query uses ON CREATE to count only net-new relationships
       const transferQuery = mockTx.run.mock.calls[0][0] as string;
-      expect(transferQuery).toContain("MERGE (m)-[:MENTIONS]->(keep)");
+      expect(transferQuery).toContain("MERGE (m)-[newRel:MENTIONS]->(keep)");
+      expect(transferQuery).toContain("ON CREATE SET newRel.created = true");
       expect(transferQuery).toContain("DELETE r");
+      expect(transferQuery).toContain("transferCount");
+
+      // Verify cleanup query removes temporary marker
+      const cleanupQuery = mockTx.run.mock.calls[1][0] as string;
+      expect(cleanupQuery).toContain("REMOVE rel.created");
 
       // Verify update mentionCount
-      const updateQuery = mockTx.run.mock.calls[1][0] as string;
+      const updateQuery = mockTx.run.mock.calls[2][0] as string;
       expect(updateQuery).toContain("mentionCount");
 
       // Verify delete query
-      const deleteQuery = mockTx.run.mock.calls[2][0] as string;
+      const deleteQuery = mockTx.run.mock.calls[3][0] as string;
       expect(deleteQuery).toContain("DETACH DELETE e");
     });
 
     it("skips mentionCount update when no relationships to transfer", async () => {
+      // P2-2 fix: when transferCount=0, cleanup markers still runs but mentionCount update is skipped.
+      // So we get 3 calls: transfer, cleanup created markers, delete.
       const mockTx = {
         run: vi
           .fn()
           .mockResolvedValueOnce({
-            // Transfer MENTIONS — 0 transferred
-            records: [mockRecord({ transferred: 0 })],
+            // Transfer MENTIONS — 0 net-new relationships (loser already covered by keeper)
+            records: [mockRecord({ transferCount: 0 })],
+          })
+          .mockResolvedValueOnce({
+            // Cleanup temporary .created markers (always runs)
+            records: [],
           })
           .mockResolvedValueOnce({
             // Delete removed entity (mentionCount update is skipped)
@@ -296,8 +314,8 @@ describe("Entity Deduplication", () => {
       const result = await client.mergeEntityPair("keep-id", "remove-id");
 
       expect(result).toBe(true);
-      // Only 2 calls: transfer (0 results) and delete (skip update)
-      expect(mockTx.run).toHaveBeenCalledTimes(2);
+      // 3 calls: transfer (0 results), cleanup created markers, delete (skip mentionCount update)
+      expect(mockTx.run).toHaveBeenCalledTimes(3);
     });
 
     it("returns false on error", async () => {

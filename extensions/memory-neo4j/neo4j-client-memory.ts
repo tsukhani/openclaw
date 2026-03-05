@@ -305,7 +305,7 @@ export async function deleteMemoriesByPattern(
      WITH m LIMIT $limit
      DETACH DELETE m
      RETURN count(*) AS removed`,
-    { pattern, agentId, limit: neo4j.int(limit) },
+    { pattern, limit: neo4j.int(limit), ...(agentId ? { agentId } : {}) },
   );
   return (result.records[0]?.get("removed") as number) ?? 0;
 }
