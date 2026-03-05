@@ -268,6 +268,9 @@ export const CREDENTIAL_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
 
   // Stripe API keys
   { pattern: /\bsk_(?:live|test)_[a-zA-Z0-9]{20,}/i, label: "Stripe API key" },
+
+  // Twilio Account SIDs
+  { pattern: /\bAC[0-9a-f]{32}\b/i, label: "Twilio account SID" },
 ];
 
 /**
