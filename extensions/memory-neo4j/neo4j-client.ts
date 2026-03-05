@@ -34,6 +34,15 @@ function stripCodeFences(text: string): string {
 // constant, there is no injection risk.
 const RELATIONSHIP_TYPE_PATTERN = [...ALLOWED_RELATIONSHIP_TYPES].join("|");
 
+// Static assertion: relationship types must be safe identifiers for Cypher interpolation.
+// ALLOWED_RELATIONSHIP_TYPES is a hardcoded constant, but this guard catches any future
+// addition of a value that doesn't meet the /^[A-Z_]+$/ contract before it causes a runtime issue.
+for (const rt of ALLOWED_RELATIONSHIP_TYPES) {
+  if (!/^[A-Z_]+$/.test(rt)) {
+    throw new Error(`Unsafe relationship type for Cypher interpolation: ${rt}`);
+  }
+}
+
 // Retry configuration for transient Neo4j errors (deadlocks, etc.)
 const TRANSIENT_RETRY_ATTEMPTS = 3;
 const TRANSIENT_RETRY_BASE_DELAY_MS = 500;
@@ -363,6 +372,7 @@ export class Neo4jMemoryClient {
           extractionStatus: inp.extractionStatus,
           agentId: inp.agentId,
           sessionKey: inp.sessionKey ?? null,
+          taskId: inp.taskId ?? null,
           createdAt: now,
           updatedAt: now,
           originalCreatedAt: now,
@@ -378,6 +388,7 @@ export class Neo4jMemoryClient {
              importance: m.importance, category: m.category,
              source: m.source, extractionStatus: m.extractionStatus,
              agentId: m.agentId, sessionKey: m.sessionKey,
+             taskId: m.taskId,
              createdAt: m.createdAt, updatedAt: m.updatedAt,
              originalCreatedAt: m.originalCreatedAt,
              retrievalCount: m.retrievalCount, lastRetrievedAt: m.lastRetrievedAt,
@@ -2788,17 +2799,25 @@ Return JSON: {"classification": "SUPERSEDES"|"COMPLEMENTS"|"UNRELATED"}`,
    *
    * @returns Number of entities updated
    */
-  async reconcileEntityMentionCounts(): Promise<number> {
+  async reconcileEntityMentionCounts(agentId?: string): Promise<number> {
     await this.ensureInitialized();
     const session = this.driver!.session();
     try {
       const result = await session.run(
-        `MATCH (e:Entity)
-         WHERE e.mentionCount IS NULL
-         OPTIONAL MATCH (m:Memory)-[:MENTIONS]->(e)
-         WITH e, count(m) AS actual
-         SET e.mentionCount = actual
-         RETURN count(e) AS updated`,
+        agentId != null
+          ? `MATCH (e:Entity)
+             WHERE (e.agentId = $agentId OR e.agentId IS NULL) AND e.mentionCount IS NULL
+             OPTIONAL MATCH (m:Memory {agentId: $agentId})-[:MENTIONS]->(e)
+             WITH e, count(m) AS actual
+             SET e.mentionCount = actual
+             RETURN count(e) AS updated`
+          : `MATCH (e:Entity)
+             WHERE e.mentionCount IS NULL
+             OPTIONAL MATCH (m:Memory)-[:MENTIONS]->(e)
+             WITH e, count(m) AS actual
+             SET e.mentionCount = actual
+             RETURN count(e) AS updated`,
+        { agentId: agentId ?? null },
       );
       return (result.records[0]?.get("updated") as number) ?? 0;
     } finally {

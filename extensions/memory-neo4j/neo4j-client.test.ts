@@ -1446,4 +1446,137 @@ describe("Neo4jMemoryClient", () => {
       expect(mockSession.run).not.toHaveBeenCalled();
     });
   });
+
+  // ------------------------------------------------------------------------
+  // CR-001: storeManyMemories taskId preservation
+  // ------------------------------------------------------------------------
+
+  describe("storeManyMemories", () => {
+    it("should include taskId in the items passed to Cypher (CR-001)", async () => {
+      const input: StoreMemoryInput = {
+        id: "mem-bulk-1",
+        text: "bulk memory with task",
+        embedding: [0.1, 0.2],
+        importance: 0.7,
+        category: "fact",
+        source: "user",
+        extractionStatus: "pending",
+        agentId: "agent-1",
+        taskId: "task-abc",
+      };
+
+      mockSession.run.mockResolvedValue({
+        records: [{ get: vi.fn().mockReturnValue(1) }],
+      });
+
+      await client.storeManyMemories([input]);
+
+      const [_query, params] = mockSession.run.mock.calls[0] as [string, { items: unknown[] }];
+      const item = (params.items as Array<Record<string, unknown>>)[0];
+      expect(item.taskId).toBe("task-abc");
+    });
+
+    it("should set taskId to null when not provided (CR-001)", async () => {
+      const input: StoreMemoryInput = {
+        id: "mem-bulk-2",
+        text: "bulk memory without task",
+        embedding: [0.1, 0.2],
+        importance: 0.5,
+        category: "fact",
+        source: "user",
+        extractionStatus: "pending",
+        agentId: "agent-1",
+      };
+
+      mockSession.run.mockResolvedValue({
+        records: [{ get: vi.fn().mockReturnValue(1) }],
+      });
+
+      await client.storeManyMemories([input]);
+
+      const [_query, params] = mockSession.run.mock.calls[0] as [string, { items: unknown[] }];
+      const item = (params.items as Array<Record<string, unknown>>)[0];
+      expect(item.taskId).toBeNull();
+    });
+
+    it("should include taskId in the CREATE clause Cypher (CR-001)", async () => {
+      const input: StoreMemoryInput = {
+        id: "mem-bulk-3",
+        text: "another bulk memory",
+        embedding: [],
+        importance: 0.5,
+        category: "other",
+        source: "user",
+        extractionStatus: "pending",
+        agentId: "agent-1",
+        taskId: "task-xyz",
+      };
+
+      mockSession.run.mockResolvedValue({
+        records: [{ get: vi.fn().mockReturnValue(1) }],
+      });
+
+      await client.storeManyMemories([input]);
+
+      const [query] = mockSession.run.mock.calls[0] as [string, unknown];
+      expect(query).toContain("taskId: m.taskId");
+    });
+  });
+
+  // ------------------------------------------------------------------------
+  // CR-002: reconcileEntityMentionCounts agentId scoping
+  // ------------------------------------------------------------------------
+
+  describe("reconcileEntityMentionCounts", () => {
+    it("should query without agentId filter when no agentId provided (CR-002)", async () => {
+      mockSession.run.mockResolvedValue({
+        records: [{ get: vi.fn().mockReturnValue(3) }],
+      });
+
+      const count = await client.reconcileEntityMentionCounts();
+
+      expect(count).toBe(3);
+      const [query] = mockSession.run.mock.calls[0] as [string, unknown];
+      // Without agentId, query should not contain agentId filter
+      expect(query).not.toContain("e.agentId = $agentId");
+    });
+
+    it("should query with agentId filter when agentId provided (CR-002)", async () => {
+      mockSession.run.mockResolvedValue({
+        records: [{ get: vi.fn().mockReturnValue(5) }],
+      });
+
+      const count = await client.reconcileEntityMentionCounts("agent-42");
+
+      expect(count).toBe(5);
+      const [query, params] = mockSession.run.mock.calls[0] as [string, { agentId: string | null }];
+      expect(query).toContain("e.agentId = $agentId");
+      expect(query).toContain("Memory {agentId: $agentId}");
+      expect(params.agentId).toBe("agent-42");
+    });
+
+    it("should return 0 when no entities updated (CR-002)", async () => {
+      mockSession.run.mockResolvedValue({ records: [] });
+
+      const count = await client.reconcileEntityMentionCounts("agent-99");
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // ------------------------------------------------------------------------
+  // CR-005: ALLOWED_RELATIONSHIP_TYPES validation on module load
+  // ------------------------------------------------------------------------
+
+  describe("ALLOWED_RELATIONSHIP_TYPES validation", () => {
+    it("should not throw on startup — all types match /^[A-Z_]+$/ (CR-005)", async () => {
+      // If the module loaded without throwing, the static assertion passed.
+      // Importing the client here re-asserts the same module; the fact that
+      // the test suite is running at all proves the check passed.
+      const { ALLOWED_RELATIONSHIP_TYPES } = await import("./schema.js");
+      for (const rt of ALLOWED_RELATIONSHIP_TYPES) {
+        expect(/^[A-Z_]+$/.test(rt)).toBe(true);
+      }
+    });
+  });
 });

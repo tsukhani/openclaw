@@ -783,7 +783,7 @@ export async function runSleepCycle(
 
     try {
       // Reconcile NULL mentionCounts before dedup so decisions are based on accurate counts
-      const reconciled = await db.reconcileEntityMentionCounts();
+      const reconciled = await db.reconcileEntityMentionCounts(agentId);
       if (reconciled > 0) {
         logger.info(
           `memory-neo4j: [sleep] Phase 1d: Reconciled mentionCount for ${reconciled} entities`,
