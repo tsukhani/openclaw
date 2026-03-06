@@ -842,6 +842,63 @@ export class Neo4jMemoryClient {
     }
   }
 
+  // --------------------------------------------------------------------------
+  // Pending Conflict Pairs (OP-125)
+  // --------------------------------------------------------------------------
+
+  /** Store a pending conflict pair for retry on the next sleep cycle. */
+  async storePendingConflict(idA: string, idB: string): Promise<void> {
+    await this.ensureInitialized();
+    const session = this.driver!.session();
+    try {
+      return await Sleep.storePendingConflict(session, idA, idB);
+    } finally {
+      await session.close();
+    }
+  }
+
+  /** Fetch all pending conflict pairs eligible for retry. */
+  async fetchPendingConflicts(
+    agentId?: string,
+    limit: number = 50,
+  ): Promise<
+    Array<{
+      memoryA: { id: string; text: string; importance: number; createdAt: string };
+      memoryB: { id: string; text: string; importance: number; createdAt: string };
+      retryCount: number;
+    }>
+  > {
+    await this.ensureInitialized();
+    const session = this.driver!.session();
+    try {
+      return await Sleep.fetchPendingConflicts(session, agentId, limit);
+    } finally {
+      await session.close();
+    }
+  }
+
+  /** Remove the PENDING_CONFLICT relationship between two memories. */
+  async clearPendingConflict(idA: string, idB: string): Promise<void> {
+    await this.ensureInitialized();
+    const session = this.driver!.session();
+    try {
+      return await Sleep.clearPendingConflict(session, idA, idB);
+    } finally {
+      await session.close();
+    }
+  }
+
+  /** Increment the retry counter on a PENDING_CONFLICT relationship. */
+  async incrementPendingConflictRetry(idA: string, idB: string): Promise<void> {
+    await this.ensureInitialized();
+    const session = this.driver!.session();
+    try {
+      return await Sleep.incrementPendingConflictRetry(session, idA, idB);
+    } finally {
+      await session.close();
+    }
+  }
+
   /**
    * Invalidate a memory by setting its importance to near-zero.
    * Used by conflict resolution to effectively retire the losing memory

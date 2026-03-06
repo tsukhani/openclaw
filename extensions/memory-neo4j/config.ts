@@ -427,9 +427,9 @@ export const memoryNeo4jConfigSchema = {
       }
     }
 
-    // Parse graphSearchDepth: must be 1-3, default 1
+    // Parse graphSearchDepth: must be 1-3, default 2
     const rawDepth = cfg.graphSearchDepth;
-    let graphSearchDepth = 1;
+    let graphSearchDepth = 2;
     if (typeof rawDepth === "number") {
       if (rawDepth < 1 || rawDepth > 3 || !Number.isInteger(rawDepth)) {
         throw new Error(`graphSearchDepth must be 1, 2, or 3, got: ${rawDepth}`);

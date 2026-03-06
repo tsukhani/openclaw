@@ -33,6 +33,7 @@ import type { SleepCycleOptions, SleepCycleResult } from "./sleep-cycle-types.js
 import { runCredentialScan, runNoiseCleanup, runOrphanCleanup } from "./sleep-phases-cleanup.js";
 import {
   runDecay,
+  runPendingConflictRetry,
   runRetroactiveConflictScan,
   runTemporalStaleness,
 } from "./sleep-phases-decay.js";
@@ -67,6 +68,7 @@ export async function runSleepCycle(
     decay: { memoriesPruned: 0 },
     temporalStaleness: { memoriesChecked: 0, memoriesRemoved: 0 },
     retroactiveConflictScan: { memoriesScanned: 0, memoriesSuperseded: 0 },
+    pendingConflictRetry: { pairsRetried: 0, resolved: 0, permanentlySkipped: 0 },
     extraction: { total: 0, processed: 0, succeeded: 0, failed: 0 },
     retroactiveTagging: { total: 0, tagged: 0, failed: 0 },
     cleanup: { entitiesRemoved: 0, tagsRemoved: 0, singleUseTagsRemoved: 0 },
@@ -102,6 +104,11 @@ export async function runSleepCycle(
   // Phase 3c: Retroactive conflict scan
   if (!abortSignal?.aborted && config.enabled) {
     await runRetroactiveConflictScan(db, config, logger, options, result);
+  }
+
+  // Phase 3d: Pending conflict retry (OP-125)
+  if (!abortSignal?.aborted && config.enabled) {
+    await runPendingConflictRetry(db, config, logger, options, result);
   }
 
   // Phase 4: Orphan cleanup

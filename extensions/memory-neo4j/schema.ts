@@ -189,6 +189,17 @@ export const ALLOWED_RELATIONSHIP_TYPES = new Set([
   "PREFERS",
   "DECIDED",
   "RELATED_TO",
+  // OP-126: expanded relationship vocabulary
+  "REPORTS_TO",
+  "PART_OF",
+  "OWNS",
+  "ATTENDED",
+  "CREATED",
+  "MANAGES",
+  "COLLABORATES_WITH",
+  "FOUNDED",
+  "STUDIED_AT",
+  "LOCATED_IN",
 ]);
 
 // ============================================================================

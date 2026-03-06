@@ -196,7 +196,7 @@ describe("exported constants", () => {
 
   it("ALLOWED_RELATIONSHIP_TYPES should be a Set", () => {
     expect(ALLOWED_RELATIONSHIP_TYPES).toBeInstanceOf(Set);
-    expect(ALLOWED_RELATIONSHIP_TYPES.size).toBe(7);
+    expect(ALLOWED_RELATIONSHIP_TYPES.size).toBe(17);
   });
 });
 

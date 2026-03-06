@@ -56,7 +56,7 @@ Return JSON:
 Rules:
 - Normalize entity names to lowercase
 - Entity types: person, organization, location, event, concept
-- Relationship types: WORKS_AT, LIVES_AT, KNOWS, MARRIED_TO, PREFERS, DECIDED, RELATED_TO
+- Relationship types: WORKS_AT, LIVES_AT, KNOWS, MARRIED_TO, PREFERS, DECIDED, RELATED_TO, REPORTS_TO, PART_OF, OWNS, ATTENDED, CREATED, MANAGES, COLLABORATES_WITH, FOUNDED, STUDIED_AT, LOCATED_IN
 - Confidence: 0.0-1.0
 - Only extract SPECIFIC named entities: real people, companies, products, tools, places, events
 - Do NOT extract generic technology terms (python, javascript, docker, linux, api, sql, html, css, json, etc.)
@@ -481,14 +481,15 @@ function validateExtractionResult(raw: Record<string, unknown>): ExtractionResul
 /**
  * Use an LLM to determine whether two memories genuinely conflict.
  * Returns which memory to keep, or "both" if they don't actually conflict.
- * Returns "skip" on any failure (network, parse, disabled config).
+ * Returns "skip" on permanent failure (JSON parse, empty response, disabled config).
+ * Returns "transient" on network/timeout errors so the caller can retry later.
  */
 export async function resolveConflict(
   memA: string,
   memB: string,
   config: ExtractionConfig,
   abortSignal?: AbortSignal,
-): Promise<"a" | "b" | "both" | "skip"> {
+): Promise<"a" | "b" | "both" | "skip" | "transient"> {
   if (!config.enabled) return "skip";
 
   try {
@@ -517,7 +518,10 @@ Return JSON: {"keep": "a"|"b"|"both", "reason": "brief explanation"}`,
     const keep = parsed.keep;
     if (keep === "a" || keep === "b" || keep === "both") return keep;
     return "skip";
-  } catch {
+  } catch (err) {
+    // Distinguish transient (network/timeout) from permanent (JSON parse, bad response)
+    // so callers can store pending pairs for retry instead of silently dropping them.
+    if (isTransientError(err)) return "transient";
     return "skip";
   }
 }

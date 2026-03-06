@@ -62,6 +62,12 @@ export type SleepCycleResult = {
     memoriesScanned: number;
     memoriesSuperseded: number;
   };
+  // Phase 3d: Pending Conflict Retry (OP-125)
+  pendingConflictRetry: {
+    pairsRetried: number;
+    resolved: number;
+    permanentlySkipped: number;
+  };
   // Phase 4: Orphan Cleanup
   cleanup: {
     entitiesRemoved: number;
@@ -137,6 +143,10 @@ export type SleepCycleOptions = {
   conflictSimilarityThreshold?: number; // Cosine threshold for candidate selection (default: 0.82)
   conflictMaxCandidates?: number; // Max candidates per memory (default: 5)
 
+  // Phase 3d: Pending Conflict Retry (OP-125)
+  skipPendingConflictRetry?: boolean; // Skip Phase 3d (default: false)
+  pendingConflictMaxRetries?: number; // Max retry attempts before permanently skipping (default: 3)
+
   // Phase 3: Decay
   decayRetentionThreshold?: number; // Below this, memory is pruned (default: 0.1)
   decayBaseHalfLifeDays?: number; // Base half-life in days (default: 30)
@@ -166,6 +176,7 @@ export type SleepCycleOptions = {
       | "decay"
       | "temporalStaleness"
       | "retroactiveConflictScan"
+      | "pendingConflictRetry"
       | "extraction"
       | "retroactiveTagging"
       | "cleanup"

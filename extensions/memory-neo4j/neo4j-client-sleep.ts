@@ -876,6 +876,107 @@ export async function fetchMemoriesForRetroactiveConflictScan(
   }));
 }
 
+// --------------------------------------------------------------------------
+// Sleep Cycle: Pending Conflict Pairs (OP-125)
+// --------------------------------------------------------------------------
+
+/**
+ * Store a pending conflict pair as a PENDING_CONFLICT relationship.
+ * Uses canonical direction (lower ID → higher ID) so MERGE is idempotent.
+ * Called when resolveConflict returns "transient" — the pair will be retried
+ * on the next sleep cycle.
+ */
+export async function storePendingConflict(
+  session: Session,
+  idA: string,
+  idB: string,
+): Promise<void> {
+  const [srcId, dstId] = idA < idB ? [idA, idB] : [idB, idA];
+  await session.run(
+    `MATCH (src:Memory {id: $srcId}), (dst:Memory {id: $dstId})
+     MERGE (src)-[r:PENDING_CONFLICT]->(dst)
+     ON CREATE SET r.retryCount = 0, r.createdAt = $now`,
+    { srcId, dstId, now: new Date().toISOString() },
+  );
+}
+
+/**
+ * Fetch all pending conflict pairs eligible for retry.
+ * Only returns pairs where both memories are still valid (validUntil IS NULL).
+ */
+export async function fetchPendingConflicts(
+  session: Session,
+  agentId?: string,
+  limit: number = 50,
+): Promise<
+  Array<{
+    memoryA: { id: string; text: string; importance: number; createdAt: string };
+    memoryB: { id: string; text: string; importance: number; createdAt: string };
+    retryCount: number;
+  }>
+> {
+  const agentFilter = agentId ? "AND a.agentId = $agentId AND b.agentId = $agentId" : "";
+  const result = await session.run(
+    `MATCH (a:Memory)-[r:PENDING_CONFLICT]->(b:Memory)
+     WHERE a.validUntil IS NULL AND b.validUntil IS NULL ${agentFilter}
+     RETURN a.id AS aId, a.text AS aText, a.importance AS aImportance, a.createdAt AS aCreatedAt,
+            b.id AS bId, b.text AS bText, b.importance AS bImportance, b.createdAt AS bCreatedAt,
+            r.retryCount AS retryCount
+     LIMIT $limit`,
+    agentId ? { agentId, limit: neo4j.int(limit) } : { limit: neo4j.int(limit) },
+  );
+
+  return result.records.map((r) => ({
+    memoryA: {
+      id: r.get("aId") as string,
+      text: r.get("aText") as string,
+      importance: r.get("aImportance") as number,
+      createdAt: String(r.get("aCreatedAt") ?? ""),
+    },
+    memoryB: {
+      id: r.get("bId") as string,
+      text: r.get("bText") as string,
+      importance: r.get("bImportance") as number,
+      createdAt: String(r.get("bCreatedAt") ?? ""),
+    },
+    retryCount: (r.get("retryCount") as number) ?? 0,
+  }));
+}
+
+/**
+ * Remove the PENDING_CONFLICT relationship between two memories.
+ * Called when the conflict is resolved (or permanently unresolvable).
+ */
+export async function clearPendingConflict(
+  session: Session,
+  idA: string,
+  idB: string,
+): Promise<void> {
+  await session.run(
+    `MATCH (a:Memory)-[r:PENDING_CONFLICT]-(b:Memory)
+     WHERE (a.id = $idA AND b.id = $idB) OR (a.id = $idB AND b.id = $idA)
+     DELETE r`,
+    { idA, idB },
+  );
+}
+
+/**
+ * Increment the retry counter on a PENDING_CONFLICT relationship.
+ * Called after each failed retry attempt so we can enforce MAX_RETRIES.
+ */
+export async function incrementPendingConflictRetry(
+  session: Session,
+  idA: string,
+  idB: string,
+): Promise<void> {
+  await session.run(
+    `MATCH (a:Memory)-[r:PENDING_CONFLICT]-(b:Memory)
+     WHERE (a.id = $idA AND b.id = $idB) OR (a.id = $idB AND b.id = $idA)
+     SET r.retryCount = r.retryCount + 1`,
+    { idA, idB },
+  );
+}
+
 /**
  * Get a single field value from a Memory node.
  * Returns undefined if the memory or field doesn't exist.

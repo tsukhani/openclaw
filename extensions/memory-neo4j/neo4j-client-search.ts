@@ -199,7 +199,7 @@ export async function graphSearch(
      WHERE score >= 0.5
      WITH entity
      ORDER BY score DESC
-     LIMIT 5
+     LIMIT 10
 
      // Collect direct mentions
      OPTIONAL MATCH (entity)<-[rm:MENTIONS]-(m:Memory)

@@ -1679,7 +1679,7 @@ describe("resolveConflict", () => {
       .mockRejectedValue(new DOMException("signal timed out", "TimeoutError"));
 
     const result = await resolveConflict("mem A", "mem B", enabledConfig);
-    expect(result).toBe("skip");
+    expect(result).toBe("transient");
   });
 
   it("should return 'skip' on invalid JSON response", async () => {
@@ -1703,7 +1703,7 @@ describe("resolveConflict", () => {
     });
 
     const result = await resolveConflict("mem A", "mem B", enabledConfig);
-    expect(result).toBe("skip");
+    expect(result).toBe("transient");
   });
 
   it("should return 'skip' when response has no content", async () => {

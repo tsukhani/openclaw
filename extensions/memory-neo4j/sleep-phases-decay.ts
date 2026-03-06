@@ -7,7 +7,7 @@
  */
 
 import type { ExtractionConfig } from "./config.js";
-import { classifyTemporalStaleness } from "./extractor.js";
+import { classifyTemporalStaleness, resolveConflict } from "./extractor.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger } from "./schema.js";
 import type { SleepCycleOptions, SleepCycleResult } from "./sleep-cycle-types.js";
@@ -133,6 +133,128 @@ export async function runTemporalStaleness(
     );
   } catch (err) {
     logger.warn(`memory-neo4j: [sleep] Phase 3b error: ${String(err)}`);
+  }
+}
+
+// ============================================================================
+// Phase 3d: Pending Conflict Retry (OP-125)
+// ============================================================================
+
+/** Max retry attempts for a pending conflict pair before permanently abandoning. */
+const MAX_PENDING_CONFLICT_RETRIES = 3;
+
+/**
+ * Retry resolveConflict for pairs that previously failed with a transient LLM error.
+ *
+ * For each pending pair:
+ * - If resolved (a/b/both): apply the decision and clear the pending record.
+ * - If still transient AND retryCount < MAX_PENDING_CONFLICT_RETRIES: increment counter, leave pending.
+ * - If still transient AND exhausted: clear pending + log.
+ * - If permanent skip: clear pending + log.
+ */
+export async function runPendingConflictRetry(
+  db: Neo4jMemoryClient,
+  config: ExtractionConfig,
+  logger: Logger,
+  options: SleepCycleOptions,
+  result: SleepCycleResult,
+): Promise<void> {
+  const {
+    agentId,
+    abortSignal,
+    skipPendingConflictRetry = false,
+    pendingConflictMaxRetries = MAX_PENDING_CONFLICT_RETRIES,
+    llmConcurrency = 8,
+    onPhaseStart,
+    onProgress,
+  } = options;
+
+  if (abortSignal?.aborted) return;
+  if (!config.enabled) return;
+  if (skipPendingConflictRetry) {
+    logger.info("memory-neo4j: [sleep] Phase 3d skipped — pending conflict retry disabled");
+    return;
+  }
+
+  onPhaseStart?.("pendingConflictRetry");
+  logger.info("memory-neo4j: [sleep] Phase 3d: Pending Conflict Retry");
+
+  try {
+    const pairs = await db.fetchPendingConflicts(agentId);
+    result.pendingConflictRetry.pairsRetried = pairs.length;
+
+    if (pairs.length === 0) {
+      logger.info("memory-neo4j: [sleep] Phase 3d complete — no pending conflict pairs");
+      return;
+    }
+
+    for (let i = 0; i < pairs.length && !abortSignal?.aborted; i += llmConcurrency) {
+      const chunk = pairs.slice(i, i + llmConcurrency);
+      const outcomes = await Promise.allSettled(
+        chunk.map((pair) =>
+          resolveConflict(pair.memoryA.text, pair.memoryB.text, config, abortSignal),
+        ),
+      );
+
+      for (let k = 0; k < outcomes.length; k++) {
+        if (abortSignal?.aborted) break;
+        const pair = chunk[k];
+        const outcome = outcomes[k];
+        if (outcome.status !== "fulfilled") continue;
+
+        const decision = outcome.value;
+
+        if (decision === "a") {
+          await db.invalidateMemories([pair.memoryB.id]);
+          await db.clearPendingConflict(pair.memoryA.id, pair.memoryB.id);
+          result.pendingConflictRetry.resolved++;
+          onProgress?.(
+            "pendingConflictRetry",
+            `Kept A, invalidated B: "${pair.memoryB.text.slice(0, 40)}..."`,
+          );
+        } else if (decision === "b") {
+          await db.invalidateMemories([pair.memoryA.id]);
+          await db.clearPendingConflict(pair.memoryA.id, pair.memoryB.id);
+          result.pendingConflictRetry.resolved++;
+          onProgress?.(
+            "pendingConflictRetry",
+            `Kept B, invalidated A: "${pair.memoryA.text.slice(0, 40)}..."`,
+          );
+        } else if (decision === "both") {
+          await db.clearPendingConflict(pair.memoryA.id, pair.memoryB.id);
+          result.pendingConflictRetry.resolved++;
+          onProgress?.("pendingConflictRetry", `Kept both — no real conflict`);
+        } else if (decision === "transient") {
+          // Still unavailable — leave pending if budget remains, otherwise abandon
+          if (pair.retryCount + 1 >= pendingConflictMaxRetries) {
+            await db.clearPendingConflict(pair.memoryA.id, pair.memoryB.id);
+            result.pendingConflictRetry.permanentlySkipped++;
+            logger.warn(
+              `memory-neo4j: [sleep] Phase 3d abandoned pair after ${pendingConflictMaxRetries} transient failures: ${pair.memoryA.id.slice(0, 8)} vs ${pair.memoryB.id.slice(0, 8)}`,
+            );
+          } else {
+            await db.incrementPendingConflictRetry(pair.memoryA.id, pair.memoryB.id);
+            onProgress?.(
+              "pendingConflictRetry",
+              `Still transient (retry ${pair.retryCount + 1}/${pendingConflictMaxRetries})`,
+            );
+          }
+        } else {
+          // Permanent skip (bad JSON, empty response) — abandon the pair
+          await db.clearPendingConflict(pair.memoryA.id, pair.memoryB.id);
+          result.pendingConflictRetry.permanentlySkipped++;
+          logger.debug?.(
+            `memory-neo4j: [sleep] Phase 3d permanent skip for pair: ${pair.memoryA.id.slice(0, 8)} vs ${pair.memoryB.id.slice(0, 8)}`,
+          );
+        }
+      }
+    }
+
+    logger.info(
+      `memory-neo4j: [sleep] Phase 3d complete — ${result.pendingConflictRetry.pairsRetried} retried, ${result.pendingConflictRetry.resolved} resolved, ${result.pendingConflictRetry.permanentlySkipped} abandoned`,
+    );
+  } catch (err) {
+    logger.warn(`memory-neo4j: [sleep] Phase 3d error: ${String(err)}`);
   }
 }
 

@@ -322,8 +322,19 @@ export async function runConflictDetection(
         } else if (decision === "both") {
           result.conflict.resolved++;
           onProgress?.("conflict", `Kept both: no real conflict`);
+        } else if (decision === "transient") {
+          // LLM temporarily unavailable — store pair for retry on next sleep cycle (OP-125)
+          await db.storePendingConflict(pair.memoryA.id, pair.memoryB.id).catch((e) => {
+            logger.debug?.(
+              `memory-neo4j: storePendingConflict failed: ${e instanceof Error ? e.message : String(e)}`,
+            );
+          });
+          onProgress?.(
+            "conflict",
+            `Stored pending (LLM unavailable): "${pair.memoryA.text.slice(0, 40)}..."`,
+          );
         }
-        // "skip" = LLM unavailable, don't count as resolved
+        // "skip" = permanent failure (bad JSON, empty response) — don't count as resolved
       }
     }
 
