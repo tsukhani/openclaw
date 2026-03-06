@@ -5,8 +5,10 @@
  * Provides runtime parsing with env var resolution and defaults.
  */
 
-import type { MemoryCategory } from "./schema.js";
+import type { MemoryCategory, RerankerConfig } from "./schema.js";
 import { MEMORY_CATEGORIES } from "./schema.js";
+
+export type { RerankerConfig };
 
 export type { MemoryCategory };
 export { MEMORY_CATEGORIES };
@@ -112,6 +114,8 @@ export type MemoryNeo4jConfig = {
     /** Interval in ms between metric summary flushes (default: 60000) */
     logIntervalMs?: number;
   };
+  /** Cross-encoder reranker configuration (OP-130). Default: disabled. */
+  reranker?: RerankerConfig;
 };
 
 /**
@@ -330,6 +334,7 @@ export const memoryNeo4jConfigSchema = {
         "recencyWeight",
         "decomposition",
         "metrics",
+        "reranker",
       ],
       "memory-neo4j config",
     );
@@ -577,6 +582,43 @@ export const memoryNeo4jConfigSchema = {
       };
     }
 
+    // Parse reranker section (optional, disabled by default)
+    const rerankerRaw = cfg.reranker as Record<string, unknown> | undefined;
+    assertAllowedKeys(
+      rerankerRaw ?? {},
+      ["enabled", "provider", "model", "topK", "topJ", "minScore"],
+      "reranker config",
+    );
+    let reranker: RerankerConfig | undefined;
+    if (rerankerRaw) {
+      const rrEnabled = rerankerRaw.enabled !== false;
+      const rrProviderRaw = rerankerRaw.provider;
+      const rrProvider: RerankerConfig["provider"] =
+        rrProviderRaw === "llm" ? "llm" : rrProviderRaw === "none" ? "none" : "local";
+      const rrModel =
+        typeof rerankerRaw.model === "string" && rerankerRaw.model ? rerankerRaw.model : undefined;
+      const rrTopK =
+        typeof rerankerRaw.topK === "number" && rerankerRaw.topK > 0
+          ? Math.floor(rerankerRaw.topK)
+          : undefined;
+      const rrTopJ =
+        typeof rerankerRaw.topJ === "number" && rerankerRaw.topJ > 0
+          ? Math.floor(rerankerRaw.topJ)
+          : undefined;
+      const rrMinScore =
+        typeof rerankerRaw.minScore === "number" && rerankerRaw.minScore >= 0
+          ? rerankerRaw.minScore
+          : undefined;
+      reranker = {
+        enabled: rrEnabled,
+        provider: rrProvider,
+        model: rrModel,
+        topK: rrTopK,
+        topJ: rrTopJ,
+        minScore: rrMinScore,
+      };
+    }
+
     return {
       neo4j: {
         uri: neo4jUri,
@@ -620,6 +662,7 @@ export const memoryNeo4jConfigSchema = {
         enabled: decompositionEnabled,
       },
       metrics,
+      reranker,
     };
   },
 };

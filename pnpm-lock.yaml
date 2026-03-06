@@ -421,6 +421,25 @@ importers:
         specifier: ^6.27.0
         version: 6.27.0(ws@8.19.0)(zod@4.3.6)
 
+  extensions/memory-neo4j:
+    dependencies:
+      '@huggingface/transformers':
+        specifier: ^3.3.0
+        version: 3.8.1
+      '@sinclair/typebox':
+        specifier: 0.34.48
+        version: 0.34.48
+      neo4j-driver:
+        specifier: ^5.27.0
+        version: 5.28.3
+      openai:
+        specifier: ^6.17.0
+        version: 6.25.0(ws@8.19.0)(zod@4.3.6)
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+
   extensions/minimax-portal-auth: {}
 
   extensions/msteams:

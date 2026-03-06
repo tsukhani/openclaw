@@ -9,6 +9,8 @@
 // SearchConfig — subset of hybridSearch options relevant to eval variants
 // ============================================================================
 
+import type { RerankerConfig } from "../schema.js";
+
 export type SearchConfig = {
   /** Override whether graph search is enabled. Default: derived from extractionConfig. */
   graphEnabled?: boolean;
@@ -24,6 +26,8 @@ export type SearchConfig = {
   temporalRecencyEnabled?: boolean;
   /** Multiply recencyWeight by this factor. Default: 1.0. */
   temporalRecencyBoost?: number;
+  /** Reranker config overrides for this variant. Default: from plugin config. */
+  reranker?: Partial<RerankerConfig>;
 };
 
 // ============================================================================
@@ -45,6 +49,10 @@ export const EVAL_VARIANTS: Record<string, Partial<SearchConfig>> = {
   "no-temporal": { temporalRecencyEnabled: false },
   /** Double the recency boost weight. */
   "high-temporal": { temporalRecencyBoost: 2.0 },
+  /** Local ONNX cross-encoder reranker enabled (OP-130). Fetches topK=10, returns topJ=5. */
+  "with-reranker-local": {
+    reranker: { enabled: true, provider: "local" as const, topK: 10, topJ: 5 },
+  },
 };
 
 /**

@@ -12,11 +12,15 @@
  * Adapted from ontology project RRF implementation.
  */
 
+import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import type { MetricsCollector } from "./metrics.js";
+import { NO_OP_METRICS } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type {
   HybridSearchResult,
   Logger,
+  RerankerConfig,
   SearchSignalResult,
   SignalAttribution,
 } from "./schema.js";
@@ -336,6 +340,17 @@ export async function hybridSearch(
      * Used by the eval harness to implement variant ablations (vector-only, bm25-only, etc.).
      */
     weightOverride?: [number, number, number, number];
+    /**
+     * Cross-encoder reranker configuration (OP-130).
+     * When set and enabled, reranks the final candidate set before returning.
+     */
+    rerankerConfig?: RerankerConfig;
+    /**
+     * LLM extraction config — required when rerankerConfig.provider === "llm".
+     */
+    extractionConfig?: ExtractionConfig;
+    /** Metrics collector for reranker telemetry. Defaults to no-op. */
+    metricsCollector?: MetricsCollector;
   } = {},
 ): Promise<HybridSearchResult[]> {
   // Guard against empty queries
@@ -355,9 +370,16 @@ export async function hybridSearch(
     asOf,
     recencyWeight = 0.1,
     weightOverride,
+    rerankerConfig,
+    extractionConfig,
+    metricsCollector = NO_OP_METRICS,
   } = options;
 
-  const candidateLimit = Math.floor(Math.min(200, Math.max(1, limit * candidateMultiplier)));
+  // When reranking is active, fetch topK candidates before reranking; otherwise fetch limit*multiplier
+  const rerankerActive = rerankerConfig?.enabled && rerankerConfig.provider !== "none";
+  const candidateLimit = rerankerActive
+    ? Math.floor(Math.min(200, Math.max(1, rerankerConfig!.topK ?? 10)))
+    : Math.floor(Math.min(200, Math.max(1, limit * candidateMultiplier)));
 
   // 1. Generate query embedding
   const t0 = performance.now();
@@ -463,11 +485,27 @@ export async function hybridSearch(
     },
   }));
 
+  // 7b. Rerank candidates if configured (OP-130).
+  //     rerankCandidates handles disabled/none provider and errors gracefully.
+  let finalResults = results;
+  if (rerankerActive && rerankerConfig && extractionConfig && logger) {
+    const { rerankCandidates } = await import("./reranker.js");
+    finalResults = await rerankCandidates(
+      query,
+      results,
+      rerankerConfig,
+      extractionConfig,
+      logger,
+      metricsCollector,
+      undefined, // no per-search AbortSignal here
+    );
+  }
+
   // 6. Record retrieval events (fire-and-forget for latency)
   // This tracks which memories are actually being used, enabling
   // retrieval-based importance adjustment.
-  if (results.length > 0) {
-    const memoryIds = results.map((r) => r.id);
+  if (finalResults.length > 0) {
+    const memoryIds = finalResults.map((r) => r.id);
     db.recordRetrievals(memoryIds).catch((err) => {
       logger?.debug?.(
         `memory-neo4j: recordRetrievals failed (non-critical): ${err instanceof Error ? err.message : String(err)}`,
@@ -479,10 +517,11 @@ export async function hybridSearch(
   const recencyStr = recencyWeight !== 0.1 ? ` recencyWeight=${recencyWeight}` : "";
   const asOfStr = asOf ? ` asOf=${asOf}` : "";
   const lowConfStr = lowConfidence ? " lowConf=true" : "";
+  const rerankerStr = rerankerActive ? ` reranker=${rerankerConfig?.provider}` : "";
   logger?.info?.(
     `memory-neo4j: [bench] hybridSearch ${(tFuse - t0).toFixed(0)}ms (embed=${(tEmbed - t0).toFixed(0)}ms, signals=${(tSignals - tEmbed).toFixed(0)}ms, fuse=${(tFuse - tSignals).toFixed(0)}ms) ` +
-      `type=${queryType} vec=${vectorResults.length} bm25=${bm25Results.length} graph=${graphResults.length} freshness=${freshnessSignal.length} → ${results.length} results${recencyStr}${asOfStr}${lowConfStr}`,
+      `type=${queryType} vec=${vectorResults.length} bm25=${bm25Results.length} graph=${graphResults.length} freshness=${freshnessSignal.length} → ${finalResults.length} results${recencyStr}${asOfStr}${lowConfStr}${rerankerStr}`,
   );
 
-  return results;
+  return finalResults;
 }

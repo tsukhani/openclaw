@@ -147,6 +147,10 @@ export type HybridSearchResult = {
    *  second result scored well below the top. Consumers may use this to abstain
    *  from injecting context rather than risk hallucination. */
   lowConfidence?: boolean;
+  /** Rerank score [0,1] when reranker is enabled. Undefined otherwise. */
+  rerankScore?: number;
+  /** Original pre-rerank RRF score, preserved for debugging. */
+  rrfScore?: number;
   signals?: {
     vector: SignalAttribution;
     bm25: SignalAttribution;
@@ -155,6 +159,22 @@ export type HybridSearchResult = {
     freshness?: SignalAttribution; // validFrom-based temporal freshness (OP-129)
   };
 };
+
+/** Configuration for the cross-encoder reranker (OP-130). */
+export interface RerankerConfig {
+  /** Enable/disable the reranker. Default: false. */
+  enabled: boolean;
+  /** Provider. Default: "local". */
+  provider: "local" | "llm" | "none";
+  /** ONNX model name from HuggingFace. Default: "cross-encoder/ms-marco-MiniLM-L-6-v2". */
+  model?: string;
+  /** Number of candidates to fetch before reranking. Default: 10. */
+  topK?: number;
+  /** Number of results to return after reranking. Default: 5. */
+  topJ?: number;
+  /** Drop results below this rerank score. Default: 0 (keep all). */
+  minScore?: number;
+}
 
 // ============================================================================
 // Input Types

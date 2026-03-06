@@ -288,6 +288,11 @@ function buildSearchOptions(
     weightOverride = [vw, bw, gw, 0.2];
   }
 
+  // Reranker config: merge plugin config with variant overrides
+  const rerankerConfig = variant.reranker
+    ? { ...(cfg.reranker ?? { enabled: false, provider: "local" as const }), ...variant.reranker }
+    : cfg.reranker;
+
   return {
     graphEnabled,
     searchOptions: {
@@ -296,6 +301,7 @@ function buildSearchOptions(
       graphRelTypes: cfg.graphRelTypes,
       recencyWeight,
       weightOverride,
+      ...(rerankerConfig ? { rerankerConfig, extractionConfig } : {}),
     },
   };
 }
