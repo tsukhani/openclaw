@@ -20,8 +20,9 @@
 import { randomUUID } from "node:crypto";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "../config.js";
 import type { Embeddings } from "../embeddings.js";
+import { runBackgroundExtraction } from "../extractor.js";
 import type { Neo4jMemoryClient } from "../neo4j-client.js";
-import type { MemoryCategory } from "../schema.js";
+import type { Logger, MemoryCategory } from "../schema.js";
 import { hybridSearch } from "../search.js";
 import { buildCiSummary, computeRegression, loadBaseline, saveBaseline } from "./baseline.js";
 import { loadDataset } from "./datasets/loader.js";
@@ -71,6 +72,14 @@ export async function runEval(
   const agentPrefix = `eval-${runId}`;
   const variantName = options.variant ?? "default";
 
+  // Minimal logger for extraction (writes to stderr to avoid polluting eval output)
+  const logger: Logger = {
+    info: (msg) => process.stderr.write(`[eval] ${msg}\n`),
+    warn: (msg) => process.stderr.write(`[eval:warn] ${msg}\n`),
+    error: (msg) => process.stderr.write(`[eval:error] ${msg}\n`),
+    debug: () => {},
+  };
+
   // Resolve variant overrides
   const variantOverrides = resolveVariant(variantName);
 
@@ -102,6 +111,12 @@ export async function runEval(
     try {
       // 1. Store memories for this test case
       storedIds.push(...(await storeTestMemories(db, embeddings, tc, caseAgentId)));
+
+      // 1b. Run entity extraction to populate the entity graph so graph signal is non-zero.
+      //     Without this, graphSearch returns 0 results because no Entity nodes exist.
+      if (extractionConfig.enabled && tc.memories.length > 0) {
+        await extractMemoriesInBatches(tc.memories, db, embeddings, extractionConfig, logger);
+      }
 
       // 2. Resolve search parameters for this variant
       const { graphEnabled, searchOptions } = buildSearchOptions(
@@ -172,6 +187,13 @@ export async function runEval(
         await db.deleteMemoriesByIds(storedIds).catch(() => {
           // Non-critical cleanup failure
         });
+        // Also remove any Entity nodes that became orphaned after memory deletion
+        const orphans = await db.findOrphanEntities().catch(() => []);
+        if (orphans.length > 0) {
+          await db.deleteOrphanEntities(orphans.map((e) => e.id)).catch(() => {
+            // Non-critical cleanup failure
+          });
+        }
       }
     }
   }
@@ -313,6 +335,28 @@ async function handleCiMode(result: EvalRunResult, options: EvalRunOptions): Pro
 }
 
 // ── Memory ingestion ──────────────────────────────────────────────────────────
+
+/**
+ * Run entity extraction for all memories in batches of 5.
+ * Awaiting all extractions before hybridSearch ensures Entity nodes exist for graph signal.
+ */
+async function extractMemoriesInBatches(
+  memories: TestCase["memories"],
+  db: Neo4jMemoryClient,
+  embeddings: Embeddings,
+  extractionConfig: ExtractionConfig,
+  logger: Logger,
+): Promise<void> {
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < memories.length; i += BATCH_SIZE) {
+    const batch = memories.slice(i, i + BATCH_SIZE);
+    await Promise.all(
+      batch.map((mem) =>
+        runBackgroundExtraction(mem.id, mem.text, db, embeddings, extractionConfig, logger, 0),
+      ),
+    );
+  }
+}
 
 /**
  * Store all memories for a test case and return their IDs.
