@@ -32,8 +32,8 @@ export async function rerankCandidates(
   query: string,
   candidates: HybridSearchResult[],
   config: RerankerConfig,
-  extractionConfig: ExtractionConfig,
-  logger: Logger,
+  extractionConfig: ExtractionConfig | null | undefined,
+  logger: Logger | null | undefined,
   metricsCollector: MetricsCollector,
   signal?: AbortSignal,
 ): Promise<HybridSearchResult[]> {
@@ -52,7 +52,7 @@ export async function rerankCandidates(
 
     if (config.provider === "llm") {
       const { llmRerank } = await import("./reranker-llm.js");
-      rerankResults = await llmRerank(query, documents, extractionConfig, signal);
+      rerankResults = await llmRerank(query, documents, extractionConfig ?? undefined, signal);
     } else {
       // Default: local ONNX
       const { localRerank } = await import("./reranker-local.js");
@@ -86,14 +86,14 @@ export async function rerankCandidates(
     metricsCollector.increment("reranker.calls");
     metricsCollector.histogram("reranker.latency", latencyMs);
 
-    logger.info(
+    logger?.info(
       `memory-neo4j: [reranker] provider=${config.provider} candidates=${candidates.length} → ${final.length} in ${latencyMs}ms`,
     );
 
     return final;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logger.warn(
+    logger?.warn(
       `memory-neo4j: [reranker] error (${config.provider}), falling back to original order: ${msg}`,
     );
     metricsCollector.increment("reranker.errors");

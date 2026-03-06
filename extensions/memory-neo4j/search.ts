@@ -488,14 +488,14 @@ export async function hybridSearch(
   // 7b. Rerank candidates if configured (OP-130).
   //     rerankCandidates handles disabled/none provider and errors gracefully.
   let finalResults = results;
-  if (rerankerActive && rerankerConfig && extractionConfig && logger) {
+  if (rerankerActive && rerankerConfig) {
     const { rerankCandidates } = await import("./reranker.js");
     finalResults = await rerankCandidates(
       query,
       results,
       rerankerConfig,
-      extractionConfig,
-      logger,
+      extractionConfig ?? null,
+      logger ?? null,
       metricsCollector,
       undefined, // no per-search AbortSignal here
     );

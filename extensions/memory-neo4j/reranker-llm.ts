@@ -26,7 +26,7 @@ Scores must be numbers between 0 and 1.`;
 export async function llmRerank(
   query: string,
   documents: string[],
-  config: ExtractionConfig,
+  config: ExtractionConfig | undefined,
   signal?: AbortSignal,
 ): Promise<LocalRerankResult[]> {
   if (documents.length === 0) return [];
@@ -42,6 +42,9 @@ export async function llmRerank(
     { role: "user", content: userPrompt },
   ];
 
+  if (!config) {
+    return documents.map((_, i) => ({ index: i, relevanceScore: 0 }));
+  }
   const raw = await callOpenRouter(config, messages, signal);
 
   if (!raw) {
