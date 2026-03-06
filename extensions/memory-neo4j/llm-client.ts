@@ -195,6 +195,7 @@ async function anthropicRequest(
       await abortableDelay(500 * 2 ** attempt * (0.75 + Math.random() * 0.5), abortSignal);
     }
   }
+  return null;
 }
 
 /**
@@ -270,6 +271,7 @@ async function anthropicStreamRequest(
       await abortableDelay(500 * 2 ** attempt * (0.75 + Math.random() * 0.5), abortSignal);
     }
   }
+  return null;
 }
 
 // ── OpenAI-compatible API ───────────────────────────────────────────────────
@@ -319,6 +321,7 @@ async function openAIRequest(
       await abortableDelay(500 * 2 ** attempt * (0.75 + Math.random() * 0.5), abortSignal);
     }
   }
+  return null;
 }
 
 export async function parseNonStreaming(response: Response): Promise<string | null> {
