@@ -1,0 +1,272 @@
+{
+  "test_cases": [
+    {
+      "id": "temp-001",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-001-m0",
+          "text": "Tarun visited Tioman Island on February 13-18, 2025 for a family holiday",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-19T08:00:00Z"
+        },
+        {
+          "id": "temp-001-m1",
+          "text": "Tarun visited Langkawi in December 2024 for his wedding anniversary trip",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-12-28T08:00:00Z"
+        }
+      ],
+      "question": "Which trip happened more recently: Tioman Island or Langkawi?",
+      "golden_answer": "The Tioman Island trip (February 2025) happened more recently than the Langkawi trip (December 2024)",
+      "gold_memory_ids": ["temp-001-m0", "temp-001-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "temp-002",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-002-m0",
+          "text": "Tarun launched the Abundent Academy v1 course in March 2024",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2024-03-15T08:00:00Z"
+        },
+        {
+          "id": "temp-002-m1",
+          "text": "Tarun launched Abundent Academy v2 with AI module upgrades in September 2024",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2024-09-01T08:00:00Z"
+        },
+        {
+          "id": "temp-002-m2",
+          "text": "Tarun launched Abundent Academy v3 with voice AI features in January 2025",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2025-01-15T08:00:00Z"
+        }
+      ],
+      "question": "What is the latest version of Abundent Academy that was launched?",
+      "golden_answer": "Abundent Academy v3 was the latest launch, in January 2025 with voice AI features",
+      "gold_memory_ids": ["temp-002-m2"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "temp-003",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-003-m0",
+          "text": "Tarun started using OpenClaw for WhatsApp automation in October 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-10-05T08:00:00Z"
+        },
+        {
+          "id": "temp-003-m1",
+          "text": "Tarun added Discord integration to OpenClaw in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-10T08:00:00Z"
+        },
+        {
+          "id": "temp-003-m2",
+          "text": "Tarun set up memory-neo4j for persistent memory storage in December 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-12-01T08:00:00Z"
+        }
+      ],
+      "question": "When did Tarun first start using OpenClaw?",
+      "golden_answer": "Tarun started using OpenClaw in October 2024 for WhatsApp automation",
+      "gold_memory_ids": ["temp-003-m0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "temp-004",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-004-m0",
+          "text": "Tarun hired his first VA (virtual assistant) Raj in June 2024 for content writing",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-06-15T08:00:00Z"
+        },
+        {
+          "id": "temp-004-m1",
+          "text": "Tarun hired second VA Mei Lin in August 2024 for social media management",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-08-20T08:00:00Z"
+        }
+      ],
+      "question": "Who was the first VA that Tarun hired?",
+      "golden_answer": "Tarun's first VA was Raj, hired in June 2024 for content writing",
+      "gold_memory_ids": ["temp-004-m0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "temp-005",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-005-m0",
+          "text": "Tarun's first deployment to production of the Abundent Academy website was on April 3, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-03T10:00:00Z"
+        },
+        {
+          "id": "temp-005-m1",
+          "text": "Tarun deployed a hotfix to production on April 5, 2024 to fix the payment gateway",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-05T14:30:00Z"
+        },
+        {
+          "id": "temp-005-m2",
+          "text": "Tarun deployed the v2 feature release to production on September 15, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-15T09:00:00Z"
+        }
+      ],
+      "question": "When was the last time Tarun deployed to production?",
+      "golden_answer": "The last deployment to production was on September 15, 2024 for the v2 feature release",
+      "gold_memory_ids": ["temp-005-m2"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "temp-006",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-006-m0",
+          "text": "Tarun attended the AI Malaysia Summit in February 2024 as a speaker",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-02-20T08:00:00Z"
+        },
+        {
+          "id": "temp-006-m1",
+          "text": "Tarun attended the Southeast Asia SaaS Conference in May 2024 as an attendee",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-12T08:00:00Z"
+        },
+        {
+          "id": "temp-006-m2",
+          "text": "Tarun spoke at the Kuala Lumpur Tech Founders Meetup in August 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-08-25T08:00:00Z"
+        }
+      ],
+      "question": "What was the first conference Tarun attended or spoke at in 2024?",
+      "golden_answer": "Tarun attended the AI Malaysia Summit in February 2024 as a speaker",
+      "gold_memory_ids": ["temp-006-m0"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "temp-007",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-007-m0",
+          "text": "Tarun decided to move the OpenClaw gateway from his home PC to a VPS in November 2024",
+          "category": "decision",
+          "importance": 0.8,
+          "createdAt": "2024-11-20T08:00:00Z"
+        },
+        {
+          "id": "temp-007-m1",
+          "text": "Tarun completed the VPS migration and shut down the home PC gateway on December 3, 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-12-03T08:00:00Z"
+        }
+      ],
+      "question": "When did Tarun actually complete the gateway migration to VPS?",
+      "golden_answer": "Tarun completed the VPS migration on December 3, 2024",
+      "gold_memory_ids": ["temp-007-m1"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "temp-008",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-008-m0",
+          "text": "Tarun's oldest son Arya started Year 1 at Kinabalu International School in January 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-01-10T08:00:00Z"
+        },
+        {
+          "id": "temp-008-m1",
+          "text": "Tarun enrolled his younger son Rohan in preschool at Little Explorers in August 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-08-01T08:00:00Z"
+        }
+      ],
+      "question": "Which of Tarun's children started school first?",
+      "golden_answer": "Arya started school first, enrolling in Year 1 at Kinabalu International School in January 2024, before Rohan started preschool in August 2024",
+      "gold_memory_ids": ["temp-008-m0", "temp-008-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "temp-009",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-009-m0",
+          "text": "Tarun started intermittent fasting (16:8) in January 2025 to improve energy levels",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-05T08:00:00Z"
+        },
+        {
+          "id": "temp-009-m1",
+          "text": "Tarun started daily cold showers in March 2025 after reading Andrew Huberman's protocols",
+          "category": "fact",
+          "importance": 0.6,
+          "createdAt": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "Which health habit did Tarun adopt first, intermittent fasting or cold showers?",
+      "golden_answer": "Tarun started intermittent fasting in January 2025, before starting daily cold showers in March 2025",
+      "gold_memory_ids": ["temp-009-m0", "temp-009-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "temp-010",
+      "ability": "temporal",
+      "memories": [
+        {
+          "id": "temp-010-m0",
+          "text": "Tarun signed the lease for the Bangsar South office on March 1, 2024 (18-month term)",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-03-01T08:00:00Z"
+        },
+        {
+          "id": "temp-010-m1",
+          "text": "Tarun's Bangsar South office lease expires August 31, 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-03-01T09:00:00Z"
+        }
+      ],
+      "question": "When does Tarun's office lease expire?",
+      "golden_answer": "Tarun's Bangsar South office lease expires August 31, 2025",
+      "gold_memory_ids": ["temp-010-m1"],
+      "metadata": { "difficulty": "easy" }
+    }
+  ]
+}

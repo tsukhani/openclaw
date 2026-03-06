@@ -1,0 +1,251 @@
+{
+  "test_cases": [
+    {
+      "id": "upd-001",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-001-m0",
+          "text": "Tarun's OpenRouter API key was last rotated on January 15, 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "upd-001-m1",
+          "text": "Tarun rotated his OpenRouter API key on February 20, 2025 after a security review",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-20T08:00:00Z"
+        }
+      ],
+      "question": "When was Tarun's OpenRouter API key last rotated?",
+      "golden_answer": "Tarun's OpenRouter API key was last rotated on February 20, 2025 after a security review",
+      "gold_memory_ids": ["upd-001-m1"],
+      "metadata": { "difficulty": "medium", "notes": "upd-001-m1 supersedes upd-001-m0" }
+    },
+    {
+      "id": "upd-002",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-002-m0",
+          "text": "Tarun's monthly revenue target for Abundent Academy was RM 30,000 set in Q1 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-01-01T08:00:00Z"
+        },
+        {
+          "id": "upd-002-m1",
+          "text": "Tarun updated his Abundent Academy monthly revenue target to RM 50,000 after Q2 growth in July 2024",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2024-07-01T08:00:00Z"
+        }
+      ],
+      "question": "What is Tarun's current monthly revenue target for Abundent Academy?",
+      "golden_answer": "Tarun's current monthly revenue target is RM 50,000, updated in July 2024 after Q2 growth",
+      "gold_memory_ids": ["upd-002-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "upd-003",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-003-m0",
+          "text": "Tarun used to wake up at 7:00 AM every morning",
+          "category": "preference",
+          "importance": 0.6,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-003-m1",
+          "text": "Tarun changed his morning routine to 5:30 AM wake-up in October 2024 to add 90 minutes of deep work before family time",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-10-15T08:00:00Z"
+        }
+      ],
+      "question": "What time does Tarun wake up?",
+      "golden_answer": "Tarun wakes up at 5:30 AM since October 2024, changed from 7:00 AM to add deep work time",
+      "gold_memory_ids": ["upd-003-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "upd-004",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-004-m0",
+          "text": "Tarun's OpenClaw gateway runs on a Raspberry Pi 4 at home",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-05-01T08:00:00Z"
+        },
+        {
+          "id": "upd-004-m1",
+          "text": "Tarun migrated his OpenClaw gateway from Raspberry Pi to a Hetzner VPS (CX21) in December 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-12-10T08:00:00Z"
+        }
+      ],
+      "question": "Where does Tarun's OpenClaw gateway run?",
+      "golden_answer": "Tarun's OpenClaw gateway now runs on a Hetzner VPS (CX21) since December 2024, migrated from a Raspberry Pi",
+      "gold_memory_ids": ["upd-004-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "upd-005",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-005-m0",
+          "text": "Tarun's Abundent Academy membership price was RM 199/month launched in March 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-03-01T08:00:00Z"
+        },
+        {
+          "id": "upd-005-m1",
+          "text": "Tarun raised Abundent Academy membership price to RM 299/month starting November 2024, grandfathering existing members",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2024-10-25T08:00:00Z"
+        }
+      ],
+      "question": "How much does Abundent Academy membership currently cost?",
+      "golden_answer": "Abundent Academy membership currently costs RM 299/month (raised from RM 199 in November 2024, existing members grandfathered)",
+      "gold_memory_ids": ["upd-005-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "upd-006",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-006-m0",
+          "text": "Tarun's main AI model for extraction was GPT-4o through OpenAI",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-01T08:00:00Z"
+        },
+        {
+          "id": "upd-006-m1",
+          "text": "Tarun switched from GPT-4o to Claude claude-sonnet-4-6 via Anthropic API in January 2025 for better instruction following",
+          "category": "decision",
+          "importance": 0.8,
+          "createdAt": "2025-01-10T08:00:00Z"
+        }
+      ],
+      "question": "Which AI model does Tarun currently use for extraction tasks?",
+      "golden_answer": "Tarun currently uses Claude claude-sonnet-4-6 via Anthropic API, switched from GPT-4o in January 2025",
+      "gold_memory_ids": ["upd-006-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "upd-007",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-007-m0",
+          "text": "Tarun's LinkedIn posting schedule was three times per week (Mon, Wed, Fri)",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-01T08:00:00Z"
+        },
+        {
+          "id": "upd-007-m1",
+          "text": "Tarun changed LinkedIn posting schedule to twice per week (Tue, Thu at 9 AM MYT) in September 2024 to maintain quality over quantity",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-09-05T08:00:00Z"
+        }
+      ],
+      "question": "What is Tarun's current LinkedIn posting schedule?",
+      "golden_answer": "Tarun now posts on LinkedIn twice per week, on Tuesdays and Thursdays at 9 AM MYT",
+      "gold_memory_ids": ["upd-007-m1"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "upd-008",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-008-m0",
+          "text": "Tarun's personal email was tarun@gmail.com",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-01-01T08:00:00Z"
+        },
+        {
+          "id": "upd-008-m1",
+          "text": "Tarun migrated to tarun@abundentacademy.com as his primary business email in May 2024, keeping Gmail for personal",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-05-20T08:00:00Z"
+        }
+      ],
+      "question": "What is Tarun's primary business email address?",
+      "golden_answer": "Tarun's primary business email is tarun@abundentacademy.com, migrated in May 2024",
+      "gold_memory_ids": ["upd-008-m1"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "upd-009",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-009-m0",
+          "text": "Tarun's VA Raj was working 20 hours per week on content writing",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-20T08:00:00Z"
+        },
+        {
+          "id": "upd-009-m1",
+          "text": "Tarun increased Raj's hours to 30 hours per week in October 2024 after Abundent Academy growth",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-01T08:00:00Z"
+        }
+      ],
+      "question": "How many hours per week does Raj (Tarun's VA) currently work?",
+      "golden_answer": "Raj currently works 30 hours per week, increased from 20 hours in October 2024",
+      "gold_memory_ids": ["upd-009-m1"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "upd-010",
+      "ability": "updates",
+      "memories": [
+        {
+          "id": "upd-010-m0",
+          "text": "Tarun planned to launch a YouTube channel in Q3 2024",
+          "category": "decision",
+          "importance": 0.6,
+          "createdAt": "2024-04-15T08:00:00Z"
+        },
+        {
+          "id": "upd-010-m1",
+          "text": "Tarun decided to postpone the YouTube channel launch to Q1 2025 to focus on Abundent Academy growth",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-07-01T08:00:00Z"
+        },
+        {
+          "id": "upd-010-m2",
+          "text": "Tarun launched his YouTube channel 'Abundent with AI' on February 5, 2025 with the first video on n8n automation",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-05T08:00:00Z"
+        }
+      ],
+      "question": "Has Tarun launched his YouTube channel yet?",
+      "golden_answer": "Yes, Tarun launched his YouTube channel 'Abundent with AI' on February 5, 2025, starting with n8n automation content",
+      "gold_memory_ids": ["upd-010-m2"],
+      "metadata": { "difficulty": "hard" }
+    }
+  ]
+}

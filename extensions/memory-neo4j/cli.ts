@@ -14,6 +14,8 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { passesAttentionGate } from "./attention-gate.js";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import { runEval } from "./eval/index.js";
+import type { EvalOutputFormat, MemoryAbility } from "./eval/types.js";
 import { stripMessageWrappers } from "./message-utils.js";
 import { metrics } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
@@ -897,6 +899,92 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
         .action(() => {
           console.log(JSON.stringify(metrics.snapshot(), null, 2));
         });
+
+      memory
+        .command("eval")
+        .description("Run retrieval evaluation against custom fixtures or LongMemEval benchmark")
+        .option(
+          "--dataset <name>",
+          'Dataset to evaluate: "custom", "longmemeval_s", or a single ability name (extraction|temporal|updates|multi-session|abstention)',
+          "custom",
+        )
+        .option(
+          "--ability <name>",
+          "Filter to a specific ability: extraction|temporal|updates|multi-session|abstention",
+        )
+        .option("--k <n>", "Retrieval cutoff K (default: 5)", "5")
+        .option(
+          "--format <fmt>",
+          "Output format: console|json|markdown (default: console)",
+          "console",
+        )
+        .option("--output <path>", "Write output to file (for json/markdown formats)")
+        .option("--e2e", "Run end-to-end answer generation and grading (Tier 2)")
+        .option("--no-judge", "Skip LLM judge (context completeness will not be evaluated)")
+        .action(
+          async (opts: {
+            dataset: string;
+            ability?: string;
+            k: string;
+            format: string;
+            output?: string;
+            e2e?: boolean;
+            judge?: boolean;
+          }) => {
+            const k = parseInt(opts.k, 10);
+            if (Number.isNaN(k) || k < 1) {
+              console.error("Error: --k must be a positive integer");
+              process.exitCode = 1;
+              return;
+            }
+
+            const validFormats: EvalOutputFormat[] = ["console", "json", "markdown"];
+            if (!validFormats.includes(opts.format as EvalOutputFormat)) {
+              console.error(`Error: --format must be one of: ${validFormats.join(", ")}`);
+              process.exitCode = 1;
+              return;
+            }
+
+            const validAbilities: MemoryAbility[] = [
+              "extraction",
+              "temporal",
+              "updates",
+              "multi-session",
+              "abstention",
+            ];
+            if (opts.ability && !validAbilities.includes(opts.ability as MemoryAbility)) {
+              console.error(`Error: --ability must be one of: ${validAbilities.join(", ")}`);
+              process.exitCode = 1;
+              return;
+            }
+
+            // Inform user if LLM judge is unavailable
+            const judgeEnabled = opts.judge !== false && extractionConfig.enabled;
+            if (!judgeEnabled && opts.judge !== false) {
+              console.warn(
+                "Warning: LLM judge disabled (no extraction API key configured). Context completeness metrics will be skipped.",
+              );
+            }
+
+            const runOptions = {
+              dataset: opts.dataset,
+              ability: opts.ability as MemoryAbility | undefined,
+              k,
+              format: opts.format as EvalOutputFormat,
+              endToEnd: opts.e2e === true && judgeEnabled,
+              outputFile: opts.output,
+            };
+
+            try {
+              await runEval(db, embeddings, extractionConfig, cfg, runOptions);
+            } catch (err) {
+              console.error(`\nEval failed: ${err instanceof Error ? err.message : String(err)}`);
+              process.exitCode = 1;
+            } finally {
+              await db.close();
+            }
+          },
+        );
     },
     { commands: [] }, // Adds subcommands to existing "memory" command, no conflict
   );

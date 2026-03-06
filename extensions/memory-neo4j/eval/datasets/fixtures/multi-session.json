@@ -1,0 +1,300 @@
+{
+  "test_cases": [
+    {
+      "id": "ms-001",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-001-m0",
+          "text": "Tarun's client Ahmad from Kuala Lumpur is interested in AI automation for his F&B business",
+          "category": "entity",
+          "importance": 0.8,
+          "sessionKey": "session-2025-01-10"
+        },
+        {
+          "id": "ms-001-m1",
+          "text": "Ahmad runs 3 restaurants in Bangsar and wants to automate his inventory ordering",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-01-15"
+        },
+        {
+          "id": "ms-001-m2",
+          "text": "Ahmad's budget for AI automation is RM 2,000 per month and he wants to start in March 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-01-20"
+        }
+      ],
+      "question": "What does Tarun know about his client Ahmad, including his business and budget?",
+      "golden_answer": "Ahmad is a client from Kuala Lumpur who runs 3 restaurants in Bangsar, wants to automate inventory ordering, has a budget of RM 2,000/month, and wants to start in March 2025",
+      "gold_memory_ids": ["ms-001-m0", "ms-001-m1", "ms-001-m2"],
+      "metadata": { "difficulty": "hard" }
+    },
+    {
+      "id": "ms-002",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-002-m0",
+          "text": "Tarun decided to create a new lead magnet: a free AI tool audit checklist",
+          "category": "decision",
+          "importance": 0.8,
+          "sessionKey": "session-2024-11-05"
+        },
+        {
+          "id": "ms-002-m1",
+          "text": "The AI tool audit checklist should cover 10 business processes: email, scheduling, invoicing, social media, customer support, content, data analysis, hiring, project management, and bookkeeping",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-08"
+        },
+        {
+          "id": "ms-002-m2",
+          "text": "The AI tool audit lead magnet was published on the Abundent Academy website on November 20, 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2024-11-20"
+        }
+      ],
+      "question": "What was the outcome of the AI tool audit checklist project?",
+      "golden_answer": "The AI tool audit checklist (covering 10 business processes) was published as a free lead magnet on Abundent Academy's website on November 20, 2024",
+      "gold_memory_ids": ["ms-002-m0", "ms-002-m1", "ms-002-m2"],
+      "metadata": { "difficulty": "hard" }
+    },
+    {
+      "id": "ms-003",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-003-m0",
+          "text": "Tarun's mother-in-law is visiting from Chennai from March 10 to April 5, 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-20"
+        },
+        {
+          "id": "ms-003-m1",
+          "text": "Tarun needs to ensure no travel is scheduled while mother-in-law is visiting in March-April",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-25"
+        },
+        {
+          "id": "ms-003-m2",
+          "text": "Tarun blocked March 10 to April 5 in his calendar as family time with no client meetings or travel",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-03-01"
+        }
+      ],
+      "question": "Is Tarun available for meetings or travel in late March 2025?",
+      "golden_answer": "Tarun is not available for meetings or travel from March 10 to April 5, 2025 as he has blocked those dates for family time while his mother-in-law visits",
+      "gold_memory_ids": ["ms-003-m0", "ms-003-m2"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "ms-004",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-004-m0",
+          "text": "Tarun has been working on an n8n workflow to automate LinkedIn post scheduling",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-01"
+        },
+        {
+          "id": "ms-004-m1",
+          "text": "The LinkedIn automation workflow uses Phantombuster to post on behalf of Tarun and sends confirmation to WhatsApp",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-05"
+        },
+        {
+          "id": "ms-004-m2",
+          "text": "The LinkedIn automation system went live on October 15, 2024 and has been running without issues",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-20"
+        }
+      ],
+      "question": "What was the outcome of the LinkedIn posting automation project?",
+      "golden_answer": "Tarun built an n8n workflow using Phantombuster for LinkedIn automation, which went live on October 15, 2024. It posts on his behalf and sends WhatsApp confirmations",
+      "gold_memory_ids": ["ms-004-m0", "ms-004-m1", "ms-004-m2"],
+      "metadata": { "difficulty": "hard" }
+    },
+    {
+      "id": "ms-005",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-005-m0",
+          "text": "Tarun is considering hiring a full-stack developer to help build Abundent Academy features",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-01"
+        },
+        {
+          "id": "ms-005-m1",
+          "text": "Tarun posted a job on LinkedIn for a full-stack developer with React and Node.js experience",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-10"
+        },
+        {
+          "id": "ms-005-m2",
+          "text": "Tarun hired Siva as his full-stack developer on January 6, 2025 at RM 6,500/month",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-01-06"
+        }
+      ],
+      "question": "Did Tarun hire a developer and what are the details?",
+      "golden_answer": "Yes, Tarun hired Siva as a full-stack developer on January 6, 2025 at RM 6,500/month after posting a job for React and Node.js skills on LinkedIn",
+      "gold_memory_ids": ["ms-005-m1", "ms-005-m2"],
+      "metadata": { "difficulty": "hard" }
+    },
+    {
+      "id": "ms-006",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-006-m0",
+          "text": "Tarun's dentist is Dr. Anitha at Smile Perfect Dental, Bangsar",
+          "category": "entity",
+          "importance": 0.8,
+          "sessionKey": "session-2024-09-01"
+        },
+        {
+          "id": "ms-006-m1",
+          "text": "Tarun has a dental appointment on March 15, 2025 at 2 PM for a routine cleaning",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-01"
+        }
+      ],
+      "question": "Who is Tarun's dentist and does he have any upcoming appointments?",
+      "golden_answer": "Tarun's dentist is Dr. Anitha at Smile Perfect Dental in Bangsar. He has a dental appointment on March 15, 2025 at 2 PM for a routine cleaning",
+      "gold_memory_ids": ["ms-006-m0", "ms-006-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "ms-007",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-007-m0",
+          "text": "Tarun started a new project to build an AI-powered expense tracker for small businesses",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-01-20"
+        },
+        {
+          "id": "ms-007-m1",
+          "text": "The expense tracker project is being built with Next.js frontend and Supabase backend",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-25"
+        },
+        {
+          "id": "ms-007-m2",
+          "text": "The expense tracker is targeting Malaysian SMEs and will be priced at RM 49/month",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-02-01"
+        }
+      ],
+      "question": "Tell me about Tarun's expense tracker project: tech stack, target market, and pricing",
+      "golden_answer": "Tarun is building an AI-powered expense tracker for Malaysian SMEs using Next.js and Supabase, priced at RM 49/month",
+      "gold_memory_ids": ["ms-007-m0", "ms-007-m1", "ms-007-m2"],
+      "metadata": { "difficulty": "hard" }
+    },
+    {
+      "id": "ms-008",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-008-m0",
+          "text": "Tarun and his business partner Vijay have a weekly sync every Monday at 11 AM",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-01"
+        },
+        {
+          "id": "ms-008-m1",
+          "text": "Vijay owns 30% equity in Abundent Academy and handles sales and partnerships",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2024-08-15"
+        }
+      ],
+      "question": "Who is Vijay and what is his role at Abundent Academy?",
+      "golden_answer": "Vijay is Tarun's business partner who owns 30% equity in Abundent Academy and handles sales and partnerships. They have a weekly sync every Monday at 11 AM",
+      "gold_memory_ids": ["ms-008-m0", "ms-008-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "ms-009",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-009-m0",
+          "text": "Tarun is planning to run a live 3-day AI Bootcamp event in Kuala Lumpur",
+          "category": "decision",
+          "importance": 0.8,
+          "sessionKey": "session-2025-01-05"
+        },
+        {
+          "id": "ms-009-m1",
+          "text": "The AI Bootcamp is scheduled for April 18-20, 2025 at KLCC Convention Centre",
+          "category": "fact",
+          "importance": 0.9,
+          "sessionKey": "session-2025-02-10"
+        },
+        {
+          "id": "ms-009-m2",
+          "text": "AI Bootcamp ticket price is RM 1,500 early bird (until March 31) and RM 2,200 regular",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-02-15"
+        }
+      ],
+      "question": "When and where is Tarun's AI Bootcamp, and how much do tickets cost?",
+      "golden_answer": "Tarun's AI Bootcamp is April 18-20, 2025 at KLCC Convention Centre. Tickets are RM 1,500 early bird (until March 31) or RM 2,200 regular",
+      "gold_memory_ids": ["ms-009-m1", "ms-009-m2"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "ms-010",
+      "ability": "multi-session",
+      "memories": [
+        {
+          "id": "ms-010-m0",
+          "text": "Tarun invested in a standing desk (FlexiSpot E7) in July 2024 for RM 2,800",
+          "category": "fact",
+          "importance": 0.6,
+          "sessionKey": "session-2024-07-20"
+        },
+        {
+          "id": "ms-010-m1",
+          "text": "Tarun set up an ergonomic chair (Herman Miller Aeron) alongside the standing desk in August 2024",
+          "category": "fact",
+          "importance": 0.6,
+          "sessionKey": "session-2024-08-10"
+        },
+        {
+          "id": "ms-010-m2",
+          "text": "Tarun's total home office setup investment in 2024 was approximately RM 15,000 including desk, chair, monitors, and audio equipment",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-31"
+        }
+      ],
+      "question": "What ergonomic equipment has Tarun set up in his home office?",
+      "golden_answer": "Tarun set up a FlexiSpot E7 standing desk (RM 2,800) in July 2024 and a Herman Miller Aeron chair in August 2024, with a total home office investment of ~RM 15,000 in 2024",
+      "gold_memory_ids": ["ms-010-m0", "ms-010-m1", "ms-010-m2"],
+      "metadata": { "difficulty": "hard" }
+    }
+  ]
+}

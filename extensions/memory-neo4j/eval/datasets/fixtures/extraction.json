@@ -1,0 +1,224 @@
+{
+  "test_cases": [
+    {
+      "id": "ext-001",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-001-m0",
+          "text": "Tarun prefers MYT (Malaysia Time, UTC+8) for all meeting scheduling",
+          "category": "preference",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-001-m1",
+          "text": "Tarun's secondary timezone preference is IST when working with Indian collaborators",
+          "category": "preference",
+          "importance": 0.6
+        }
+      ],
+      "question": "What is Tarun's preferred timezone for meetings?",
+      "golden_answer": "Tarun prefers MYT (Malaysia Time, UTC+8) for all meeting scheduling",
+      "gold_memory_ids": ["ext-001-m0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "ext-002",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-002-m0",
+          "text": "Tarun's phone number is +60125886583",
+          "category": "fact",
+          "importance": 0.9
+        },
+        {
+          "id": "ext-002-m1",
+          "text": "Tarun's WhatsApp is linked to his primary phone number",
+          "category": "fact",
+          "importance": 0.7
+        }
+      ],
+      "question": "What is Tarun's phone number?",
+      "golden_answer": "+60125886583",
+      "gold_memory_ids": ["ext-002-m0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "ext-003",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-003-m0",
+          "text": "Tarun uses a standing desk setup with dual monitors at his home office in Kuala Lumpur",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-m1",
+          "text": "Tarun's work-from-home setup includes a Blue Yeti microphone and Logitech 4K webcam",
+          "category": "fact",
+          "importance": 0.7
+        }
+      ],
+      "question": "What microphone does Tarun use for work calls?",
+      "golden_answer": "Tarun uses a Blue Yeti microphone",
+      "gold_memory_ids": ["ext-003-m1"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "ext-004",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-004-m0",
+          "text": "Tarun's primary bank is Maybank and his secondary is CIMB for business transactions",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-004-m1",
+          "text": "Tarun pays all business expenses via Maybank Visa credit card ending in 4521",
+          "category": "fact",
+          "importance": 0.8
+        }
+      ],
+      "question": "What is Tarun's primary bank?",
+      "golden_answer": "Tarun's primary bank is Maybank",
+      "gold_memory_ids": ["ext-004-m0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "ext-005",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-005-m0",
+          "text": "Tarun runs the Abundent Academy business, which teaches AI automation to solopreneurs",
+          "category": "entity",
+          "importance": 0.9
+        },
+        {
+          "id": "ext-005-m1",
+          "text": "Abundent Academy monthly subscription is priced at RM 299 per member",
+          "category": "fact",
+          "importance": 0.8
+        }
+      ],
+      "question": "What does Abundent Academy teach and how much does it cost?",
+      "golden_answer": "Abundent Academy teaches AI automation to solopreneurs and costs RM 299 per month per member",
+      "gold_memory_ids": ["ext-005-m0", "ext-005-m1"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "ext-006",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-006-m0",
+          "text": "Tarun's wife is Priya and they have two children: Arya (age 7) and Rohan (age 4)",
+          "category": "fact",
+          "importance": 0.9
+        },
+        {
+          "id": "ext-006-m1",
+          "text": "Tarun takes his kids to school every weekday at 7:30 AM before starting work",
+          "category": "fact",
+          "importance": 0.7
+        }
+      ],
+      "question": "What are the names of Tarun's children?",
+      "golden_answer": "Tarun's children are Arya (age 7) and Rohan (age 4)",
+      "gold_memory_ids": ["ext-006-m0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "ext-007",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-007-m0",
+          "text": "Tarun's preferred code editor is VS Code with the Cursor AI extension for pair programming",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-m1",
+          "text": "Tarun uses Neovim for quick file edits and server-side work",
+          "category": "preference",
+          "importance": 0.6
+        }
+      ],
+      "question": "What code editor does Tarun prefer for AI-assisted coding?",
+      "golden_answer": "Tarun uses VS Code with the Cursor AI extension for pair programming",
+      "gold_memory_ids": ["ext-007-m0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "ext-008",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-008-m0",
+          "text": "Tarun's home address is Unit 12B, Sri Hartamas Residences, Kuala Lumpur 50480",
+          "category": "fact",
+          "importance": 0.9
+        },
+        {
+          "id": "ext-008-m1",
+          "text": "Tarun's office is located in Bangsar South, Kuala Lumpur — he goes in on Tuesdays and Thursdays",
+          "category": "fact",
+          "importance": 0.7
+        }
+      ],
+      "question": "Where is Tarun's home address?",
+      "golden_answer": "Tarun's home address is Unit 12B, Sri Hartamas Residences, Kuala Lumpur 50480",
+      "gold_memory_ids": ["ext-008-m0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "ext-009",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-009-m0",
+          "text": "Tarun uses n8n self-hosted on a VPS for all workflow automation, not Zapier",
+          "category": "decision",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-009-m1",
+          "text": "n8n instance runs on the same server as the OpenClaw gateway at port 5678",
+          "category": "fact",
+          "importance": 0.7
+        }
+      ],
+      "question": "What automation platform does Tarun use?",
+      "golden_answer": "Tarun uses n8n self-hosted on a VPS for all workflow automation",
+      "gold_memory_ids": ["ext-009-m0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "ext-010",
+      "ability": "extraction",
+      "memories": [
+        {
+          "id": "ext-010-m0",
+          "text": "Tarun's LinkedIn profile URL is linkedin.com/in/tarun-sharma-kl",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-010-m1",
+          "text": "Tarun posts on LinkedIn every Tuesday and Thursday at 9 AM MYT for maximum reach",
+          "category": "fact",
+          "importance": 0.7
+        }
+      ],
+      "question": "When does Tarun post on LinkedIn?",
+      "golden_answer": "Tarun posts on LinkedIn every Tuesday and Thursday at 9 AM MYT for maximum reach",
+      "gold_memory_ids": ["ext-010-m1"],
+      "metadata": { "difficulty": "easy" }
+    }
+  ]
+}

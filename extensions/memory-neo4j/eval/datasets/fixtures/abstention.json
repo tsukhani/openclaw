@@ -1,0 +1,254 @@
+{
+  "test_cases": [
+    {
+      "id": "abs-001",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-001-m0",
+          "text": "Tarun prefers Italian food for client dinners at formal restaurants",
+          "category": "preference",
+          "importance": 0.6
+        },
+        {
+          "id": "abs-001-m1",
+          "text": "Tarun's go-to casual dining spot is a mamak stall near his office",
+          "category": "preference",
+          "importance": 0.6
+        }
+      ],
+      "question": "What is Tarun's favourite dessert?",
+      "golden_answer": "This information is not available in the stored memories",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "easy",
+        "notes": "Memories mention food preferences but not dessert specifically"
+      }
+    },
+    {
+      "id": "abs-002",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-002-m0",
+          "text": "Tarun exercises 3 times a week at the gym near his house",
+          "category": "fact",
+          "importance": 0.6
+        },
+        {
+          "id": "abs-002-m1",
+          "text": "Tarun started running 5km twice a week in September 2024",
+          "category": "fact",
+          "importance": 0.6
+        }
+      ],
+      "question": "What is Tarun's blood type?",
+      "golden_answer": "This information is not available in the stored memories",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "easy",
+        "notes": "Health memories exist but blood type not mentioned"
+      }
+    },
+    {
+      "id": "abs-003",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-003-m0",
+          "text": "Tarun drives a Toyota Camry 2022 model",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-m1",
+          "text": "Tarun's wife Priya drives a Perodua Myvi for her daily commute",
+          "category": "fact",
+          "importance": 0.6
+        }
+      ],
+      "question": "What is the license plate number of Tarun's car?",
+      "golden_answer": "This information is not available in the stored memories",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "easy",
+        "notes": "Car model stored but license plate not mentioned"
+      }
+    },
+    {
+      "id": "abs-004",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-004-m0",
+          "text": "Tarun uses Notion for personal knowledge management and project planning",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-m1",
+          "text": "Tarun uses Linear for bug tracking and sprint planning",
+          "category": "preference",
+          "importance": 0.7
+        }
+      ],
+      "question": "Does Tarun use Jira or Asana for project management?",
+      "golden_answer": "There is no information in the stored memories about Tarun using Jira or Asana. He uses Notion and Linear",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "PM tools stored but not Jira or Asana"
+      }
+    },
+    {
+      "id": "abs-005",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-005-m0",
+          "text": "Tarun's monthly electricity bill for his home averages RM 350",
+          "category": "fact",
+          "importance": 0.5
+        },
+        {
+          "id": "abs-005-m1",
+          "text": "Tarun installed solar panels on his roof in 2023 to reduce electricity costs",
+          "category": "fact",
+          "importance": 0.6
+        }
+      ],
+      "question": "What is Tarun's home WiFi password?",
+      "golden_answer": "This information is not available in the stored memories",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "easy",
+        "notes": "Home-related memories exist but WiFi password never stored"
+      }
+    },
+    {
+      "id": "abs-006",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-006-m0",
+          "text": "Tarun's Abundent Academy has 127 active members as of February 2025",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-006-m1",
+          "text": "Abundent Academy grew from 50 to 127 members between June and February",
+          "category": "fact",
+          "importance": 0.8
+        }
+      ],
+      "question": "What is Tarun's Abundent Academy churn rate?",
+      "golden_answer": "This information is not available in the stored memories — only member count growth is recorded, not churn rate",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Membership count stored but churn rate not mentioned"
+      }
+    },
+    {
+      "id": "abs-007",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-007-m0",
+          "text": "Tarun's parents live in Penang and he visits them once a month",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-m1",
+          "text": "Tarun has a younger sister named Kavitha who lives in Singapore",
+          "category": "fact",
+          "importance": 0.7
+        }
+      ],
+      "question": "What is Tarun's father's name?",
+      "golden_answer": "This information is not available in the stored memories",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "easy",
+        "notes": "Family members mentioned but father's name not stored"
+      }
+    },
+    {
+      "id": "abs-008",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-008-m0",
+          "text": "Tarun's VPS uses Ubuntu 22.04 LTS and runs the OpenClaw gateway process",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-m1",
+          "text": "The VPS has 4GB RAM and 80GB SSD storage at Hetzner",
+          "category": "fact",
+          "importance": 0.7
+        }
+      ],
+      "question": "What is the IP address of Tarun's VPS?",
+      "golden_answer": "This information is not available in the stored memories",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "easy",
+        "notes": "VPS specs stored but IP address not mentioned (sensitive)"
+      }
+    },
+    {
+      "id": "abs-009",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-009-m0",
+          "text": "Tarun reads books on business strategy and personal development",
+          "category": "preference",
+          "importance": 0.6
+        },
+        {
+          "id": "abs-009-m1",
+          "text": "Tarun reads for 30 minutes every morning before starting work",
+          "category": "fact",
+          "importance": 0.6
+        }
+      ],
+      "question": "What specific book is Tarun currently reading?",
+      "golden_answer": "This information is not available in the stored memories — only that he reads business and personal development books each morning",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Reading habit stored but current book title not mentioned"
+      }
+    },
+    {
+      "id": "abs-010",
+      "ability": "abstention",
+      "memories": [
+        {
+          "id": "abs-010-m0",
+          "text": "Tarun uses Stripe for payment processing on Abundent Academy",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-m1",
+          "text": "Tarun also accepts FPX and bank transfer payments for Malaysian customers",
+          "category": "fact",
+          "importance": 0.7
+        }
+      ],
+      "question": "What are Tarun's Stripe API keys?",
+      "golden_answer": "This information is not available in the stored memories — API keys and credentials are not stored",
+      "gold_memory_ids": [],
+      "metadata": {
+        "difficulty": "easy",
+        "notes": "Payment provider stored but API keys never stored (security-sensitive)"
+      }
+    }
+  ]
+}
