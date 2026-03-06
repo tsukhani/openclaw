@@ -425,6 +425,14 @@ export function registerMemoryHooks(
   );
   if (cfg.autoCapture) {
     logger.debug?.("memory-neo4j: registering agent_end hook for auto-capture");
+
+    // Circuit breaker: after CIRCUIT_BREAKER_THRESHOLD consecutive failures,
+    // suspend auto-capture to avoid silently failing on every turn when Neo4j
+    // or the embeddings service is down. Resets automatically on the first success.
+    const CIRCUIT_BREAKER_THRESHOLD = 5;
+    let consecutiveFailures = 0;
+    let circuitOpen = false;
+
     api.on("agent_end", (event, ctx) => {
       logger.debug?.(
         `memory-neo4j: agent_end fired (success=${event.success}, messages=${event.messages?.length ?? 0})`,
@@ -443,6 +451,12 @@ export function registerMemoryHooks(
         return;
       }
 
+      // Circuit open: skip to avoid hammering a broken downstream service.
+      if (circuitOpen) {
+        logger.debug?.("memory-neo4j: auto-capture circuit open, skipping");
+        return;
+      }
+
       const agentId = ctx.agentId || "default";
 
       // Fire-and-forget: run auto-capture asynchronously so it doesn't
@@ -458,11 +472,26 @@ export function registerMemoryHooks(
         ctx.workspaceDir, // Layer 3: pass workspace dir for task auto-tagging
         cfg.autoCaptureAssistant,
         sleepAbortController.signal,
-      ).catch((err) => {
-        logger.warn?.(
-          `memory-neo4j: auto-capture failed: ${err instanceof Error ? err.message : String(err)}`,
-        );
-      });
+      )
+        .then(() => {
+          // Success: reset circuit breaker so transient errors don't permanently suspend capture.
+          consecutiveFailures = 0;
+          circuitOpen = false;
+        })
+        .catch((err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          consecutiveFailures++;
+          if (consecutiveFailures >= CIRCUIT_BREAKER_THRESHOLD) {
+            circuitOpen = true;
+            logger.error?.(
+              `memory-neo4j: auto-capture CIRCUIT OPEN — ${consecutiveFailures} consecutive failures. Memory capture suspended. Last error: ${msg}`,
+            );
+          } else {
+            logger.warn?.(
+              `memory-neo4j: auto-capture failed (${consecutiveFailures}/${CIRCUIT_BREAKER_THRESHOLD}): ${msg}`,
+            );
+          }
+        });
     });
   }
 }
