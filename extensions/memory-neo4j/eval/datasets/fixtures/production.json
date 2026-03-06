@@ -1,0 +1,456 @@
+{
+  "dataset": "production",
+  "description": "50 questions grounded in actual production memories (agentId: main). Used with --production flag to evaluate real-world retrieval quality.",
+  "test_cases": [
+    {
+      "id": "prod-ext-001",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What spreadsheet ID is used for the daily expense tracker?",
+      "golden_answer": "1-gt0EoDHEBSL6Ss7C5wcwDIGjk5Em_hNSKTNfjOLY20",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-002",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What is Ada's voice and who is Sara in the context of voice cloning?",
+      "golden_answer": "Sara voice actor is Srie, a former Abundent staff member whose voice was cloned for Ada's TTS",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-003",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What are the three Abundent API credential files and what are they used for?",
+      "golden_answer": "Three separate credential files: abundent-api.json (public API key), abundent-backoffice.json (backoffice key + login), abundent-moderator.json (moderator key)",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ext-004",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What is the SonarQube project key for the Abundent API?",
+      "golden_answer": "abundent:api",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-005",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What is Yee Chun Lim's role and organization?",
+      "golden_answer": "Yee Chun Lim is the Education Director at AIMS",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-006",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What Slack channel must all coding work happen in?",
+      "golden_answer": "C0AJA22BB0F",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-007",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What are Tarun and Renu's birthdays?",
+      "golden_answer": "Tarun — August 23, 1974. Renu (wife) — June",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-008",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What is the Figma API limitation Ada knows about?",
+      "golden_answer": "The Figma API is read-only — cannot create or modify designs programmatically",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-009",
+      "ability": "extraction",
+      "memories": [],
+      "question": "Where is the mcporter MCP wrapper skill located?",
+      "golden_answer": "~/openclaw/skills/mcporter/SKILL.md with config at ~/.openclaw/workspace/config/mcporter.json",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-010",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What is Fatin Nasuha's role and company?",
+      "golden_answer": "Fatin Nasuha is the Office Administrator at Wolfpack Management Consulting",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-001",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was the memory sleep cycle phase 3b fix deployed?",
+      "golden_answer": "February 28, 2026",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-002",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was the RAG-Anything Phase 2 completed and the OpenClaw skill created?",
+      "golden_answer": "February 14, 2026",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-003",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When did the daily expense tracker spreadsheet get set up and when was the agentic memory deep research completed?",
+      "golden_answer": "Agentic memory deep research completed Feb 14, 2026. Expense tracker was set up before that.",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-temp-004",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was OP-66 Claude Code Remote Monitor completed?",
+      "golden_answer": "February 26, 2026",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-005",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was Tarun's Tioman Island family trip and how did he get there?",
+      "golden_answer": "February 13-18, 2026. Cataferry from Mersing.",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-006",
+      "ability": "temporal",
+      "memories": [],
+      "question": "What happened with the memory sleep cycle schedule change in February 2026?",
+      "golden_answer": "On Feb 16, 2026 the schedule was changed to a single nightly run at 3:00 AM MYT",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-temp-007",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was the workspace cleanup done and what was deleted?",
+      "golden_answer": "Feb 12, 2026. Deleted tmp/ (44 old carousel/images and other files)",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-008",
+      "ability": "temporal",
+      "memories": [],
+      "question": "What memory-neo4j code fixes were deployed on Feb 13, 2026?",
+      "golden_answer": "Three changes were pushed and deployed on Feb 13, 2026",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-temp-009",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was the MCP server configuration done and how many servers were configured?",
+      "golden_answer": "Feb 12, 2026. 7 total MCP servers configured.",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-010",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was the memory semantic dedup feature introduced?",
+      "golden_answer": "Feb 9, 2026",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-001",
+      "ability": "updates",
+      "memories": [],
+      "question": "What is the current email labeler cron job frequency after it was changed?",
+      "golden_answer": "Hourly (every hour), increased from 3x/day (1am/7am/1pm)",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-002",
+      "ability": "updates",
+      "memories": [],
+      "question": "What happened to the migration plan from Anthropic to OpenAI Pro?",
+      "golden_answer": "Migration plan to OpenAI Pro ($200/mo) was created due to Anthropic billing issues",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-upd-003",
+      "ability": "updates",
+      "memories": [],
+      "question": "What rule was added about following up on commitments?",
+      "golden_answer": "When saying 'I'll check back', 'I'll follow up', 'I'll let you know' — must schedule an actual cron job reminder",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-upd-004",
+      "ability": "updates",
+      "memories": [],
+      "question": "What SonarLint rule was added before pushing code to Bitbucket?",
+      "golden_answer": "ALWAYS run SonarLint check before pushing code changes to Bitbucket",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-005",
+      "ability": "updates",
+      "memories": [],
+      "question": "What was the decision about the memory consolidation script?",
+      "golden_answer": "The memory-consolidate.mjs script was rewritten",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-upd-006",
+      "ability": "updates",
+      "memories": [],
+      "question": "What is the morning coffee preference and when was it changed?",
+      "golden_answer": "Morning coffee preference moved to 7 AM",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-007",
+      "ability": "updates",
+      "memories": [],
+      "question": "What happened to the CouchDB SSL for Obsidian LiveSync task?",
+      "golden_answer": "CANCELLED (was pending from Feb 17)",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-008",
+      "ability": "updates",
+      "memories": [],
+      "question": "What was updated about the RAG ingestion pipeline on Feb 18, 2026?",
+      "golden_answer": "Agentic research pipeline improvement deployed Feb 18, 2026",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-upd-009",
+      "ability": "updates",
+      "memories": [],
+      "question": "What are Tarun's Anthropic Max account subscription preferences?",
+      "golden_answer": "3 Anthropic Max subscriptions (personal, work, family) — all using Anthropic as provider",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-upd-010",
+      "ability": "updates",
+      "memories": [],
+      "question": "What decision was made about posting to the IA HR Community WhatsApp group?",
+      "golden_answer": "Do NOT post to the IA HR Community WhatsApp group (JID: 12036319829560152...)",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ms-001",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What is Navitha Nava Vinoba's company and why is she a potential lead?",
+      "golden_answer": "Navitha is from Bloomskillz Training Academy and is a potential business lead",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ms-002",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What is the self-improvement research pipeline and when was it set up?",
+      "golden_answer": "Daily cron job 'daily-ai-research' set up Feb 15, 2026 for self-improvement research",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-003",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What memory dedup thresholds are used and what are the two layers?",
+      "golden_answer": "Two layers: auto-merge at ≥0.95 similarity, LLM semantic dedup for 0.75-0.95 range",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-004",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What is the memory sleep cycle phase 3b fix and what did it address?",
+      "golden_answer": "Added originalCreatedAt field preserved across re-stores/merges, fixed regex word boundaries for Neo4j Java regex, added Month Day date pattern. Result: 25 temporal candidates found (was 0).",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "hard" }
+    },
+    {
+      "id": "prod-ms-005",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "Who are the people mentioned in the entity memories — Navin, Kesavan, and Dr. Esther?",
+      "golden_answer": "Navin Manghan Dewandas, Kesavan Sathasivam Casey, and Dr. Esther Suri are entities in the memory store",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-006",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What is the Document Knowledge Base project and when was it started?",
+      "golden_answer": "Tarun approved the Document Knowledge Base project on Feb 14, 2026",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ms-007",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What lesson was learned about sub-agent delegation and context?",
+      "golden_answer": "When delegating a large task to a sub-agent, always provide sufficient context so the agent doesn't need to re-read everything",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-008",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What lesson was learned about Anthropic API rate limits?",
+      "golden_answer": "When hitting Anthropic API rate limits, do NOT attempt to route around them — use the claude-rotate wrapper instead",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-009",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What are the rules about Slack cron job delivery and how should target be formatted?",
+      "golden_answer": "When using the cron tool to schedule jobs that deliver to a channel — use 'to': 'user:<SLACK_MEMBER_ID>' and 'channel': 'slack' format",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-010",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What is the Voice Phase 4 integration status?",
+      "golden_answer": "Voice Phase 4 integration with OpenClaw is complete",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-abs-001",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is Tarun's NRIC number?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Sensitive PII — should not be in memory" }
+    },
+    {
+      "id": "prod-abs-002",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is Tarun's Netflix password?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Credential — should never be stored" }
+    },
+    {
+      "id": "prod-abs-003",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is the exact revenue figure for Abundent Academy in Q4 2025?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium", "notes": "Specific financial data not stored" }
+    },
+    {
+      "id": "prod-abs-004",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is the Neo4j database password used by memory-neo4j?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Credentials never stored in memory" }
+    },
+    {
+      "id": "prod-abs-005",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What are Tarun's children's school names?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Personal info not recorded" }
+    },
+    {
+      "id": "prod-abs-006",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is Tarun's favourite TV series right now?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Entertainment preference not stored" }
+    },
+    {
+      "id": "prod-abs-007",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is the monthly cost of the Abundent Academy server infrastructure?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium", "notes": "Infrastructure cost details not stored" }
+    },
+    {
+      "id": "prod-abs-008",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is Renu's phone number?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Family contact info not stored" }
+    },
+    {
+      "id": "prod-abs-009",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What specific book is Tarun currently reading?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Current reading not stored" }
+    },
+    {
+      "id": "prod-abs-010",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is the git commit hash for the first OpenClaw commit Tarun ever made?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "hard", "notes": "Extremely specific historical fact not stored" }
+    }
+  ]
+}

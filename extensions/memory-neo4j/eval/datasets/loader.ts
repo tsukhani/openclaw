@@ -46,14 +46,17 @@ export async function loadDataset(
     cases = await loadCustomDataset({ ability: opts.ability });
   } else if (name === "longmemeval_s" || name === "longmemeval") {
     cases = await loadLongMemEvalDataset({ ability: opts.ability });
+  } else if (name === "production") {
+    // Production fixture: grounded in real production memories, used with --production flag
+    cases = await loadCustomDataset({ ability: opts.ability, fixtureFile: "production" });
   } else {
     throw new Error(
-      `Unknown dataset: "${name}". Valid options: "custom", "longmemeval_s", ` +
+      `Unknown dataset: "${name}". Valid options: "custom", "production", "longmemeval_s", ` +
         abilityNames.map((a) => `"${a}"`).join(", "),
     );
   }
 
-  if (opts.ability && name === "custom") {
+  if (opts.ability && (name === "custom" || name === "production")) {
     cases = cases.filter((c) => c.ability === opts.ability);
   }
 

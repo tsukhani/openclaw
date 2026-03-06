@@ -103,19 +103,24 @@ export async function runEval(
   const contextResults: ContextCompletenessResult[] = [];
   const e2eResults: EndToEndResult[] = [];
 
+  // In production mode, query the real agent's memories instead of injecting test data.
+  const productionAgentId = options.productionMode ? (options.agentId ?? "main") : null;
+
   // Run each test case
   for (const tc of testCases) {
-    const caseAgentId = `${agentPrefix}-${tc.id}`;
+    const caseAgentId = productionAgentId ?? `${agentPrefix}-${tc.id}`;
     const storedIds: string[] = [];
 
     try {
-      // 1. Store memories for this test case
-      storedIds.push(...(await storeTestMemories(db, embeddings, tc, caseAgentId)));
+      if (!productionAgentId) {
+        // 1. Store memories for this test case
+        storedIds.push(...(await storeTestMemories(db, embeddings, tc, caseAgentId)));
 
-      // 1b. Run entity extraction to populate the entity graph so graph signal is non-zero.
-      //     Without this, graphSearch returns 0 results because no Entity nodes exist.
-      if (extractionConfig.enabled && tc.memories.length > 0) {
-        await extractMemoriesInBatches(tc.memories, db, embeddings, extractionConfig, logger);
+        // 1b. Run entity extraction to populate the entity graph so graph signal is non-zero.
+        //     Without this, graphSearch returns 0 results because no Entity nodes exist.
+        if (extractionConfig.enabled && tc.memories.length > 0) {
+          await extractMemoriesInBatches(tc.memories, db, embeddings, extractionConfig, logger);
+        }
       }
 
       // 2. Resolve search parameters for this variant
@@ -182,8 +187,8 @@ export async function runEval(
         }
       }
     } finally {
-      // Always clean up test memories (even on error)
-      if (storedIds.length > 0) {
+      // Skip cleanup in production mode — we don't own those memories
+      if (!productionAgentId && storedIds.length > 0) {
         await db.deleteMemoriesByIds(storedIds).catch(() => {
           // Non-critical cleanup failure
         });

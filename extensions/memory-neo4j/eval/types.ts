@@ -355,4 +355,15 @@ export type EvalRunOptions = {
   saveBaselinePath?: string;
   /** If true, include per-signal attribution stats in results. */
   signalAttribution?: boolean;
+  /**
+   * Production mode: skip memory ingestion and cleanup.
+   * Queries run against existing memories in the store (e.g. agentId "main").
+   * Only context completeness is scored (no gold IDs).
+   */
+  productionMode?: boolean;
+  /**
+   * Agent ID to query when productionMode is true.
+   * Defaults to "main" if not specified.
+   */
+  agentId?: string;
 };

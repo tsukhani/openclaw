@@ -23,6 +23,12 @@ const FIXTURE_FILES: Record<MemoryAbility, string> = {
 export type CustomDatasetOptions = {
   /** If provided, only load this ability's fixture file. */
   ability?: MemoryAbility;
+  /**
+   * If provided, load a specific fixture file by name (without .json extension).
+   * Defaults to loading all standard ability fixture files.
+   * E.g. "production" loads fixtures/production.json.
+   */
+  fixtureFile?: string;
 };
 
 /**
@@ -32,6 +38,27 @@ export type CustomDatasetOptions = {
  * memory IDs in gold_memory_ids must reference memories defined in the case.
  */
 export async function loadCustomDataset(opts: CustomDatasetOptions = {}): Promise<TestCase[]> {
+  // If a specific fixture file is requested, load just that one
+  if (opts.fixtureFile) {
+    const filename = `${opts.fixtureFile}.json`;
+    const filepath = join(FIXTURES_DIR, filename);
+    let raw: string;
+    try {
+      raw = await readFile(filepath, "utf-8");
+    } catch (err) {
+      throw new Error(
+        `Failed to load fixture file "${filepath}": ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+    const fixture = JSON.parse(raw) as FixtureFile;
+    if (!Array.isArray(fixture.test_cases)) {
+      throw new Error(`Fixture file "${filename}" is missing "test_cases" array`);
+    }
+    const cases = fixture.test_cases.filter((tc) => !opts.ability || tc.ability === opts.ability);
+    for (const tc of cases) validateTestCase(tc, filename);
+    return cases;
+  }
+
   const abilities: MemoryAbility[] = opts.ability
     ? [opts.ability]
     : (Object.keys(FIXTURE_FILES) as MemoryAbility[]);
