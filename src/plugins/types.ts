@@ -455,6 +455,7 @@ export const PLUGIN_HOOK_NAMES = [
   "llm_input",
   "llm_output",
   "agent_end",
+  "agent_bootstrap",
   "before_compaction",
   "after_compaction",
   "before_reset",
