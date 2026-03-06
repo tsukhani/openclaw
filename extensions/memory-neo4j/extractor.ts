@@ -14,7 +14,12 @@
 import { randomUUID } from "node:crypto";
 import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
-import { callOpenRouter, callOpenRouterStream, isTransientError } from "./llm-client.js";
+import {
+  abortableDelay,
+  callOpenRouter,
+  callOpenRouterStream,
+  isTransientError,
+} from "./llm-client.js";
 import type { MetricsCollector } from "./metrics.js";
 import { NO_OP_METRICS } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
@@ -538,6 +543,41 @@ export async function decomposeIntoAtomicFacts(
 }
 
 // ============================================================================
+// Retry Helper
+// ============================================================================
+
+/**
+ * Retry a function on transient LLM failures (network errors, HTTP 429/502/503).
+ *
+ * - Non-transient errors (400, 401, content policy) are re-thrown immediately.
+ * - Returns null when all attempts are exhausted or the abort signal fires.
+ * - Delays follow exponential backoff: baseDelayMs × 3^attempt
+ *   (e.g. 500ms → 1500ms → 4500ms for 3 attempts).
+ */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts: number,
+  baseDelayMs: number,
+  abortSignal?: AbortSignal,
+): Promise<T | null> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (abortSignal?.aborted) return null;
+      // Non-transient errors (4xx client errors, content policy) — surface to caller
+      if (!isTransientError(err)) throw err;
+      // All attempts exhausted
+      if (attempt >= maxAttempts - 1) return null;
+      // Wait before next retry, honouring abort signal
+      await abortableDelay(baseDelayMs * 3 ** attempt, abortSignal);
+      if (abortSignal?.aborted) return null;
+    }
+  }
+  return null;
+}
+
+// ============================================================================
 // Conflict Resolution
 // ============================================================================
 
@@ -555,36 +595,41 @@ export async function resolveConflict(
 ): Promise<"a" | "b" | "both" | "skip" | "transient"> {
   if (!config.enabled) return "skip";
 
-  try {
-    const content = await callOpenRouter(
-      config,
-      [
-        {
-          role: "system",
-          content: `Two memories may conflict with each other. Determine which should be kept.
+  const messages = [
+    {
+      role: "system",
+      content: `Two memories may conflict with each other. Determine which should be kept.
 
 If they genuinely contradict each other, keep the one that is more current, specific, or accurate.
 If they don't actually conflict (they cover different aspects or are both valid), keep both.
 
 Return JSON: {"keep": "a"|"b"|"both", "reason": "brief explanation"}`,
-        },
-        {
-          role: "user",
-          content: `Memory A: "${sanitizeMemoryText(memA)}"\nMemory B: "${sanitizeMemoryText(memB)}"`,
-        },
-      ],
+    },
+    {
+      role: "user",
+      content: `Memory A: "${sanitizeMemoryText(memA)}"\nMemory B: "${sanitizeMemoryText(memB)}"`,
+    },
+  ];
+
+  try {
+    // Retry up to 3 times on transient failures (429, 502, 503, network errors).
+    // Returns null when all attempts exhausted or aborted — store pair for next sleep cycle.
+    const content = await withRetry(
+      () => callOpenRouter(config, messages, abortSignal),
+      3,
+      500,
       abortSignal,
     );
-    if (!content) return "skip";
+    // null = all retries exhausted or aborted — store pair for retry on next sleep cycle
+    if (!content) return "transient";
 
     const parsed = JSON.parse(stripCodeFences(content)) as { keep?: string };
     const keep = parsed.keep;
     if (keep === "a" || keep === "b" || keep === "both") return keep;
     return "skip";
   } catch (err) {
-    // Distinguish transient (network/timeout) from permanent (JSON parse, bad response)
-    // so callers can store pending pairs for retry instead of silently dropping them.
-    if (isTransientError(err)) return "transient";
+    // Non-transient errors re-thrown by withRetry (400, 401, content policy, JSON parse)
+    if (isTransientError(err)) return "transient"; // defensive
     return "skip";
   }
 }

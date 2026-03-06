@@ -538,6 +538,87 @@ describe("hybridSearch", () => {
       expect.any(Number),
       true,
       undefined,
+      undefined,
+    );
+  });
+
+  it("should pass graphSeedCap to graphSearch when provided", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "who is Tarun",
+      5,
+      "agent-1",
+      true,
+      { graphSeedCap: 3 },
+    );
+
+    expect(mockDb.graphSearch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Number),
+      expect.any(Number),
+      "agent-1",
+      expect.any(Number),
+      false,
+      3,
+      undefined,
+    );
+  });
+
+  it("should pass graphRelTypes to graphSearch when provided", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "who is Tarun",
+      5,
+      "agent-1",
+      true,
+      { graphRelTypes: ["WORKS_AT", "KNOWS"] },
+    );
+
+    expect(mockDb.graphSearch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Number),
+      expect.any(Number),
+      "agent-1",
+      expect.any(Number),
+      false,
+      undefined,
+      ["WORKS_AT", "KNOWS"],
+    );
+  });
+
+  it("should use default depth 2 when graphSearchDepth is not specified", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "who is Tarun",
+      5,
+      "agent-1",
+      true,
+    );
+
+    expect(mockDb.graphSearch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Number),
+      expect.any(Number),
+      "agent-1",
+      2, // default depth
+      false,
+      undefined,
+      undefined,
     );
   });
 });

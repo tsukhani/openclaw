@@ -171,9 +171,11 @@ export async function graphSearch(
   limit: number,
   firingThreshold: number = 0.3,
   agentId?: string,
-  maxHops: number = 1,
+  maxHops: number = 2,
   includeExpired?: boolean,
   asOf?: string,
+  seedCap: number = 5,
+  relTypes?: string[] | null,
 ): Promise<SearchSignalResult[]> {
   // Single query: entity fulltext lookup → direct mentions + N-hop spreading activation
   const agentFilterM = agentId ? "AND m.agentId = $agentId" : "";
@@ -199,7 +201,7 @@ export async function graphSearch(
      WHERE score >= 0.5
      WITH entity
      ORDER BY score DESC
-     LIMIT 10
+     LIMIT $seedCap
 
      // Collect direct mentions
      OPTIONAL MATCH (entity)<-[rm:MENTIONS]-(m:Memory)
@@ -214,7 +216,7 @@ export async function graphSearch(
      // N-hop spreading activation — only traverse active (non-expired) relationships
      OPTIONAL MATCH (entity)-[rels:${RELATIONSHIP_TYPE_PATTERN}*${hopRange}]-(e2:Entity)
      WHERE ALL(r IN rels WHERE coalesce(r.confidence, 0.7) >= $firingThreshold
-       ${expiredRelFilter})
+       ${expiredRelFilter} AND ($relTypes IS NULL OR type(r) IN $relTypes))
      OPTIONAL MATCH (e2)<-[rm2:MENTIONS]-(m2:Memory)
      WHERE m2 IS NOT NULL ${agentFilterM2} ${expiredFilterM2}
      WITH directResults, collect({
@@ -231,7 +233,15 @@ export async function graphSearch(
             row.importance AS importance, row.createdAt AS createdAt,
             row.taskId AS taskId,
             max(row.score) AS graphScore`,
-    { query, firingThreshold, now: new Date().toISOString(), ...(agentId ? { agentId } : {}), ...temporalParamsM },
+    {
+      query,
+      firingThreshold,
+      now: new Date().toISOString(),
+      seedCap: neo4j.int(Math.max(1, Math.floor(seedCap))),
+      relTypes: relTypes ?? null,
+      ...(agentId ? { agentId } : {}),
+      ...temporalParamsM,
+    },
   );
 
   // Deduplicate by id, keeping highest score

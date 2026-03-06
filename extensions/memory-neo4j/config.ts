@@ -53,10 +53,21 @@ export type MemoryNeo4jConfig = {
   };
   /**
    * Maximum relationship hops for graph search spreading activation.
-   * Default: 1 (direct + 1-hop neighbors).
-   * Setting to 2+ enables deeper traversal but may slow queries.
+   * Default: 2 (direct + 2-hop neighbors).
+   * Setting to 3 enables deeper traversal but may slow queries.
    */
   graphSearchDepth: number;
+  /**
+   * Maximum number of seed entities to look up in the fulltext index per graph search.
+   * Default: 5. Lower values reduce query latency; higher values increase recall.
+   */
+  graphSeedCap?: number;
+  /**
+   * Relationship types to traverse during graph search spreading activation.
+   * Default: null (traverse all allowed relationship types).
+   * Example: ["WORKS_AT", "KNOWS"] to focus graph traversal.
+   */
+  graphRelTypes?: string[] | null;
   /**
    * Per-category decay curve parameters. Each category can have its own
    * half-life (days) controlling how fast memories in that category decay.
@@ -311,6 +322,8 @@ export const memoryNeo4jConfigSchema = {
         "coreMemory",
         "extraction",
         "graphSearchDepth",
+        "graphSeedCap",
+        "graphRelTypes",
         "decayCurves",
         "sleepCycle",
         "conflictDetection",
@@ -454,6 +467,25 @@ export const memoryNeo4jConfigSchema = {
       graphSearchDepth = rawDepth;
     }
 
+    // Parse graphSeedCap: positive integer, default undefined (function uses 5)
+    const rawSeedCap = cfg.graphSeedCap;
+    let graphSeedCap: number | undefined;
+    if (typeof rawSeedCap === "number") {
+      if (!Number.isInteger(rawSeedCap) || rawSeedCap < 1) {
+        throw new Error(`graphSeedCap must be a positive integer, got: ${rawSeedCap}`);
+      }
+      graphSeedCap = rawSeedCap;
+    }
+
+    // Parse graphRelTypes: array of strings (relationship type names), default undefined (all types)
+    const rawRelTypes = cfg.graphRelTypes;
+    let graphRelTypes: string[] | null | undefined;
+    if (Array.isArray(rawRelTypes)) {
+      graphRelTypes = rawRelTypes.filter((t): t is string => typeof t === "string" && t.length > 0);
+    } else if (rawRelTypes !== undefined && rawRelTypes !== null) {
+      throw new Error("graphRelTypes must be an array of strings");
+    }
+
     // Parse sleepCycle section (optional with defaults)
     const sleepCycleRaw = cfg.sleepCycle as Record<string, unknown> | undefined;
     assertAllowedKeys(sleepCycleRaw ?? {}, ["auto", "autoIntervalMs"], "sleepCycle config");
@@ -569,6 +601,8 @@ export const memoryNeo4jConfigSchema = {
         refreshAtContextPercent,
       },
       graphSearchDepth,
+      graphSeedCap,
+      graphRelTypes,
       decayCurves,
       sleepCycle: {
         auto: sleepCycleAuto,

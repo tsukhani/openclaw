@@ -14,6 +14,7 @@ import {
   runBackgroundExtraction,
   rateImportance,
   resolveConflict,
+  withRetry,
   isSemanticDuplicate,
   SEMANTIC_DEDUP_VECTOR_THRESHOLD,
   sanitizeMemoryText,
@@ -1593,6 +1594,115 @@ describe("rateImportance", () => {
 
     const result = await rateImportance("test", enabledConfig);
     expect(result).toBe(0.5);
+  });
+});
+
+// ============================================================================
+// withRetry()
+// ============================================================================
+
+describe("withRetry", () => {
+  it("should return result on first success", async () => {
+    const fn = vi.fn().mockResolvedValue("ok");
+    const result = await withRetry(fn, 3, 1);
+    expect(result).toBe("ok");
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("should retry on transient errors (503) and return result on success", async () => {
+    const transientErr = new Error("OpenAI-compatible API error 503: Service Unavailable");
+    const fn = vi.fn().mockRejectedValueOnce(transientErr).mockResolvedValueOnce("recovered");
+    const result = await withRetry(fn, 3, 1);
+    expect(result).toBe("recovered");
+    expect(fn).toHaveBeenCalledTimes(2);
+  });
+
+  it("should return null when all 3 attempts fail with transient errors", async () => {
+    const transientErr = new Error("OpenAI-compatible API error 503: Service Unavailable");
+    const fn = vi.fn().mockRejectedValue(transientErr);
+    const result = await withRetry(fn, 3, 1);
+    expect(result).toBeNull();
+    expect(fn).toHaveBeenCalledTimes(3);
+  });
+
+  it("should not retry on non-transient errors (400) and throw immediately", async () => {
+    const badReqErr = new Error("OpenAI-compatible API error 400: Bad Request");
+    const fn = vi.fn().mockRejectedValue(badReqErr);
+    await expect(withRetry(fn, 3, 1)).rejects.toThrow("400");
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("should return null immediately when abort signal is already aborted", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const fn = vi.fn().mockResolvedValue("ok");
+    // fn is never called because abort is checked before each retry
+    // but first attempt still runs; abort is checked after the throw
+    const transientErr = new Error("OpenAI-compatible API error 503: unavailable");
+    fn.mockRejectedValueOnce(transientErr);
+    const result = await withRetry(fn, 3, 1, controller.signal);
+    expect(result).toBeNull();
+    // fn called once, then abort signal detected after first failure
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ============================================================================
+// resolveConflict() — retry behaviour (OP-125)
+// ============================================================================
+
+describe("resolveConflict retry behaviour", () => {
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const retryConfig: ExtractionConfig = {
+    enabled: true,
+    apiKey: "test-key",
+    model: "test-model",
+    baseUrl: "https://test.ai/api/v1",
+    temperature: 0.0,
+    maxRetries: 0, // disable llm-client internal retries so withRetry controls them
+  };
+
+  it("should return transient after all 3 retries fail with 503", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      text: () => Promise.resolve("Service Unavailable"),
+    });
+
+    const result = await resolveConflict("mem A", "mem B", retryConfig);
+    expect(result).toBe("transient");
+    // withRetry makes 3 attempts
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("should return skip (not retry) on 400 error", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      text: () => Promise.resolve("Bad Request"),
+    });
+
+    const result = await resolveConflict("mem A", "mem B", retryConfig);
+    expect(result).toBe("skip");
+    // 400 is non-transient — only 1 attempt
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("should return transient when abort signal is fired during retry", async () => {
+    const controller = new AbortController();
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      controller.abort();
+      return Promise.reject(new DOMException("signal timed out", "TimeoutError"));
+    });
+
+    const result = await resolveConflict("mem A", "mem B", retryConfig, controller.signal);
+    expect(result).toBe("transient");
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 });
 

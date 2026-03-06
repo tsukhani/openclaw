@@ -394,9 +394,11 @@ export class Neo4jMemoryClient {
     limit: number,
     firingThreshold: number = 0.3,
     agentId?: string,
-    maxHops: number = 1,
+    maxHops: number = 2,
     includeExpired?: boolean,
     asOf?: string,
+    seedCap?: number,
+    relTypes?: string[] | null,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     const escaped = escapeLucene(query);
@@ -417,6 +419,8 @@ export class Neo4jMemoryClient {
             maxHops,
             includeExpired,
             asOf,
+            seedCap,
+            relTypes,
           );
         } finally {
           await session.close();

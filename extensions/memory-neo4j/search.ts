@@ -237,6 +237,10 @@ export async function hybridSearch(
     candidateMultiplier?: number;
     graphFiringThreshold?: number;
     graphSearchDepth?: number;
+    /** Max seed entities to look up in the fulltext index. Default: 5. */
+    graphSeedCap?: number;
+    /** Relationship types to traverse during graph search. Default: null (all types). */
+    graphRelTypes?: string[] | null;
     logger?: Logger;
     /** When true, include expired (superseded) memories in search results */
     includeExpired?: boolean;
@@ -255,7 +259,9 @@ export async function hybridSearch(
     rrfK = 60,
     candidateMultiplier = 4,
     graphFiringThreshold = 0.3,
-    graphSearchDepth = 1,
+    graphSearchDepth = 2,
+    graphSeedCap,
+    graphRelTypes,
     logger,
     includeExpired = false,
     asOf,
@@ -286,6 +292,8 @@ export async function hybridSearch(
           graphSearchDepth,
           includeExpired,
           asOf,
+          graphSeedCap,
+          graphRelTypes,
         )
       : Promise.resolve([] as SearchSignalResult[]),
   ]);
