@@ -26,6 +26,7 @@
 
 import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import { metrics } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger } from "./schema.js";
 // Import types for use in this file and re-export for external consumers (backward-compatible).
@@ -58,6 +59,7 @@ export async function runSleepCycle(
   options: SleepCycleOptions = {},
 ): Promise<SleepCycleResult> {
   const startTime = Date.now();
+  metrics.record("sleep_cycles_run");
   const { abortSignal } = options;
 
   const result: SleepCycleResult = {
@@ -130,6 +132,7 @@ export async function runSleepCycle(
   await runTipGeneration(db, embeddings, config, logger, options, result);
 
   result.durationMs = Date.now() - startTime;
+  metrics.record("sleep_cycle_duration_ms", result.durationMs);
   result.aborted = abortSignal?.aborted ?? false;
 
   logger.info(

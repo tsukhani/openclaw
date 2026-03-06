@@ -1,20 +1,62 @@
 /**
  * Structured metrics and observability for memory-neo4j.
  *
- * Counters:
- *   memories.stored, memories.recalled, memories.decayed, memories.failed
- *   auto_capture.fired, auto_capture.skipped, auto_capture.circuit_open
- *   extraction.success, extraction.failed, extraction.skipped
- *   conflicts.detected, conflicts.superseded
- *   embeddings.cache_hit, embeddings.cache_miss
+ * Two tiers:
  *
- * Histograms: auto_recall.latency_ms, auto_capture.latency_ms,
- *             extraction.latency_ms, embedding.latency_ms
+ * 1. `MemoryMetrics` (singleton `metrics`) — lightweight in-memory counters for
+ *    capture rates, dedup rates, phase timings, and error counts. Readable via
+ *    `openclaw memory neo4j metrics` CLI or `metrics.snapshot()`.
  *
- * Gauges: memories.total, memories.pending_extraction
+ *    Key counters:
+ *      memories_stored          — memories successfully written to Neo4j
+ *      memories_deduped         — memories skipped by semantic/exact dedup
+ *      memories_rejected_gate   — messages dropped by the attention gate
+ *      memories_rejected_conflict — memories invalidated by conflict detection
+ *      phase_errors             — unhandled errors in any pipeline phase
+ *      sleep_cycles_run         — number of sleep-cycle invocations
+ *      sleep_cycle_duration_ms  — total elapsed ms across all sleep cycles
+ *
+ * 2. `MetricsCollector` / `LoggingMetricsCollector` — richer histogram/gauge
+ *    collector used by the embedding and extraction subsystems to emit periodic
+ *    structured JSON summaries to the logger.
  */
 
 import type { Logger } from "./schema.js";
+
+// ============================================================================
+// Tier 1: simple in-memory counters (OP-124)
+// ============================================================================
+
+export class MemoryMetrics {
+  private readonly counters = new Map<string, number>();
+
+  /** Increment a named counter by `value` (default 1). */
+  record(metric: string, value = 1): void {
+    this.counters.set(metric, (this.counters.get(metric) ?? 0) + value);
+  }
+
+  /** Record elapsed milliseconds since `startMs` (from Date.now()). */
+  recordDuration(metric: string, startMs: number): void {
+    this.record(metric, Date.now() - startMs);
+  }
+
+  /** Return a shallow copy of all counters as a plain object. */
+  snapshot(): Record<string, number> {
+    return Object.fromEntries(this.counters);
+  }
+
+  /** Clear all counters — useful in tests and between benchmark runs. */
+  reset(): void {
+    this.counters.clear();
+  }
+}
+
+/** Process-scoped singleton — import this directly from other modules. */
+export const metrics = new MemoryMetrics();
+
+// ============================================================================
+// Tier 2: histogram/gauge collector used by embeddings and extraction
+// ============================================================================
 
 export interface MetricsCollector {
   increment(counter: string, value?: number): void;

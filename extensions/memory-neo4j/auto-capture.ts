@@ -13,6 +13,7 @@ import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
 import { decomposeIntoAtomicFacts, isSemanticDuplicate, rateImportance } from "./extractor.js";
 import { extractUserMessages, extractAssistantMessages } from "./message-utils.js";
+import { metrics } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger, MemorySource } from "./schema.js";
 import { parseTaskLedger } from "./task-ledger.js";
@@ -266,6 +267,13 @@ async function runAutoCapture(
       }
     }
     const tProcess = performance.now();
+
+    // Track gate rejections and outcomes
+    const rejectedGate =
+      userMessages.length - retained.length + assistantMessages.length - retainedAssistant.length;
+    if (rejectedGate > 0) metrics.record("memories_rejected_gate", rejectedGate);
+    if (stored > 0) metrics.record("memories_stored", stored);
+    if (semanticDeduped > 0) metrics.record("memories_deduped", semanticDeduped);
 
     const totalMs = tProcess - t0;
     const gateMs = tGate - t0;

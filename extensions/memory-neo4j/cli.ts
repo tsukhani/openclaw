@@ -15,6 +15,7 @@ import { passesAttentionGate } from "./attention-gate.js";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
 import { stripMessageWrappers } from "./message-utils.js";
+import { metrics } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import { hybridSearch } from "./search.js";
 import { runSleepCycle } from "./sleep-cycle.js";
@@ -889,6 +890,12 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
           } finally {
             await db.close();
           }
+        });
+      memory
+        .command("metrics")
+        .description("Show in-process metrics snapshot (capture rates, dedup, phase timings)")
+        .action(() => {
+          console.log(JSON.stringify(metrics.snapshot(), null, 2));
         });
     },
     { commands: [] }, // Adds subcommands to existing "memory" command, no conflict
