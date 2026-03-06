@@ -486,9 +486,19 @@ export async function hybridSearch(
   }));
 
   // 7b. Rerank candidates if configured (OP-130).
-  //     rerankCandidates handles disabled/none provider and errors gracefully.
+  //     Skip reranking for temporal/updates queries — the cross-encoder is trained on
+  //     web search relevance and hurts temporal ordering. RRF + freshness signal is better
+  //     for queries about current/updated facts.
+  // Skip reranking for update/temporal queries — cross-encoder trained on web search
+  // relevance hurts temporal ordering; RRF + freshness signal performs better here.
+  const isTemporalQuery =
+    queryType === "updates" ||
+    /\b(when|since|before|after|changed|previously|used to|first|last|latest|recent|current|now|at the time|history|version)\b/i.test(
+      query,
+    );
+  const rerankerSkippedForQueryType = isTemporalQuery;
   let finalResults = results;
-  if (rerankerActive && rerankerConfig) {
+  if (rerankerActive && rerankerConfig && !rerankerSkippedForQueryType) {
     const { rerankCandidates } = await import("./reranker.js");
     finalResults = await rerankCandidates(
       query,
