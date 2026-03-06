@@ -11,7 +11,7 @@ import { randomUUID } from "node:crypto";
 import { passesAttentionGate, passesAssistantAttentionGate } from "./attention-gate.js";
 import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
-import { isSemanticDuplicate, rateImportance } from "./extractor.js";
+import { decomposeIntoAtomicFacts, isSemanticDuplicate, rateImportance } from "./extractor.js";
 import { extractUserMessages, extractAssistantMessages } from "./message-utils.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger, MemorySource } from "./schema.js";
@@ -174,6 +174,7 @@ async function runAutoCapture(
   workspaceDir?: string, // Layer 3: workspace dir for task auto-tagging
   captureAssistant: boolean = false,
   signal?: AbortSignal,
+  decompose: boolean = false,
 ): Promise<void> {
   if (signal?.aborted) return;
   try {
@@ -201,9 +202,30 @@ async function runAutoCapture(
       discount: number;
     }> = [];
 
+    // Minimum text length to bother decomposing — short messages are already atomic
+    const DECOMPOSE_MIN_CHARS = 200;
+
     for (const text of retained) {
-      allTexts.push(text);
-      allMeta.push({ text, source: "auto-capture", threshold: 0.75, discount: 1.0 });
+      // Decompose long user messages into atomic facts when enabled
+      if (decompose && text.length >= DECOMPOSE_MIN_CHARS) {
+        const facts = await decomposeIntoAtomicFacts(text, extractionConfig, signal);
+        if (facts && facts.length > 1) {
+          // Cap at 5 facts to bound LLM/embedding cost per message
+          for (const fact of facts.slice(0, 5)) {
+            allTexts.push(fact);
+            allMeta.push({ text: fact, source: "auto-capture", threshold: 0.75, discount: 1.0 });
+          }
+          logger.debug?.(
+            `memory-neo4j: decomposed "${text.slice(0, 60)}..." into ${Math.min(facts.length, 5)} atomic facts`,
+          );
+        } else {
+          allTexts.push(text);
+          allMeta.push({ text, source: "auto-capture", threshold: 0.75, discount: 1.0 });
+        }
+      } else {
+        allTexts.push(text);
+        allMeta.push({ text, source: "auto-capture", threshold: 0.75, discount: 1.0 });
+      }
     }
     for (const text of retainedAssistant) {
       allTexts.push(text);

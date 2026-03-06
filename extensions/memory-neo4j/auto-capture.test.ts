@@ -665,4 +665,237 @@ describe("runAutoCapture", () => {
     // Should have logged the error
     expect(mockLogger.warn).toHaveBeenCalled();
   });
+
+  // ============================================================================
+  // Decomposition
+  // ============================================================================
+
+  it("should skip decomposition when decompose=false even for long text", async () => {
+    const db = createMockDb();
+    const storeMemoryMock = vi.fn().mockResolvedValue(undefined);
+    const dbWithStore = createMockDb({ storeMemory: storeMemoryMock });
+    const embedBatchMock = vi.fn().mockResolvedValue([[0.1, 0.2]]);
+    const embeddings = createMockEmbeddings({ embedBatch: embedBatchMock });
+
+    // Only rateImportance should be called (no decomposition LLM call)
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: JSON.stringify({ score: 8 }) } }],
+        }),
+    });
+
+    const longText =
+      "I prefer TypeScript over JavaScript. I also like Neo4j for graph databases. My team uses pnpm as the package manager.";
+
+    await runAutoCapture(
+      [{ role: "user", content: longText }],
+      "test-agent",
+      "session-1",
+      dbWithStore,
+      embeddings,
+      enabledConfig,
+      mockLogger,
+      undefined,
+      false,
+      undefined,
+      false, // decompose=false
+    );
+
+    // embedBatch should be called with exactly one text (the original, not decomposed)
+    expect(embedBatchMock).toHaveBeenCalledOnce();
+    expect(embedBatchMock.mock.calls[0][0]).toHaveLength(1);
+    expect(embedBatchMock.mock.calls[0][0][0]).toBe(longText);
+  });
+
+  it("should skip decomposition for texts shorter than 200 chars", async () => {
+    const db = createMockDb();
+    const storeMemoryMock = vi.fn().mockResolvedValue(undefined);
+    const dbWithStore = createMockDb({ storeMemory: storeMemoryMock });
+    const embedBatchMock = vi.fn().mockResolvedValue([[0.1, 0.2]]);
+    const embeddings = createMockEmbeddings({ embedBatch: embedBatchMock });
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: JSON.stringify({ score: 8 }) } }],
+        }),
+    });
+
+    // Text that passes the attention gate but is < 200 chars
+    const shortText = "I prefer TypeScript over JavaScript for backend services.";
+
+    await runAutoCapture(
+      [{ role: "user", content: shortText }],
+      "test-agent",
+      "session-1",
+      dbWithStore,
+      embeddings,
+      enabledConfig,
+      mockLogger,
+      undefined,
+      false,
+      undefined,
+      true, // decompose=true, but text is too short
+    );
+
+    // Should embed the original text unchanged (no decomposition LLM call means
+    // fetch was only called for rateImportance, not decomposition)
+    expect(embedBatchMock).toHaveBeenCalledOnce();
+    expect(embedBatchMock.mock.calls[0][0][0]).toBe(shortText);
+    // Only one fetch call (rateImportance), no decomposition LLM call
+    expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1);
+  });
+
+  it("should expand multi-fact text into multiple stored memories when decompose=true", async () => {
+    const storeMemoryMock = vi.fn().mockResolvedValue(undefined);
+    const dbWithStore = createMockDb({ storeMemory: storeMemoryMock });
+    const embedBatchMock = vi.fn().mockResolvedValue([
+      [0.1, 0.2],
+      [0.3, 0.4],
+      [0.5, 0.6],
+    ]);
+    const embeddings = createMockEmbeddings({ embedBatch: embedBatchMock });
+
+    // Helper: SSE stream body for callOpenRouterStream (decomposeIntoAtomicFacts)
+    const factsJson = JSON.stringify({
+      facts: [
+        "I prefer TypeScript over JavaScript for backend services.",
+        "I use Neo4j as my primary graph database.",
+        "My team adopted pnpm as the package manager.",
+      ],
+    });
+    const encoder = new TextEncoder();
+    const sseBody = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: factsJson } }] })}\n\ndata: [DONE]\n\n`,
+          ),
+        );
+        controller.close();
+      },
+    });
+
+    // First call: decomposition (streaming); subsequent: rateImportance (non-streaming)
+    let fetchCallCount = 0;
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      fetchCallCount++;
+      if (fetchCallCount === 1) {
+        return Promise.resolve({ ok: true, body: sseBody });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            choices: [{ message: { content: JSON.stringify({ score: 8 }) } }],
+          }),
+      });
+    });
+
+    // Text >= 200 chars to trigger decomposition
+    const multiFactText =
+      "I prefer TypeScript over JavaScript for backend services and type safety. " +
+      "I use Neo4j as my primary graph database for all relationship queries. " +
+      "My team adopted pnpm as the package manager for all our Node.js monorepo projects.";
+
+    await runAutoCapture(
+      [{ role: "user", content: multiFactText }],
+      "test-agent",
+      "session-1",
+      dbWithStore,
+      embeddings,
+      enabledConfig,
+      mockLogger,
+      undefined,
+      false,
+      undefined,
+      true, // decompose=true
+    );
+
+    // embedBatch should receive 3 atomic facts instead of 1 original text
+    expect(embedBatchMock).toHaveBeenCalledOnce();
+    expect(embedBatchMock.mock.calls[0][0]).toHaveLength(3);
+    // All 3 facts should be stored independently
+    expect(storeMemoryMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("should run dedup independently for each atomic fact", async () => {
+    const findSimilarMock = vi
+      .fn()
+      // First fact: has a duplicate (score >= 0.95) → skip
+      .mockResolvedValueOnce([{ id: "dup-1", text: "I prefer TypeScript", score: 0.97 }])
+      // Second fact: no duplicate → store
+      .mockResolvedValue([]);
+
+    const storeMemoryMock = vi.fn().mockResolvedValue(undefined);
+    const dbWithStore = createMockDb({
+      findSimilar: findSimilarMock,
+      storeMemory: storeMemoryMock,
+    });
+    const embedBatchMock = vi.fn().mockResolvedValue([
+      [0.1, 0.2],
+      [0.3, 0.4],
+    ]);
+    const embeddings = createMockEmbeddings({ embedBatch: embedBatchMock });
+
+    const factsJson2 = JSON.stringify({
+      facts: [
+        "I prefer TypeScript over JavaScript for all my development work.",
+        "I use Neo4j as my graph database for all relationship queries in production.",
+      ],
+    });
+    const encoder2 = new TextEncoder();
+    const sseBody2 = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          encoder2.encode(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: factsJson2 } }] })}\n\ndata: [DONE]\n\n`,
+          ),
+        );
+        controller.close();
+      },
+    });
+
+    let fetchCallCount2 = 0;
+    globalThis.fetch = vi.fn().mockImplementation(() => {
+      fetchCallCount2++;
+      if (fetchCallCount2 === 1) {
+        return Promise.resolve({ ok: true, body: sseBody2 });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            choices: [{ message: { content: JSON.stringify({ score: 8 }) } }],
+          }),
+      });
+    });
+
+    // Text >= 200 chars to ensure decomposition runs
+    const multiFactText =
+      "I strongly prefer TypeScript over JavaScript for all my development work because of superior type safety and tooling. " +
+      "I also rely on Neo4j as my graph database for all relationship queries in production systems at work.";
+
+    await runAutoCapture(
+      [{ role: "user", content: multiFactText }],
+      "test-agent",
+      "session-1",
+      dbWithStore,
+      embeddings,
+      enabledConfig,
+      mockLogger,
+      undefined,
+      false,
+      undefined,
+      true, // decompose=true
+    );
+
+    // findSimilar called once per fact
+    expect(findSimilarMock).toHaveBeenCalledTimes(2);
+    // Only the second fact stored (first was an exact duplicate)
+    expect(storeMemoryMock).toHaveBeenCalledTimes(1);
+  });
 });

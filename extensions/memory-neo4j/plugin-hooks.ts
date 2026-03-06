@@ -481,6 +481,7 @@ export function registerMemoryHooks(
         ctx.workspaceDir, // Layer 3: pass workspace dir for task auto-tagging
         cfg.autoCaptureAssistant,
         sleepAbortController.signal,
+        cfg.decomposition.enabled,
       )
         .then(() => {
           // Success: reset circuit breaker so transient errors don't permanently suspend capture.
