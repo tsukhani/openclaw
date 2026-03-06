@@ -141,6 +141,8 @@ export type HybridSearchResult = {
   category: string;
   importance: number;
   createdAt: string;
+  /** ISO-8601 — when this fact became valid. Populated from validFrom signal (OP-129/130). */
+  validFrom?: string;
   score: number;
   taskId?: string; // Optional link to TASKS.md task (e.g., "TASK-001")
   /** True when retrieval confidence is low — only one signal matched and the

@@ -486,19 +486,10 @@ export async function hybridSearch(
   }));
 
   // 7b. Rerank candidates if configured (OP-130).
-  //     Skip reranking for temporal/updates queries — the cross-encoder is trained on
-  //     web search relevance and hurts temporal ordering. RRF + freshness signal is better
-  //     for queries about current/updated facts.
-  // Skip reranking for update/temporal queries — cross-encoder trained on web search
-  // relevance hurts temporal ordering; RRF + freshness signal performs better here.
-  const isTemporalQuery =
-    queryType === "updates" ||
-    /\b(when|since|before|after|changed|previously|used to|first|last|latest|recent|current|now|at the time|history|version)\b/i.test(
-      query,
-    );
-  const rerankerSkippedForQueryType = isTemporalQuery;
+  //     Temporal/update queries route to LLM reranker (with timestamps) inside rerankCandidates.
+  //     All other queries use the local cross-encoder HTTP service.
   let finalResults = results;
-  if (rerankerActive && rerankerConfig && !rerankerSkippedForQueryType) {
+  if (rerankerActive && rerankerConfig) {
     const { rerankCandidates } = await import("./reranker.js");
     finalResults = await rerankCandidates(
       query,
@@ -508,6 +499,7 @@ export async function hybridSearch(
       logger ?? null,
       metricsCollector,
       undefined, // no per-search AbortSignal here
+      queryType, // passed for temporal routing decision
     );
   }
 

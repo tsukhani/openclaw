@@ -1,31 +1,45 @@
 /**
  * Cross-encoder reranker dispatcher (OP-130).
  *
- * Routes rerank calls to either the local ONNX provider or the LLM fallback,
- * based on `RerankerConfig.provider`. Always degrades gracefully — retrieval
- * is never broken by a reranker failure.
+ * Routes rerank calls to the appropriate provider based on query type:
+ * - Temporal/update queries → LLM reranker with timestamp context (understands recency)
+ * - All other queries → local cross-encoder (fast, semantic relevance)
+ * - Falls back gracefully on any error — retrieval is never broken.
  */
 
 import type { ExtractionConfig } from "./config.js";
 import type { MetricsCollector } from "./metrics.js";
 import type { HybridSearchResult, Logger, RerankerConfig } from "./schema.js";
+import type { QueryType } from "./search.js";
+
+/** Keyword pattern that identifies temporal/update queries. */
+const TEMPORAL_QUERY_RE =
+  /\b(when|since|before|after|changed|previously|used to|first|last|latest|recent|current|now|at the time|history|version|updated|update|currently)\b/i;
+
+/** Returns true when the query is about recency or knowledge updates. */
+export function isTemporalQuery(query: string, queryType?: QueryType): boolean {
+  return queryType === "updates" || TEMPORAL_QUERY_RE.test(query);
+}
 
 /**
  * Rerank and filter `candidates` using the configured provider.
  *
- * Behaviour:
- * - If `config.enabled === false` or `provider === "none"`: returns candidates unchanged.
- * - On any provider error: logs a warning, increments `reranker.errors`, returns unchanged.
- * - On success: sets `rerankScore`, preserves original score as `rrfScore`,
- *   sorts descending, applies `minScore` filter, truncates to `topJ`.
+ * Routing logic:
+ * - Temporal/update queries always use the LLM reranker (with timestamps) — cross-encoders
+ *   trained on web passage retrieval cannot reason about recency/supersession.
+ * - All other queries use the local cross-encoder HTTP service (fast, ~100ms).
+ * - provider="llm" forces LLM reranker regardless of query type.
+ * - provider="none" or enabled=false: returns candidates unchanged.
+ * - Any provider error: logs warning, returns original order (graceful degradation).
  *
  * @param query - Original search query string.
  * @param candidates - Pre-ranked candidate results from hybridSearch.
  * @param config - Reranker configuration.
- * @param extractionConfig - LLM config used when provider is "llm".
- * @param logger - Logger for warnings/info.
+ * @param extractionConfig - LLM config used for temporal LLM reranking.
+ * @param logger - Logger for warnings/info (nullable for eval harness).
  * @param metricsCollector - Metrics collector for counters and latency.
  * @param signal - Optional AbortSignal.
+ * @param queryType - Pre-classified query type (used for temporal routing).
  * @returns Reranked (and possibly filtered/truncated) candidates.
  */
 export async function rerankCandidates(
@@ -36,30 +50,44 @@ export async function rerankCandidates(
   logger: Logger | null | undefined,
   metricsCollector: MetricsCollector,
   signal?: AbortSignal,
+  queryType?: QueryType,
 ): Promise<HybridSearchResult[]> {
   if (!config.enabled || config.provider === "none" || candidates.length === 0) {
     return candidates;
   }
 
   const t0 = Date.now();
+  const temporal = isTemporalQuery(query, queryType);
 
   try {
-    const documents = candidates.map((c) => c.text);
     const model = config.model ?? "cross-encoder/ms-marco-MiniLM-L-6-v2";
 
-    // Dispatch to the chosen provider
     let rerankResults: Array<{ index: number; relevanceScore: number }>;
 
-    if (config.provider === "llm") {
+    // Route temporal/update queries to LLM reranker with timestamp context.
+    // Cross-encoders can't reason about recency — LLM can with date metadata.
+    if (config.provider === "llm" || temporal) {
       const { llmRerank } = await import("./reranker-llm.js");
-      rerankResults = await llmRerank(query, documents, extractionConfig ?? undefined, signal);
+      const candidatesWithDates = candidates.map((c) => ({
+        text: c.text,
+        createdAt: c.createdAt,
+        validFrom: c.validFrom,
+      }));
+      rerankResults = await llmRerank(
+        query,
+        candidatesWithDates,
+        extractionConfig ?? undefined,
+        temporal,
+        signal,
+      );
     } else {
-      // Default: local ONNX
+      // Local cross-encoder HTTP service (port 4124)
       const { localRerank } = await import("./reranker-local.js");
+      const documents = candidates.map((c) => c.text);
       rerankResults = await localRerank(query, documents, model, signal);
     }
 
-    // Map scores back onto candidates: set rerankScore, preserve rrfScore
+    // Map rerank scores back onto candidates
     const reranked: HybridSearchResult[] = rerankResults.map(({ index, relevanceScore }) => {
       const candidate = candidates[index];
       return {
@@ -70,15 +98,12 @@ export async function rerankCandidates(
       };
     });
 
-    // Sort descending by rerank score (already sorted by rerankResults, but map may lose order)
     reranked.sort((a, b) => (b.rerankScore ?? 0) - (a.rerankScore ?? 0));
 
-    // Apply minScore filter
     const minScore = config.minScore ?? 0;
     const filtered =
       minScore > 0 ? reranked.filter((r) => (r.rerankScore ?? 0) >= minScore) : reranked;
 
-    // Truncate to topJ
     const topJ = config.topJ ?? candidates.length;
     const final = filtered.slice(0, topJ);
 
@@ -86,16 +111,15 @@ export async function rerankCandidates(
     metricsCollector.increment("reranker.calls");
     metricsCollector.histogram("reranker.latency", latencyMs);
 
+    const providerUsed = config.provider === "llm" || temporal ? "llm-temporal" : "local";
     logger?.info(
-      `memory-neo4j: [reranker] provider=${config.provider} candidates=${candidates.length} → ${final.length} in ${latencyMs}ms`,
+      `memory-neo4j: [reranker] provider=${providerUsed} temporal=${temporal} candidates=${candidates.length} → ${final.length} in ${latencyMs}ms`,
     );
 
     return final;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logger?.warn(
-      `memory-neo4j: [reranker] error (${config.provider}), falling back to original order: ${msg}`,
-    );
+    logger?.warn(`memory-neo4j: [reranker] error, falling back to original order: ${msg}`);
     metricsCollector.increment("reranker.errors");
     return candidates;
   }
