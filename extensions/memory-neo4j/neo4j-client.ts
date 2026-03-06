@@ -969,6 +969,41 @@ export class Neo4jMemoryClient {
   }
 
   /**
+   * Close a specific entity-to-entity relationship by setting validUntil.
+   * Use this when a relationship is known to be superseded or contradicted by
+   * newer information (e.g. a person changed employer).
+   *
+   * For bulk cleanup of relationships no longer supported by any active memory,
+   * use expireOrphanedEntityRelationships instead.
+   *
+   * @param entityAName  Canonical name of the source entity (will be lowercased)
+   * @param entityBName  Canonical name of the target entity (will be lowercased)
+   * @param relType      Relationship type (must be in ALLOWED_RELATIONSHIP_TYPES)
+   * @param closedAt     ISO-8601 timestamp; defaults to now
+   * @returns            true if at least one relationship was closed
+   */
+  async closeEntityRelationship(
+    entityAName: string,
+    entityBName: string,
+    relType: string,
+    closedAt?: string,
+  ): Promise<boolean> {
+    await this.ensureInitialized();
+    const session = this.driver!.session();
+    try {
+      return await Entity.closeEntityRelationship(
+        session,
+        entityAName,
+        entityBName,
+        relType,
+        closedAt,
+      );
+    } finally {
+      await session.close();
+    }
+  }
+
+  /**
    * Expire entity-to-entity relationships no longer supported by active memories.
    * A relationship is expired when no active (validUntil IS NULL) memory for this
    * agent mentions both connected entities.

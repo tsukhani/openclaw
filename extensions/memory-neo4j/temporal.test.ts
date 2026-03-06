@@ -253,6 +253,75 @@ describe("detectConflicts", () => {
 });
 
 // ============================================================================
+// OP-122: closeEntityRelationship
+// ============================================================================
+
+describe("closeEntityRelationship (OP-122)", () => {
+  it("sets validUntil and updatedAt on the matching active relationship", async () => {
+    const { client, session } = makeClient();
+    session.run.mockResolvedValueOnce({
+      records: [{ get: vi.fn().mockReturnValue(1) }],
+    });
+
+    const result = await client.closeEntityRelationship("alice", "acme corp", "WORKS_AT");
+
+    expect(result).toBe(true);
+    const [[query, params]] = session.run.mock.calls as [[string, Record<string, unknown>]];
+    expect(query).toContain("WORKS_AT");
+    expect(query).toContain("WHERE rel.validUntil IS NULL");
+    expect(query).toContain("SET rel.validUntil = $now");
+    expect(query).toContain("rel.updatedAt = $now");
+    expect(params).toMatchObject({ nameA: "alice", nameB: "acme corp" });
+    expect(typeof params.now).toBe("string");
+  });
+
+  it("accepts a custom closedAt timestamp", async () => {
+    const { client, session } = makeClient();
+    session.run.mockResolvedValueOnce({
+      records: [{ get: vi.fn().mockReturnValue(1) }],
+    });
+    const ts = "2025-01-15T10:00:00.000Z";
+
+    await client.closeEntityRelationship("alice", "acme", "WORKS_AT", ts);
+
+    const [[, params]] = session.run.mock.calls as [[string, Record<string, unknown>]];
+    expect(params.now).toBe(ts);
+  });
+
+  it("returns false when no active relationship found", async () => {
+    const { client, session } = makeClient();
+    session.run.mockResolvedValueOnce({
+      records: [{ get: vi.fn().mockReturnValue(0) }],
+    });
+
+    const result = await client.closeEntityRelationship("alice", "acme", "WORKS_AT");
+
+    expect(result).toBe(false);
+  });
+
+  it("throws on invalid relationship type", async () => {
+    const { client } = makeClient();
+
+    await expect(client.closeEntityRelationship("alice", "acme", "INVALID_TYPE")).rejects.toThrow(
+      "Invalid relationship type",
+    );
+  });
+
+  it("lowercases and trims entity names before querying", async () => {
+    const { client, session } = makeClient();
+    session.run.mockResolvedValueOnce({
+      records: [{ get: vi.fn().mockReturnValue(1) }],
+    });
+
+    await client.closeEntityRelationship("  Alice  ", "  ACME Corp  ", "KNOWS");
+
+    const [[, params]] = session.run.mock.calls as [[string, Record<string, unknown>]];
+    expect(params.nameA).toBe("alice");
+    expect(params.nameB).toBe("acme corp");
+  });
+});
+
+// ============================================================================
 // OP-122: batchEntityOperations — validFrom/validUntil on new relationships
 // ============================================================================
 
@@ -288,6 +357,34 @@ describe("batchEntityOperations (OP-122 temporal fields)", () => {
     const onMatchPart = query.slice(query.indexOf("ON MATCH"));
     expect(onMatchPart).not.toContain("validFrom");
     expect(onMatchPart).not.toContain("validUntil");
+  });
+
+  it("sets updatedAt on ON MATCH for existing inter-entity relationships", async () => {
+    const { client, session } = makeClient();
+
+    const txRun = vi.fn().mockResolvedValue({ records: [] });
+    session.executeWrite = vi
+      .fn()
+      .mockImplementation(async (fn: (tx: any) => Promise<void>) => fn({ run: txRun }));
+
+    await client.batchEntityOperations(
+      "mem-2",
+      [
+        { id: "e1", name: "Alice", type: "person" },
+        { id: "e2", name: "Acme", type: "organization" },
+      ],
+      [{ source: "alice", target: "acme", type: "WORKS_AT", confidence: 0.9 }],
+      [],
+    );
+
+    const mergeCall = txRun.mock.calls.find(
+      ([q]: [string]) => typeof q === "string" && q.includes("MERGE (e1)-[rel:WORKS_AT]"),
+    );
+    expect(mergeCall).toBeDefined();
+    const [query] = mergeCall!;
+    // ON MATCH must set updatedAt
+    const onMatchPart = query.slice(query.indexOf("ON MATCH"));
+    expect(onMatchPart).toContain("updatedAt");
   });
 });
 

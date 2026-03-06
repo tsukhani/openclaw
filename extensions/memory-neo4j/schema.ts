@@ -75,6 +75,16 @@ export type TagNode = {
   createdAt: string;
 };
 
+/** Temporal properties on entity-to-entity relationship edges (OP-122). */
+export type EntityRelationship = {
+  type: string;
+  confidence: number;
+  createdAt: string;
+  updatedAt?: string; // ISO-8601 — set on every subsequent merge
+  validFrom: string; // ISO-8601 — when this relationship was first observed
+  validUntil?: string; // ISO-8601 — when this relationship was closed (null = still active)
+};
+
 // ============================================================================
 // Extraction Types
 // ============================================================================

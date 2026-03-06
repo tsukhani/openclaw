@@ -130,7 +130,8 @@ export async function batchEntityOperations(
            MERGE (e1)-[rel:${relType}]->(e2)
            ON CREATE SET rel.confidence = r.confidence, rel.createdAt = $now,
                          rel.validFrom = $now, rel.validUntil = null
-           ON MATCH SET rel.confidence = CASE WHEN r.confidence > rel.confidence THEN r.confidence ELSE rel.confidence END`,
+           ON MATCH SET rel.confidence = CASE WHEN r.confidence > rel.confidence THEN r.confidence ELSE rel.confidence END,
+                        rel.updatedAt = $now`,
           {
             rels: rels.map((r) => ({
               source: r.source.trim().toLowerCase(),
@@ -533,6 +534,43 @@ export async function batchMergeEntityPairs(
   } catch {
     return 0;
   }
+}
+
+/**
+ * Close a specific entity-to-entity relationship by setting validUntil.
+ * Used when a relationship is known to be superseded or contradicted by newer information
+ * (e.g. a person changed employer, making the old WORKS_AT edge invalid).
+ *
+ * @param entityAName  Canonical (lowercased) name of the source entity
+ * @param entityBName  Canonical (lowercased) name of the target entity
+ * @param relType      Relationship type (must be in ALLOWED_RELATIONSHIP_TYPES)
+ * @param closedAt     ISO-8601 timestamp; defaults to now
+ * @returns            true if at least one relationship was closed
+ */
+export async function closeEntityRelationship(
+  session: Session,
+  entityAName: string,
+  entityBName: string,
+  relType: string,
+  closedAt?: string,
+): Promise<boolean> {
+  if (!validateRelationshipType(relType)) {
+    throw new Error(`Invalid relationship type for closeEntityRelationship: ${relType}`);
+  }
+  const now = closedAt ?? new Date().toISOString();
+  const result = await session.run(
+    `MATCH (e1:Entity {name: $nameA})-[rel:${relType}]->(e2:Entity {name: $nameB})
+     WHERE rel.validUntil IS NULL
+     SET rel.validUntil = $now, rel.updatedAt = $now
+     RETURN count(rel) AS closed`,
+    {
+      nameA: entityAName.trim().toLowerCase(),
+      nameB: entityBName.trim().toLowerCase(),
+      now,
+    },
+  );
+  const closed = (result.records[0]?.get("closed") as number) ?? 0;
+  return closed > 0;
 }
 
 /**
