@@ -574,7 +574,7 @@ export async function findConflictingMemories(
      RETURN DISTINCT m1.id AS m1Id, m1.text AS m1Text, m1.importance AS m1Importance, m1.createdAt AS m1CreatedAt,
             m2.id AS m2Id, m2.text AS m2Text, m2.importance AS m2Importance, m2.createdAt AS m2CreatedAt
      LIMIT $limit`,
-    agentId ? { agentId, limit } : { limit },
+    agentId ? { agentId, limit: neo4j.int(limit) } : { limit: neo4j.int(limit) },
   );
 
   return result.records.map((r) => ({
@@ -896,7 +896,7 @@ export async function fetchMemoriesForCredentialScan(
      RETURN m.id AS id, m.text AS text, m.createdAt AS createdAt
      ORDER BY m.createdAt ASC, m.id ASC
      LIMIT $limit`,
-    { agentId: agentId ?? null, cursorTs, cursorId, limit },
+    { agentId: agentId ?? null, cursorTs, cursorId, limit: neo4j.int(limit) },
   );
   return result.records.map((r) => ({
     id: r.get("id") as string,

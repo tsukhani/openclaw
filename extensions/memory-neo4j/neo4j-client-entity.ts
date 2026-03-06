@@ -348,7 +348,9 @@ export async function findDuplicateEntityPairs(
 
   const result = await session.run(
     `${matchClause}
-     CALL db.index.fulltext.queryNodes('entity_fulltext_index', e1.name) YIELD node AS e2
+     WITH e1, reduce(s = e1.name, c IN ['+', '-', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':', '/', '\\\\'] | replace(s, c, ' ')) AS searchName
+     WHERE size(trim(searchName)) > 2
+     CALL db.index.fulltext.queryNodes('entity_fulltext_index', searchName) YIELD node AS e2
      WHERE e2.id <> e1.id
        AND e1.name < e2.name
        AND e1.type = e2.type
