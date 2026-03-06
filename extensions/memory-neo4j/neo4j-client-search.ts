@@ -71,6 +71,7 @@ export async function vectorSearch(
      WHERE score >= $minScore ${agentFilter} ${expiredFilter}
      RETURN node.id AS id, node.text AS text, node.category AS category,
             node.importance AS importance, node.createdAt AS createdAt,
+            node.validFrom AS validFrom,
             node.taskId AS taskId,
             score AS similarity
      ORDER BY score DESC`,
@@ -89,6 +90,7 @@ export async function vectorSearch(
     category: r.get("category") as string,
     importance: r.get("importance") as number,
     createdAt: String(r.get("createdAt") ?? ""),
+    validFrom: r.get("validFrom") != null ? String(r.get("validFrom")) : undefined,
     score: r.get("similarity") as number,
     taskId: (r.get("taskId") as string) ?? undefined,
   }));
@@ -118,6 +120,7 @@ export async function bm25Search(
      WHERE true ${agentFilter} ${expiredFilter}
      RETURN node.id AS id, node.text AS text, node.category AS category,
             node.importance AS importance, node.createdAt AS createdAt,
+            node.validFrom AS validFrom,
             node.taskId AS taskId,
             score AS bm25Score
      ORDER BY score DESC
@@ -137,6 +140,7 @@ export async function bm25Search(
     category: r.get("category") as string,
     importance: r.get("importance") as number,
     createdAt: String(r.get("createdAt") ?? ""),
+    validFrom: r.get("validFrom") != null ? String(r.get("validFrom")) : undefined,
     rawScore: r.get("bm25Score") as number,
     taskId: (r.get("taskId") as string) ?? undefined,
   }));
@@ -209,6 +213,7 @@ export async function graphSearch(
      WITH entity, collect({
        id: m.id, text: m.text, category: m.category,
        importance: m.importance, createdAt: m.createdAt,
+       validFrom: m.validFrom,
        taskId: m.taskId,
        score: coalesce(rm.confidence, 1.0)
      }) AS directResults
@@ -222,6 +227,7 @@ export async function graphSearch(
      WITH directResults, collect({
        id: m2.id, text: m2.text, category: m2.category,
        importance: m2.importance, createdAt: m2.createdAt,
+       validFrom: m2.validFrom,
        taskId: m2.taskId,
        score: reduce(s = 1.0, r IN rels | s * coalesce(r.confidence, 0.7)) * coalesce(rm2.confidence, 1.0)
      }) AS hopResults
@@ -231,6 +237,7 @@ export async function graphSearch(
      WITH row WHERE row.id IS NOT NULL
      RETURN row.id AS id, row.text AS text, row.category AS category,
             row.importance AS importance, row.createdAt AS createdAt,
+            row.validFrom AS validFrom,
             row.taskId AS taskId,
             max(row.score) AS graphScore`,
     {
@@ -260,6 +267,7 @@ export async function graphSearch(
         category: record.get("category") as string,
         importance: record.get("importance") as number,
         createdAt: String(record.get("createdAt") ?? ""),
+        validFrom: record.get("validFrom") != null ? String(record.get("validFrom")) : undefined,
         score,
         taskId: (record.get("taskId") as string) ?? undefined,
       });

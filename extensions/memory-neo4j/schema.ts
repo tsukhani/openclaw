@@ -125,6 +125,7 @@ export type SearchSignalResult = {
   category: string;
   importance: number;
   createdAt: string;
+  validFrom?: string; // ISO-8601 — when this fact became true (used for temporal freshness signal)
   score: number;
   taskId?: string; // Optional link to TASKS.md task (e.g., "TASK-001")
 };
@@ -142,11 +143,16 @@ export type HybridSearchResult = {
   createdAt: string;
   score: number;
   taskId?: string; // Optional link to TASKS.md task (e.g., "TASK-001")
+  /** True when retrieval confidence is low — only one signal matched and the
+   *  second result scored well below the top. Consumers may use this to abstain
+   *  from injecting context rather than risk hallucination. */
+  lowConfidence?: boolean;
   signals?: {
     vector: SignalAttribution;
     bm25: SignalAttribution;
     graph: SignalAttribution;
     recency?: SignalAttribution;
+    freshness?: SignalAttribution; // validFrom-based temporal freshness (OP-129)
   };
 };
 
