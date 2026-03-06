@@ -95,6 +95,12 @@ export type MemoryNeo4jConfig = {
      */
     enabled: boolean;
   };
+  metrics?: {
+    /** Enable structured metrics emission to logger (default: false) */
+    enabled: boolean;
+    /** Interval in ms between metric summary flushes (default: 60000) */
+    logIntervalMs?: number;
+  };
 };
 
 /**
@@ -310,6 +316,7 @@ export const memoryNeo4jConfigSchema = {
         "conflictDetection",
         "recencyWeight",
         "decomposition",
+        "metrics",
       ],
       "memory-neo4j config",
     );
@@ -526,6 +533,18 @@ export const memoryNeo4jConfigSchema = {
       throw new Error(`memory-neo4j config: invalid autoRecallSkipPattern regex — ${String(e)}`);
     }
 
+    // Parse metrics section (optional, disabled by default)
+    const metricsRaw = cfg.metrics as Record<string, unknown> | undefined;
+    assertAllowedKeys(metricsRaw ?? {}, ["enabled", "logIntervalMs"], "metrics config");
+    let metrics: MemoryNeo4jConfig["metrics"];
+    if (metricsRaw && metricsRaw.enabled === true) {
+      const rawInterval = metricsRaw.logIntervalMs;
+      metrics = {
+        enabled: true,
+        logIntervalMs: typeof rawInterval === "number" && rawInterval > 0 ? rawInterval : undefined,
+      };
+    }
+
     return {
       neo4j: {
         uri: neo4jUri,
@@ -566,6 +585,7 @@ export const memoryNeo4jConfigSchema = {
       decomposition: {
         enabled: decompositionEnabled,
       },
+      metrics,
     };
   },
 };

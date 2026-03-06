@@ -11,6 +11,8 @@ import { stringEnum } from "openclaw/plugin-sdk";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import { MEMORY_CATEGORIES } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import type { MetricsCollector } from "./metrics.js";
+import { NO_OP_METRICS } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger, MemoryCategory, MemorySource } from "./schema.js";
 import { hybridSearch } from "./search.js";
@@ -22,6 +24,7 @@ export function registerMemoryTools(
   cfg: MemoryNeo4jConfig,
   extractionConfig: ExtractionConfig,
   logger: Logger,
+  metrics: MetricsCollector = NO_OP_METRICS,
 ): void {
   // memory_recall — Three-signal hybrid search
   api.registerTool(
@@ -59,6 +62,7 @@ export function registerMemoryTools(
           };
           const limit = Math.floor(Math.min(50, Math.max(1, rawLimit)));
 
+          const t0Recall = performance.now();
           const results = await hybridSearch(
             db,
             embeddings,
@@ -74,6 +78,8 @@ export function registerMemoryTools(
               recencyWeight: cfg.recencyWeight,
             },
           );
+          metrics.histogram("auto_recall.latency_ms", performance.now() - t0Recall);
+          metrics.increment("memories.recalled", results.length);
 
           if (results.length === 0) {
             return {
@@ -214,6 +220,11 @@ export function registerMemoryTools(
 
           // 5. Extraction is deferred to sleep cycle (like human memory consolidation)
           // See: runSleepCycleExtraction() and `openclaw memory sleep` command
+
+          metrics.increment("memories.stored");
+          if (supersededCount > 0) {
+            metrics.increment("conflicts.superseded", supersededCount);
+          }
 
           return {
             content: [

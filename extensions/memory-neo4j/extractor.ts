@@ -15,6 +15,8 @@ import { randomUUID } from "node:crypto";
 import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
 import { callOpenRouter, callOpenRouterStream, isTransientError } from "./llm-client.js";
+import type { MetricsCollector } from "./metrics.js";
+import { NO_OP_METRICS } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { EntityType, ExtractionResult, Logger, MemoryCategory } from "./schema.js";
 import { ALLOWED_RELATIONSHIP_TYPES, ENTITY_TYPES, MEMORY_CATEGORIES } from "./schema.js";
@@ -616,6 +618,7 @@ export async function runBackgroundExtraction(
   logger: Logger,
   currentRetries: number = 0,
   abortSignal?: AbortSignal,
+  metrics: MetricsCollector = NO_OP_METRICS,
 ): Promise<{ success: boolean; memoryId: string }> {
   if (!config.enabled) {
     await db.updateExtractionStatus(memoryId, "skipped").catch((err) => {
@@ -623,9 +626,11 @@ export async function runBackgroundExtraction(
         `memory-neo4j: updateExtractionStatus failed: ${err instanceof Error ? err.message : String(err)}`,
       );
     });
+    metrics.increment("extraction.skipped");
     return { success: true, memoryId };
   }
 
+  const t0Extract = performance.now();
   try {
     const { result, transientFailure } = await extractEntities(text, config, abortSignal);
 
@@ -638,6 +643,7 @@ export async function runBackgroundExtraction(
             `memory-neo4j: extraction permanently failed for ${memoryId.slice(0, 8)} after ${retries} transient retries`,
           );
           await db.updateExtractionStatus(memoryId, "failed", { incrementRetries: true });
+          metrics.increment("extraction.failed");
         } else {
           logger.info(
             `memory-neo4j: extraction transient failure for ${memoryId.slice(0, 8)}, will retry (${retries}/${MAX_EXTRACTION_RETRIES})`,
@@ -648,6 +654,7 @@ export async function runBackgroundExtraction(
       } else {
         // Permanent failure (JSON parse, empty response, etc.)
         await db.updateExtractionStatus(memoryId, "failed");
+        metrics.increment("extraction.failed");
       }
       return { success: false, memoryId };
     }
@@ -692,6 +699,8 @@ export async function runBackgroundExtraction(
       result.category,
     );
 
+    metrics.histogram("extraction.latency_ms", performance.now() - t0Extract);
+    metrics.increment("extraction.success");
     logger.info(
       `memory-neo4j: extraction complete for ${memoryId.slice(0, 8)} — ` +
         `${result.entities.length} entities, ${result.relationships.length} rels, ${result.tags.length} tags` +
@@ -720,6 +729,7 @@ export async function runBackgroundExtraction(
           `memory-neo4j: updateExtractionStatus failed: ${e instanceof Error ? e.message : String(e)}`,
         );
       });
+      metrics.increment("extraction.failed");
     }
     return { success: false, memoryId };
   }

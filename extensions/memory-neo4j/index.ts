@@ -22,6 +22,7 @@ import {
   vectorDimsForModel,
 } from "./config.js";
 import { Embeddings } from "./embeddings.js";
+import { LoggingMetricsCollector, NO_OP_METRICS, type MetricsCollector } from "./metrics.js";
 import { Neo4jMemoryClient } from "./neo4j-client.js";
 import { registerMemoryHooks } from "./plugin-hooks.js";
 import { registerMemoryTools } from "./plugin-tools.js";
@@ -64,6 +65,12 @@ const memoryNeo4jPlugin = {
       );
     }
 
+    // Create metrics collector (no-op when not configured)
+    const metrics: MetricsCollector =
+      cfg.metrics?.enabled === true
+        ? new LoggingMetricsCollector(api.logger, cfg.metrics.logIntervalMs)
+        : NO_OP_METRICS;
+
     // Create shared resources
     const db = new Neo4jMemoryClient(
       cfg.neo4j.uri,
@@ -78,6 +85,7 @@ const memoryNeo4jPlugin = {
       cfg.embedding.provider,
       cfg.embedding.baseUrl,
       api.logger,
+      metrics,
     );
 
     api.logger.debug?.(
@@ -89,7 +97,7 @@ const memoryNeo4jPlugin = {
     // Tools (using factory pattern for agentId)
     // ========================================================================
 
-    registerMemoryTools(api, db, embeddings, cfg, extractionConfig, api.logger);
+    registerMemoryTools(api, db, embeddings, cfg, extractionConfig, api.logger, metrics);
 
     // ========================================================================
     // CLI Commands (delegated to cli.ts)
@@ -113,6 +121,7 @@ const memoryNeo4jPlugin = {
       extractionConfig,
       sleepAbortController,
       api.logger,
+      metrics,
     );
 
     // ========================================================================
@@ -172,6 +181,10 @@ const memoryNeo4jPlugin = {
           autoSleepTimerId = null;
         }
         sleepAbortController.abort();
+        if (metrics instanceof LoggingMetricsCollector) {
+          metrics.flush();
+          metrics.stop();
+        }
         await db.close();
         api.logger.info("memory-neo4j: service stopped");
       },
@@ -185,6 +198,13 @@ const memoryNeo4jPlugin = {
 
 export { _taskLedgerCache, _getActiveTaskIdForCapture } from "./auto-capture.js";
 export { _captureMessage, _runAutoCapture } from "./auto-capture.js";
+
+// ============================================================================
+// Public API — MetricsCollector for external consumers (e.g. Prometheus adapters)
+// ============================================================================
+
+export type { MetricsCollector } from "./metrics.js";
+export { NO_OP_METRICS, LoggingMetricsCollector } from "./metrics.js";
 
 // ============================================================================
 // Export

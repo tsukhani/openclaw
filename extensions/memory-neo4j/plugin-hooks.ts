@@ -8,6 +8,8 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { runAutoCapture } from "./auto-capture.js";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import type { MetricsCollector } from "./metrics.js";
+import { NO_OP_METRICS } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger } from "./schema.js";
 import { hybridSearch } from "./search.js";
@@ -54,6 +56,7 @@ export function registerMemoryHooks(
   extractionConfig: ExtractionConfig,
   sleepAbortController: AbortController,
   logger: Logger,
+  metrics: MetricsCollector = NO_OP_METRICS,
 ): void {
   // Track sessions where core memories have already been loaded (skip on subsequent turns).
   // NOTE: This is in-memory and will be cleared on gateway restart. The agent_bootstrap
@@ -288,9 +291,11 @@ export function registerMemoryHooks(
               }
 
               const totalMs = performance.now() - t0;
+              metrics.histogram("auto_recall.latency_ms", totalMs);
               logger.info?.(
                 `memory-neo4j: [bench] auto-recall ${totalMs.toFixed(0)}ms total (search=${(tSearch - t0).toFixed(0)}ms), ${results.length} results`,
               );
+              metrics.increment("memories.recalled", results.length);
 
               if (results.length > 0) {
                 const memoryContext = results.map((r) => `- [${r.category}] ${r.text}`).join("\n");
@@ -439,6 +444,7 @@ export function registerMemoryHooks(
       );
       if (!event.success || !event.messages || event.messages.length === 0) {
         logger.debug?.("memory-neo4j: skipping - no success or empty messages");
+        metrics.increment("auto_capture.skipped");
         return;
       }
 
@@ -448,6 +454,7 @@ export function registerMemoryHooks(
         logger.debug?.(
           `memory-neo4j: skipping auto-capture for session ${sessionKey} (matches skipPattern)`,
         );
+        metrics.increment("auto_capture.skipped");
         return;
       }
 
@@ -457,7 +464,9 @@ export function registerMemoryHooks(
         return;
       }
 
+      metrics.increment("auto_capture.fired");
       const agentId = ctx.agentId || "default";
+      const t0Capture = performance.now();
 
       // Fire-and-forget: run auto-capture asynchronously so it doesn't
       // block the agent_end hook (which otherwise adds 2-10s per turn).
@@ -477,6 +486,7 @@ export function registerMemoryHooks(
           // Success: reset circuit breaker so transient errors don't permanently suspend capture.
           consecutiveFailures = 0;
           circuitOpen = false;
+          metrics.histogram("auto_capture.latency_ms", performance.now() - t0Capture);
         })
         .catch((err) => {
           const msg = err instanceof Error ? err.message : String(err);

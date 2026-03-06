@@ -9,6 +9,8 @@ import { createHash } from "node:crypto";
 import OpenAI from "openai";
 import type { EmbeddingProvider } from "./config.js";
 import { contextLengthForModel, vectorDimsForModel } from "./config.js";
+import type { MetricsCollector } from "./metrics.js";
+import { NO_OP_METRICS } from "./metrics.js";
 import type { Logger } from "./schema.js";
 
 /**
@@ -69,6 +71,7 @@ export class Embeddings {
   private readonly contextLength: number;
   private readonly expectedDimensions: number;
   private readonly cache = new EmbeddingCache(200);
+  private readonly metrics: MetricsCollector;
 
   constructor(
     private readonly apiKey: string | undefined,
@@ -76,7 +79,9 @@ export class Embeddings {
     provider: EmbeddingProvider = "openai",
     baseUrl?: string,
     logger?: Logger,
+    metrics: MetricsCollector = NO_OP_METRICS,
   ) {
+    this.metrics = metrics;
     this.provider = provider;
     this.baseUrl = (baseUrl ?? (provider === "ollama" ? "http://localhost:11434" : "")).replace(
       /\/+$/,
@@ -149,11 +154,15 @@ export class Embeddings {
     const cached = this.cache.get(input);
     if (cached) {
       this.logger?.debug?.("memory-neo4j: embedding cache hit");
+      this.metrics.increment("embeddings.cache_hit");
       return cached;
     }
 
+    this.metrics.increment("embeddings.cache_miss");
+    const t0 = performance.now();
     const embedding =
       this.provider === "ollama" ? await this.embedOllama(input) : await this.embedOpenAI(input);
+    this.metrics.histogram("embedding.latency_ms", performance.now() - t0);
 
     this.validateDimensions(embedding);
     this.cache.set(input, embedding);
