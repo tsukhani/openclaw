@@ -86,6 +86,15 @@ export type MemoryNeo4jConfig = {
    * Default: 0.1. Set to 0 to disable recency boost.
    */
   recencyWeight: number;
+  decomposition: {
+    /**
+     * Enable atomic fact decomposition (Phase 2c).
+     * Splits multi-fact memories (3+ entities) into independent atomic facts
+     * linked back to the source via DERIVED_FROM relationships.
+     * Default: false (opt-in until validated).
+     */
+    enabled: boolean;
+  };
 };
 
 /**
@@ -300,6 +309,7 @@ export const memoryNeo4jConfigSchema = {
         "sleepCycle",
         "conflictDetection",
         "recencyWeight",
+        "decomposition",
       ],
       "memory-neo4j config",
     );
@@ -477,6 +487,11 @@ export const memoryNeo4jConfigSchema = {
       recencyWeight = rawRecencyWeight;
     }
 
+    // Parse decomposition section (optional with defaults)
+    const decompositionRaw = cfg.decomposition as Record<string, unknown> | undefined;
+    assertAllowedKeys(decompositionRaw ?? {}, ["enabled"], "decomposition config");
+    const decompositionEnabled = decompositionRaw?.enabled === true; // disabled by default
+
     // Sec-3: ReDoS length guard — reject patterns > 200 chars before compilation
     const autoCaptureSkipPatternRaw =
       typeof cfg.autoCaptureSkipPattern === "string" && cfg.autoCaptureSkipPattern
@@ -548,6 +563,9 @@ export const memoryNeo4jConfigSchema = {
         sleepScanBatchSize: cdBatchSize,
       },
       recencyWeight,
+      decomposition: {
+        enabled: decompositionEnabled,
+      },
     };
   },
 };

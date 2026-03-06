@@ -1018,6 +1018,7 @@ describe("Neo4jMemoryClient", () => {
         complete: 10,
         failed: 2,
         skipped: 0,
+        decomposed: 0,
       });
     });
 

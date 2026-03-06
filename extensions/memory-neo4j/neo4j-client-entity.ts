@@ -225,6 +225,7 @@ export async function countByExtractionStatus(
     complete: 0,
     failed: 0,
     skipped: 0,
+    decomposed: 0,
   };
   for (const record of result.records) {
     const status = record.get("status") as string;
@@ -556,4 +557,53 @@ export async function reconcileEntityMentionCounts(session: Session): Promise<nu
      RETURN count(e) AS updated`,
   );
   return (result.records[0]?.get("updated") as number) ?? 0;
+}
+
+/**
+ * List memories that have 3+ entity MENTIONS and have not been decomposed yet.
+ * Used by Phase 2c (atomic decomposition) to find candidates for decomposition.
+ */
+export async function listMemoriesWithManyEntities(
+  session: Session,
+  minEntityCount: number = 3,
+  limit: number = 50,
+  agentId?: string,
+): Promise<Array<{ id: string; text: string }>> {
+  const agentFilter = agentId ? "AND m.agentId = $agentId" : "";
+  const result = await session.run(
+    `MATCH (m:Memory)-[:MENTIONS]->(e:Entity)
+     WHERE m.extractionStatus = 'complete' ${agentFilter}
+       AND m.validUntil IS NULL
+     WITH m, count(e) AS entityCount
+     WHERE entityCount >= $minCount
+     RETURN m.id AS id, m.text AS text
+     ORDER BY entityCount DESC
+     LIMIT $limit`,
+    {
+      minCount: neo4j.int(minEntityCount),
+      limit: neo4j.int(limit),
+      ...(agentId ? { agentId } : {}),
+    },
+  );
+  return result.records.map((r) => ({
+    id: r.get("id") as string,
+    text: r.get("text") as string,
+  }));
+}
+
+/**
+ * Create a DERIVED_FROM relationship from an atomic memory back to its source.
+ * Used by Phase 2c after storing atomic fact memories from a decomposed source.
+ */
+export async function createDerivedFromRelationship(
+  session: Session,
+  atomicMemId: string,
+  sourceMemId: string,
+): Promise<void> {
+  await session.run(
+    `MATCH (a:Memory {id: $atomicMemId})
+     MATCH (s:Memory {id: $sourceMemId})
+     MERGE (a)-[:DERIVED_FROM]->(s)`,
+    { atomicMemId, sourceMemId },
+  );
 }

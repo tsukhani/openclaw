@@ -26,13 +26,14 @@ export type MemoryCategory =
   | "lesson"
   | "other";
 export type EntityType = "person" | "organization" | "location" | "event" | "concept";
-export type ExtractionStatus = "pending" | "complete" | "failed" | "skipped";
+export type ExtractionStatus = "pending" | "complete" | "failed" | "skipped" | "decomposed";
 export type MemorySource =
   | "user"
   | "auto-capture"
   | "auto-capture-assistant"
   | "memory-watcher"
-  | "import";
+  | "import"
+  | "decomposed";
 
 export type MemoryNode = {
   id: string;
@@ -201,6 +202,12 @@ export const ALLOWED_RELATIONSHIP_TYPES = new Set([
   "STUDIED_AT",
   "LOCATED_IN",
 ]);
+
+/**
+ * Memory-to-memory relationship types (distinct from entity-entity relationships).
+ * Not included in ALLOWED_RELATIONSHIP_TYPES to avoid polluting entity graph traversal.
+ */
+export const MEMORY_RELATIONSHIP_TYPES = new Set(["DERIVED_FROM"]);
 
 // ============================================================================
 // Lucene Helpers
