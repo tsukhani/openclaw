@@ -8,6 +8,11 @@
  * 4. Optionally generate + grade answers (Tier 2 E2E)
  * 5. Aggregate and report results
  *
+ * Phase 3+4 additions:
+ * - Named config variants applied to hybridSearch (A/B testing)
+ * - Signal attribution stats
+ * - CI mode: regression detection against a saved baseline, JSON output
+ *
  * Uses an ephemeral agentId per test case to avoid polluting production data.
  * All test memories are cleaned up after each case via deleteMemoriesByIds.
  */
@@ -18,6 +23,7 @@ import type { Embeddings } from "../embeddings.js";
 import type { Neo4jMemoryClient } from "../neo4j-client.js";
 import type { MemoryCategory } from "../schema.js";
 import { hybridSearch } from "../search.js";
+import { buildCiSummary, computeRegression, loadBaseline, saveBaseline } from "./baseline.js";
 import { loadDataset } from "./datasets/loader.js";
 import { LlmJudge } from "./judges/llm-judge.js";
 import {
@@ -26,6 +32,7 @@ import {
 } from "./metrics/context-completeness.js";
 import { aggregateEndToEnd, generateAnswer, gradeAnswer } from "./metrics/end-to-end.js";
 import { aggregateByAbility, aggregateOverall, computeCaseMetrics } from "./metrics/retrieval.js";
+import { computeSignalAttributionStats } from "./metrics/signal-attribution.js";
 import { reportConsole } from "./reporters/console.js";
 import { formatJson, reportJson, reportJsonStdout } from "./reporters/json.js";
 import { reportMarkdown, reportMarkdownStdout } from "./reporters/markdown.js";
@@ -38,6 +45,8 @@ import type {
   RetrievedMemory,
   TestCase,
 } from "./types.js";
+import type { SearchConfig } from "./variants.js";
+import { resolveVariant } from "./variants.js";
 
 /**
  * Run the full evaluation pipeline.
@@ -60,6 +69,10 @@ export async function runEval(
   const runId = randomUUID().slice(0, 8);
   const k = options.k ?? 5;
   const agentPrefix = `eval-${runId}`;
+  const variantName = options.variant ?? "default";
+
+  // Resolve variant overrides
+  const variantOverrides = resolveVariant(variantName);
 
   await db.ensureInitialized();
 
@@ -90,8 +103,14 @@ export async function runEval(
       // 1. Store memories for this test case
       storedIds.push(...(await storeTestMemories(db, embeddings, tc, caseAgentId)));
 
-      // 2. Run hybridSearch
-      const graphEnabled = extractionConfig.enabled && cfg.graphSearchDepth > 0;
+      // 2. Resolve search parameters for this variant
+      const { graphEnabled, searchOptions } = buildSearchOptions(
+        variantOverrides,
+        extractionConfig,
+        cfg,
+      );
+
+      // 3. Run hybridSearch
       const rawResults = await hybridSearch(
         db,
         embeddings,
@@ -99,12 +118,7 @@ export async function runEval(
         k,
         caseAgentId,
         graphEnabled,
-        {
-          graphSearchDepth: cfg.graphSearchDepth,
-          graphSeedCap: cfg.graphSeedCap,
-          graphRelTypes: cfg.graphRelTypes,
-          recencyWeight: cfg.recencyWeight,
-        },
+        searchOptions,
       );
 
       const retrieved: RetrievedMemory[] = rawResults.map((r, i) => ({
@@ -115,7 +129,7 @@ export async function runEval(
         signals: r.signals,
       }));
 
-      // 3. Compute retrieval metrics
+      // 4. Compute retrieval metrics
       const caseMetrics = computeCaseMetrics(
         tc.id,
         tc.ability,
@@ -126,7 +140,7 @@ export async function runEval(
       );
       retrievalCases.push(caseMetrics);
 
-      // 4. Context completeness (LLM judge, Tier 1)
+      // 5. Context completeness (LLM judge, Tier 1)
       if (judge) {
         const retrievedTexts = retrieved.map((r) => r.text);
         const completeness = await evaluateContextCompleteness(
@@ -138,7 +152,7 @@ export async function runEval(
         );
         contextResults.push(completeness);
 
-        // 5. End-to-end evaluation (Tier 2)
+        // 6. End-to-end evaluation (Tier 2)
         if (options.endToEnd) {
           const answer = await generateAnswer(judge, tc.question, retrievedTexts);
           const graded = await gradeAnswer(
@@ -171,10 +185,16 @@ export async function runEval(
 
   const e2eAggregate = e2eResults.length > 0 ? aggregateEndToEnd(e2eResults) : undefined;
 
+  // Signal attribution (optional)
+  const signalAttribution = options.signalAttribution
+    ? computeSignalAttributionStats(retrievalCases)
+    : undefined;
+
   const result: EvalRunResult = {
     runId,
     timestamp: new Date().toISOString(),
     datasetName: options.dataset,
+    variant: variantName,
     k,
     agentNamespace: agentPrefix,
     retrievalCases,
@@ -184,13 +204,112 @@ export async function runEval(
       ? { cases: contextResults, aggregate: contextAggregate }
       : undefined,
     endToEnd: e2eAggregate ? { cases: e2eResults, aggregate: e2eAggregate } : undefined,
+    signalAttribution,
     durationMs: Date.now() - startedAt,
   };
+
+  // CI mode: regression detection + JSON output to stdout
+  if (options.ciMode) {
+    await handleCiMode(result, options);
+    return result;
+  }
+
+  // Save baseline if requested (non-CI path)
+  if (options.saveBaselinePath) {
+    await saveBaseline(result, options.saveBaselinePath);
+  }
 
   // Report
   await dispatchReporter(result, options);
 
   return result;
+}
+
+// ── Variant → search options translation ──────────────────────────────────────
+
+type SearchOptions = Parameters<typeof hybridSearch>[6];
+
+/**
+ * Build hybridSearch call parameters from a variant config + plugin config.
+ */
+function buildSearchOptions(
+  variant: Partial<SearchConfig>,
+  extractionConfig: ExtractionConfig,
+  cfg: MemoryNeo4jConfig,
+): { graphEnabled: boolean; searchOptions: SearchOptions } {
+  // Graph enabled: variant can force-disable, otherwise check extraction config + depth
+  const graphEnabled =
+    variant.graphEnabled !== undefined
+      ? variant.graphEnabled
+      : extractionConfig.enabled && cfg.graphSearchDepth > 0;
+
+  // Recency weight: can be disabled or boosted
+  let recencyWeight = cfg.recencyWeight;
+  if (variant.temporalRecencyEnabled === false) {
+    recencyWeight = 0;
+  } else if (variant.temporalRecencyBoost !== undefined) {
+    recencyWeight = recencyWeight * variant.temporalRecencyBoost;
+  }
+
+  // Weight override: when vector/bm25 weights are explicitly set, bypass adaptive weights
+  let weightOverride: [number, number, number] | undefined;
+  if (variant.vectorWeight !== undefined || variant.bm25Weight !== undefined) {
+    const vw = variant.vectorWeight ?? 1.0;
+    const bw = variant.bm25Weight ?? 1.0;
+    const gw = graphEnabled ? 1.0 : 0.0;
+    weightOverride = [vw, bw, gw];
+  }
+
+  return {
+    graphEnabled,
+    searchOptions: {
+      graphSearchDepth: variant.graphDepthLimit ?? cfg.graphSearchDepth,
+      graphSeedCap: variant.graphSeedCap ?? cfg.graphSeedCap,
+      graphRelTypes: cfg.graphRelTypes,
+      recencyWeight,
+      weightOverride,
+    },
+  };
+}
+
+// ── CI mode handler ────────────────────────────────────────────────────────────
+
+async function handleCiMode(result: EvalRunResult, options: EvalRunOptions): Promise<void> {
+  let hasRegression = false;
+
+  if (options.baselinePath) {
+    const baseline = await loadBaseline(options.baselinePath);
+    if (baseline) {
+      const report = computeRegression(result, baseline);
+      hasRegression = report.hasRegression;
+
+      if (report.hasRegression) {
+        process.stderr.write(
+          `[eval] Regression detected against baseline (${options.baselinePath}):\n`,
+        );
+        for (const r of report.regressions) {
+          process.stderr.write(
+            `  ${r.metric}: ${(r.current * 100).toFixed(2)}% vs baseline ${(r.baseline * 100).toFixed(2)}% (delta ${(r.delta * 100).toFixed(2)}%, threshold ${(r.threshold * 100).toFixed(2)}%)\n`,
+          );
+        }
+      }
+    } else {
+      process.stderr.write(
+        `[eval] Warning: baseline file not found at "${options.baselinePath}" — skipping regression check.\n`,
+      );
+    }
+  }
+
+  if (options.saveBaselinePath) {
+    await saveBaseline(result, options.saveBaselinePath);
+  }
+
+  const summary = buildCiSummary(result, hasRegression);
+  process.stdout.write(JSON.stringify(summary, null, 2) + "\n");
+
+  if (hasRegression) {
+    process.exitCode = 1;
+  }
 }
 
 // ── Memory ingestion ──────────────────────────────────────────────────────────

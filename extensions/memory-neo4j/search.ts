@@ -248,6 +248,12 @@ export async function hybridSearch(
     asOf?: string;
     /** Weight for recency boost applied after RRF fusion (default: 0.1). Higher = more recent memories ranked higher. */
     recencyWeight?: number;
+    /**
+     * Override adaptive signal weights [vector, bm25, graph].
+     * When set, bypasses query-adaptive weight calculation.
+     * Used by the eval harness to implement variant ablations (vector-only, bm25-only, etc.).
+     */
+    weightOverride?: [number, number, number];
   } = {},
 ): Promise<HybridSearchResult[]> {
   // Guard against empty queries
@@ -266,6 +272,7 @@ export async function hybridSearch(
     includeExpired = false,
     asOf,
     recencyWeight = 0.1,
+    weightOverride,
   } = options;
 
   const candidateLimit = Math.floor(Math.min(200, Math.max(1, limit * candidateMultiplier)));
@@ -275,9 +282,9 @@ export async function hybridSearch(
   const queryEmbedding = await embeddings.embed(query);
   const tEmbed = performance.now();
 
-  // 2. Classify query and get adaptive weights
+  // 2. Classify query and get adaptive weights (overridable for eval variants)
   const queryType = classifyQuery(query);
-  const weights = getAdaptiveWeights(queryType, graphEnabled);
+  const weights = weightOverride ?? getAdaptiveWeights(queryType, graphEnabled);
 
   // 3. Run signals in parallel
   const [vectorResults, bm25Results, graphResults] = await Promise.all([

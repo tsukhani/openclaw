@@ -14,8 +14,9 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { passesAttentionGate } from "./attention-gate.js";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
-import { runEval } from "./eval/index.js";
+import { reportAbComparison, runAbComparison, runEval } from "./eval/index.js";
 import type { EvalOutputFormat, MemoryAbility } from "./eval/types.js";
+import { EVAL_VARIANTS } from "./eval/variants.js";
 import { stripMessageWrappers } from "./message-utils.js";
 import { metrics } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
@@ -900,6 +901,15 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
           console.log(JSON.stringify(metrics.snapshot(), null, 2));
         });
 
+      const validAbilities: MemoryAbility[] = [
+        "extraction",
+        "temporal",
+        "updates",
+        "multi-session",
+        "abstention",
+      ];
+      const validVariants = Object.keys(EVAL_VARIANTS);
+
       memory
         .command("eval")
         .description("Run retrieval evaluation against custom fixtures or LongMemEval benchmark")
@@ -921,6 +931,17 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
         .option("--output <path>", "Write output to file (for json/markdown formats)")
         .option("--e2e", "Run end-to-end answer generation and grading (Tier 2)")
         .option("--no-judge", "Skip LLM judge (context completeness will not be evaluated)")
+        .option(
+          "--variant <name>",
+          `Named search config variant (${validVariants.join("|")})`,
+          "default",
+        )
+        .option("--signal-attribution", "Include per-signal attribution stats in results")
+        .option("--ci", "CI mode: output flat JSON to stdout, exit 1 on regression")
+        .option("--baseline <path>", "Load baseline JSON for regression comparison")
+        .option("--save-baseline <path>", "Save current results as new baseline JSON")
+        .option("--variant-a <name>", "A/B test: run variant A (requires --variant-b)")
+        .option("--variant-b <name>", "A/B test: run variant B and compare against --variant-a")
         .action(
           async (opts: {
             dataset: string;
@@ -930,6 +951,13 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
             output?: string;
             e2e?: boolean;
             judge?: boolean;
+            variant: string;
+            signalAttribution?: boolean;
+            ci?: boolean;
+            baseline?: string;
+            saveBaseline?: string;
+            variantA?: string;
+            variantB?: string;
           }) => {
             const k = parseInt(opts.k, 10);
             if (Number.isNaN(k) || k < 1) {
@@ -945,15 +973,31 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
               return;
             }
 
-            const validAbilities: MemoryAbility[] = [
-              "extraction",
-              "temporal",
-              "updates",
-              "multi-session",
-              "abstention",
-            ];
             if (opts.ability && !validAbilities.includes(opts.ability as MemoryAbility)) {
               console.error(`Error: --ability must be one of: ${validAbilities.join(", ")}`);
+              process.exitCode = 1;
+              return;
+            }
+
+            if (!validVariants.includes(opts.variant)) {
+              console.error(`Error: --variant must be one of: ${validVariants.join(", ")}`);
+              process.exitCode = 1;
+              return;
+            }
+
+            // Validate A/B variant names upfront
+            if (opts.variantA && !validVariants.includes(opts.variantA)) {
+              console.error(`Error: --variant-a must be one of: ${validVariants.join(", ")}`);
+              process.exitCode = 1;
+              return;
+            }
+            if (opts.variantB && !validVariants.includes(opts.variantB)) {
+              console.error(`Error: --variant-b must be one of: ${validVariants.join(", ")}`);
+              process.exitCode = 1;
+              return;
+            }
+            if ((opts.variantA && !opts.variantB) || (!opts.variantA && opts.variantB)) {
+              console.error("Error: --variant-a and --variant-b must be used together");
               process.exitCode = 1;
               return;
             }
@@ -966,16 +1010,45 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
               );
             }
 
-            const runOptions = {
-              dataset: opts.dataset,
-              ability: opts.ability as MemoryAbility | undefined,
-              k,
-              format: opts.format as EvalOutputFormat,
-              endToEnd: opts.e2e === true && judgeEnabled,
-              outputFile: opts.output,
-            };
-
             try {
+              // A/B comparison mode
+              if (opts.variantA && opts.variantB) {
+                const abResult = await runAbComparison(
+                  db,
+                  embeddings,
+                  extractionConfig,
+                  cfg,
+                  opts.dataset,
+                  opts.variantA,
+                  opts.variantB,
+                  {
+                    evalOptions: {
+                      ability: opts.ability as MemoryAbility | undefined,
+                      k,
+                      endToEnd: opts.e2e === true && judgeEnabled,
+                      signalAttribution: opts.signalAttribution === true,
+                    },
+                  },
+                );
+                reportAbComparison(abResult);
+                return;
+              }
+
+              // Standard eval mode
+              const runOptions = {
+                dataset: opts.dataset,
+                ability: opts.ability as MemoryAbility | undefined,
+                k,
+                format: opts.format as EvalOutputFormat,
+                endToEnd: opts.e2e === true && judgeEnabled,
+                outputFile: opts.output,
+                variant: opts.variant,
+                signalAttribution: opts.signalAttribution === true,
+                ciMode: opts.ci === true,
+                baselinePath: opts.baseline,
+                saveBaselinePath: opts.saveBaseline,
+              };
+
               await runEval(db, embeddings, extractionConfig, cfg, runOptions);
             } catch (err) {
               console.error(`\nEval failed: ${err instanceof Error ? err.message : String(err)}`);

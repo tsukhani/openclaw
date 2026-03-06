@@ -172,6 +172,8 @@ export type EvalRunResult = {
   runId: string;
   timestamp: string;
   datasetName: string;
+  /** Named variant used for this run (default: "default"). */
+  variant: string;
   k: number;
   agentNamespace: string;
   /** Per-case retrieval metrics. */
@@ -198,6 +200,8 @@ export type EvalRunResult = {
     cases: EndToEndResult[];
     aggregate: EndToEndAggregate;
   };
+  /** Per-signal attribution stats (populated when signalAttribution option is enabled). */
+  signalAttribution?: SignalAttributionStats;
   durationMs: number;
 };
 
@@ -214,6 +218,108 @@ export type ConfigVariant = {
   graphSearchDepth?: number;
   graphSeedCap?: number;
   recencyWeight?: number;
+};
+
+// ============================================================================
+// Signal Attribution (Phase 3)
+// ============================================================================
+
+export type SignalName = "vector" | "bm25" | "graph";
+
+/** Statistics about which signals found the gold memories. */
+export type SignalAttributionStats = {
+  /** Total gold memories that were retrieved (at any rank). */
+  total: number;
+  /** Gold memories found exclusively by the vector signal. */
+  vectorOnlyHits: number;
+  /** Gold memories found exclusively by the BM25 signal. */
+  bm25OnlyHits: number;
+  /** Gold memories found exclusively by the graph signal. */
+  graphOnlyHits: number;
+  /** Gold memories found by 2+ signals (RRF fusion candidates). */
+  multiSignalHits: number;
+  /**
+   * Fraction of multi-signal hits where the fused rank is better than
+   * the best single-signal rank — indicates RRF uplift.
+   */
+  rrfUplift: number;
+};
+
+// ============================================================================
+// A/B Comparison (Phase 3)
+// ============================================================================
+
+/** 95% bootstrap confidence interval. */
+export type BootstrapCI = {
+  lower: number;
+  upper: number;
+  /** Observed delta (B − A). */
+  mean: number;
+};
+
+/** Comparison of one metric between two variants. */
+export type MetricComparison = {
+  metricName: string;
+  variantA: number;
+  variantB: number;
+  /** B − A */
+  delta: number;
+  /** Paired bootstrap CI for the delta. */
+  ci: BootstrapCI;
+  /** True when CI does not include 0 (statistically significant at 95%). */
+  significant: boolean;
+};
+
+/** Full A/B comparison result. */
+export type AbComparisonResult = {
+  variantA: string;
+  variantB: string;
+  datasetName: string;
+  k: number;
+  timestamp: string;
+  runA: EvalRunResult;
+  runB: EvalRunResult;
+  metrics: MetricComparison[];
+  /** Variant that wins significantly on more metrics, or no_significant_difference. */
+  winner: "A" | "B" | "no_significant_difference";
+};
+
+// ============================================================================
+// Regression Detection (Phase 4)
+// ============================================================================
+
+/** A single metric regression entry. */
+export type MetricDelta = {
+  metric: string;
+  current: number;
+  baseline: number;
+  /** current − baseline (negative = regression). */
+  delta: number;
+  /** Minimum acceptable drop before flagging as regression (negative). */
+  threshold: number;
+  isRegression: boolean;
+};
+
+/** Regression comparison report. */
+export type RegressionReport = {
+  hasRegression: boolean;
+  regressions: MetricDelta[];
+  currentTimestamp: string;
+  baselineTimestamp: string;
+};
+
+/** Flat CI-friendly metrics summary for JSON output. */
+export type CiMetricsSummary = {
+  recall_at_k: number;
+  precision_at_k: number;
+  f1_at_k: number;
+  mrr: number;
+  ndcg_at_k: number;
+  context_completeness: number;
+  regression: boolean;
+  dataset: string;
+  variant: string;
+  timestamp: string;
 };
 
 // ============================================================================
@@ -241,8 +347,12 @@ export type EvalRunOptions = {
   keepData?: boolean;
   /** Output file path (for JSON/markdown formats). */
   outputFile?: string;
-  /** If true, compare against a saved baseline and fail on regression. */
+  /** If true, output JSON to stdout and exit 1 on regression. */
   ciMode?: boolean;
-  /** Path to baseline JSON for regression detection. */
+  /** Path to baseline JSON for regression comparison. */
   baselinePath?: string;
+  /** Path to save current results as new baseline. */
+  saveBaselinePath?: string;
+  /** If true, include per-signal attribution stats in results. */
+  signalAttribution?: boolean;
 };

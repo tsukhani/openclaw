@@ -9,9 +9,12 @@ export { runEval } from "./harness.js";
 
 // Types
 export type {
+  AbComparisonResult,
   AbilityMetrics,
   AnswerCorrectness,
+  BootstrapCI,
   CaseRetrievalMetrics,
+  CiMetricsSummary,
   ConfigVariant,
   ContextCompletenessResult,
   ContextVerdict,
@@ -21,8 +24,13 @@ export type {
   EvalRunResult,
   FixtureFile,
   MemoryAbility,
+  MetricComparison,
+  MetricDelta,
+  RegressionReport,
   RetrievedMemory,
   RetrievedSignals,
+  SignalAttributionStats,
+  SignalName,
   TestCase,
   TestMemory,
 } from "./types.js";
@@ -44,6 +52,7 @@ export {
   evaluateContextCompleteness,
 } from "./metrics/context-completeness.js";
 export { aggregateEndToEnd, generateAnswer, gradeAnswer } from "./metrics/end-to-end.js";
+export { computeSignalAttributionStats } from "./metrics/signal-attribution.js";
 
 // Judge
 export { LlmJudge } from "./judges/llm-judge.js";
@@ -52,3 +61,14 @@ export { LlmJudge } from "./judges/llm-judge.js";
 export { reportConsole } from "./reporters/console.js";
 export { formatJson, reportJson, reportJsonStdout } from "./reporters/json.js";
 export { formatMarkdown, reportMarkdown, reportMarkdownStdout } from "./reporters/markdown.js";
+
+// A/B comparison
+export { reportAbComparison, runAbComparison } from "./ab-compare.js";
+export type { AbCompareOptions } from "./ab-compare.js";
+
+// Baseline & CI
+export { buildCiSummary, computeRegression, loadBaseline, saveBaseline } from "./baseline.js";
+
+// Variants
+export { EVAL_VARIANTS, resolveVariant } from "./variants.js";
+export type { SearchConfig } from "./variants.js";

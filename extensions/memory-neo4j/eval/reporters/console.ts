@@ -11,12 +11,13 @@ import type { EvalRunResult } from "../types.js";
  * Print eval results to stdout as a formatted table.
  */
 export function reportConsole(result: EvalRunResult): void {
-  const { overall, abilityMetrics, contextCompleteness, endToEnd } = result;
+  const { overall, abilityMetrics, contextCompleteness, endToEnd, signalAttribution } = result;
 
   console.log("\n╔══════════════════════════════════════════════════════════════╗");
   console.log("║           Memory-Neo4j Retrieval Evaluation Results           ║");
   console.log("╚══════════════════════════════════════════════════════════════╝");
   console.log(`\n  Dataset:   ${result.datasetName}`);
+  console.log(`  Variant:   ${result.variant}`);
   console.log(`  Run ID:    ${result.runId}`);
   console.log(`  Timestamp: ${result.timestamp}`);
   console.log(`  K:         ${result.k}`);
@@ -88,6 +89,31 @@ export function reportConsole(result: EvalRunResult): void {
     );
     console.log(`│  Partial:   (${aggregate.partial})`);
     console.log(`│  Incorrect: (${aggregate.incorrect})`);
+    console.log("└");
+  }
+
+  // Signal attribution breakdown
+  if (signalAttribution) {
+    const sa = signalAttribution;
+    const t = sa.total > 0 ? sa.total : 1; // avoid div by 0
+    console.log("\n┌─ Signal Attribution (gold memory hits)");
+    console.log("│");
+    console.log(
+      `│  Vector-only:   ${String(sa.vectorOnlyHits).padStart(4)}  ${pct(sa.vectorOnlyHits / t)}  ${bar(sa.vectorOnlyHits / t)}`,
+    );
+    console.log(
+      `│  BM25-only:     ${String(sa.bm25OnlyHits).padStart(4)}  ${pct(sa.bm25OnlyHits / t)}  ${bar(sa.bm25OnlyHits / t)}`,
+    );
+    console.log(
+      `│  Graph-only:    ${String(sa.graphOnlyHits).padStart(4)}  ${pct(sa.graphOnlyHits / t)}  ${bar(sa.graphOnlyHits / t)}`,
+    );
+    console.log(
+      `│  Multi-signal:  ${String(sa.multiSignalHits).padStart(4)}  ${pct(sa.multiSignalHits / t)}  ${bar(sa.multiSignalHits / t)}`,
+    );
+    console.log(`│  Total hits:    ${String(sa.total).padStart(4)}`);
+    console.log(
+      `│  RRF uplift:    ${pct(sa.rrfUplift)}  (multi-signal hits ranked higher by fusion)`,
+    );
     console.log("└");
   }
 
