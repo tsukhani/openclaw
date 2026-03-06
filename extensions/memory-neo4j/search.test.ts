@@ -439,8 +439,15 @@ describe("hybridSearch", () => {
     );
 
     // limit=5, multiplier=8 => candidateLimit = 40
-    expect(mockDb.vectorSearch).toHaveBeenCalledWith(expect.any(Array), 40, 0.1, "agent-1", false);
-    expect(mockDb.bm25Search).toHaveBeenCalledWith("test query", 40, "agent-1", false);
+    expect(mockDb.vectorSearch).toHaveBeenCalledWith(
+      expect.any(Array),
+      40,
+      0.1,
+      "agent-1",
+      false,
+      undefined,
+    );
+    expect(mockDb.bm25Search).toHaveBeenCalledWith("test query", 40, "agent-1", false, undefined);
   });
 
   it("should pass default agentId when not specified", async () => {
@@ -459,6 +466,7 @@ describe("hybridSearch", () => {
       0.1,
       "default",
       false,
+      undefined,
     );
   });
 
@@ -481,12 +489,14 @@ describe("hybridSearch", () => {
       0.1,
       "agent-1",
       false,
+      undefined,
     );
     expect(mockDb.bm25Search).toHaveBeenCalledWith(
       "test query",
       expect.any(Number),
       "agent-1",
       false,
+      undefined,
     );
   });
 
@@ -511,12 +521,14 @@ describe("hybridSearch", () => {
       0.1,
       "agent-1",
       true,
+      undefined,
     );
     expect(mockDb.bm25Search).toHaveBeenCalledWith(
       "tell me about Tarun",
       expect.any(Number),
       "agent-1",
       true,
+      undefined,
     );
     expect(mockDb.graphSearch).toHaveBeenCalledWith(
       "tell me about Tarun",
@@ -525,7 +537,228 @@ describe("hybridSearch", () => {
       "agent-1",
       expect.any(Number),
       true,
+      undefined,
     );
+  });
+});
+
+// ============================================================================
+// OP-120: asOf point-in-time queries
+// ============================================================================
+
+describe("hybridSearch — asOf parameter (OP-120)", () => {
+  type MockedDb = {
+    [K in keyof Pick<
+      Neo4jMemoryClient,
+      "vectorSearch" | "bm25Search" | "graphSearch" | "recordRetrievals"
+    >]: ReturnType<typeof vi.fn>;
+  };
+  type MockedEmbeddings = {
+    [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
+  };
+
+  const mockDb: MockedDb = {
+    vectorSearch: vi.fn(),
+    bm25Search: vi.fn(),
+    graphSearch: vi.fn(),
+    recordRetrievals: vi.fn(),
+  };
+  const mockEmbeddings: MockedEmbeddings = {
+    embed: vi.fn(),
+    embedBatch: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockEmbeddings.embed.mockResolvedValue([0.1, 0.2, 0.3]);
+    mockDb.recordRetrievals.mockResolvedValue(undefined);
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+  });
+
+  it("should pass asOf to vectorSearch and bm25Search", async () => {
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { asOf: "2026-01-01" },
+    );
+
+    expect(mockDb.vectorSearch).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Number),
+      0.1,
+      "agent-1",
+      false,
+      "2026-01-01",
+    );
+    expect(mockDb.bm25Search).toHaveBeenCalledWith(
+      "test query",
+      expect.any(Number),
+      "agent-1",
+      false,
+      "2026-01-01",
+    );
+  });
+
+  it("should pass asOf to graphSearch when graphEnabled=true", async () => {
+    mockDb.graphSearch.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "tell me about Tarun",
+      5,
+      "agent-1",
+      true,
+      { asOf: "2025-06-15T00:00:00Z" },
+    );
+
+    expect(mockDb.graphSearch).toHaveBeenCalledWith(
+      "tell me about Tarun",
+      expect.any(Number),
+      expect.any(Number),
+      "agent-1",
+      expect.any(Number),
+      false,
+      "2025-06-15T00:00:00Z",
+    );
+  });
+});
+
+// ============================================================================
+// OP-121: Temporal recency as 4th RRF signal
+// ============================================================================
+
+describe("hybridSearch — recency signal (OP-121)", () => {
+  type MockedDb = {
+    [K in keyof Pick<
+      Neo4jMemoryClient,
+      "vectorSearch" | "bm25Search" | "graphSearch" | "recordRetrievals"
+    >]: ReturnType<typeof vi.fn>;
+  };
+  type MockedEmbeddings = {
+    [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
+  };
+
+  const mockDb: MockedDb = {
+    vectorSearch: vi.fn(),
+    bm25Search: vi.fn(),
+    graphSearch: vi.fn(),
+    recordRetrievals: vi.fn(),
+  };
+  const mockEmbeddings: MockedEmbeddings = {
+    embed: vi.fn(),
+    embedBatch: vi.fn(),
+  };
+
+  function makeResult(id: string, score: number, createdAt: string): SearchSignalResult {
+    return { id, text: `Memory ${id}`, category: "fact", importance: 0.7, createdAt, score };
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockEmbeddings.embed.mockResolvedValue([0.1, 0.2, 0.3]);
+    mockDb.recordRetrievals.mockResolvedValue(undefined);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+  });
+
+  it("should rank more recent memory higher than older with equal vector score", async () => {
+    const recentDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(); // 5 days ago
+    const oldDate = new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(); // 300 days ago
+
+    mockDb.vectorSearch.mockResolvedValue([
+      makeResult("old-mem", 0.9, oldDate),
+      makeResult("recent-mem", 0.9, recentDate),
+    ]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { recencyWeight: 0.5 }, // amplify recency effect for test clarity
+    );
+
+    expect(results.length).toBe(2);
+    // Recent memory should rank higher due to recency boost
+    expect(results[0].id).toBe("recent-mem");
+    expect(results[1].id).toBe("old-mem");
+  });
+
+  it("should include recency in signals output", async () => {
+    const recentDate = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    mockDb.vectorSearch.mockResolvedValue([makeResult("mem-1", 0.8, recentDate)]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    expect(results[0].signals).toBeDefined();
+    expect(results[0].signals?.recency).toBeDefined();
+    expect(results[0].signals?.recency?.score).toBeGreaterThan(0);
+    expect(results[0].signals?.recency?.score).toBeLessThanOrEqual(1);
+  });
+
+  it("should return score <= 1 after recency boost and normalization", async () => {
+    const dates = [
+      new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+    ];
+    mockDb.vectorSearch.mockResolvedValue(
+      dates.map((d, i) => makeResult(`mem-${i}`, 0.9 - i * 0.1, d)),
+    );
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { recencyWeight: 1.0 }, // max weight
+    );
+
+    for (const r of results) {
+      expect(r.score).toBeGreaterThanOrEqual(0);
+      expect(r.score).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("recencyWeight=0 should disable recency boost (pure RRF ordering)", async () => {
+    const recentDate = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString();
+    const oldDate = new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Old memory has slightly higher RRF score
+    mockDb.vectorSearch.mockResolvedValue([
+      makeResult("old-mem", 0.95, oldDate),
+      makeResult("recent-mem", 0.5, recentDate),
+    ]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { recencyWeight: 0 },
+    );
+
+    // With recencyWeight=0, old memory should still rank higher (better RRF score)
+    expect(results[0].id).toBe("old-mem");
   });
 });
 

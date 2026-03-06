@@ -240,6 +240,10 @@ export async function hybridSearch(
     logger?: Logger;
     /** When true, include expired (superseded) memories in search results */
     includeExpired?: boolean;
+    /** ISO-8601 date — recall memories valid at this point in time. Takes precedence over includeExpired. */
+    asOf?: string;
+    /** Weight for recency boost applied after RRF fusion (default: 0.1). Higher = more recent memories ranked higher. */
+    recencyWeight?: number;
   } = {},
 ): Promise<HybridSearchResult[]> {
   // Guard against empty queries
@@ -254,6 +258,8 @@ export async function hybridSearch(
     graphSearchDepth = 1,
     logger,
     includeExpired = false,
+    asOf,
+    recencyWeight = 0.1,
   } = options;
 
   const candidateLimit = Math.floor(Math.min(200, Math.max(1, limit * candidateMultiplier)));
@@ -269,8 +275,8 @@ export async function hybridSearch(
 
   // 3. Run signals in parallel
   const [vectorResults, bm25Results, graphResults] = await Promise.all([
-    db.vectorSearch(queryEmbedding, candidateLimit, 0.1, agentId, includeExpired),
-    db.bm25Search(query, candidateLimit, agentId, includeExpired),
+    db.vectorSearch(queryEmbedding, candidateLimit, 0.1, agentId, includeExpired, asOf),
+    db.bm25Search(query, candidateLimit, agentId, includeExpired, asOf),
     graphEnabled
       ? db.graphSearch(
           query,
@@ -279,6 +285,7 @@ export async function hybridSearch(
           agentId,
           graphSearchDepth,
           includeExpired,
+          asOf,
         )
       : Promise.resolve([] as SearchSignalResult[]),
   ]);
@@ -288,43 +295,41 @@ export async function hybridSearch(
   const fused = fuseWithConfidenceRRF([vectorResults, bm25Results, graphResults], rrfK, weights);
   const tFuse = performance.now();
 
-  // 5. Return top results, normalized to 0-100% display scores.
-  // Only normalize when maxRrf is above a minimum threshold to avoid
-  // inflating weak matches (e.g., a single low-score result becoming 1.0).
-  const maxRrf = fused.length > 0 ? fused[0].rrfScore : 0;
-  const MIN_RRF_FOR_NORMALIZATION = 0.01;
-  const normalizer = maxRrf >= MIN_RRF_FOR_NORMALIZATION ? 1 / maxRrf : 1;
-
+  // 5. Apply recency as 4th multiplicative signal (OP-121).
+  //    recencyScore = exp(-daysSince / 365) — 1-year half-life
+  //    boostedScore = rrfScore * (1 + recencyWeight * recencyScore)
+  //    Then normalize to 0-1 range.
   const now = Date.now();
-  const results = fused.slice(0, limit).map((r) => {
-    const rrfNorm = Math.min(1, r.rrfScore * normalizer);
-
-    // Recency score: exponential decay with 30-day half-life
+  const candidates = fused.slice(0, limit).map((r) => {
     const ageDays = r.createdAt
       ? (now - new Date(r.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-      : 30; // default to 30 days if no createdAt
-    const recencyScore = Math.exp(-ageDays / 30);
-
-    // Importance score (already 0-1)
-    const importanceScore = r.importance ?? 0.5;
-
-    // Blended final score (tribe.ai formula adapted for RRF)
-    const blendedScore = 0.6 * rrfNorm + 0.25 * recencyScore + 0.15 * importanceScore;
-
-    return {
-      id: r.id,
-      text: r.text,
-      category: r.category,
-      importance: r.importance,
-      createdAt: r.createdAt,
-      score: blendedScore,
-      taskId: r.taskId,
-      signals: r.signals,
-    };
+      : 365; // default to 1 year if no createdAt
+    const recencyScore = Math.exp(-ageDays / 365);
+    const boostedScore = r.rrfScore * (1 + recencyWeight * recencyScore);
+    return { ...r, recencyScore, boostedScore };
   });
 
-  // Re-sort by blended score (recency/importance may reorder vs pure RRF)
-  results.sort((a, b) => b.score - a.score);
+  // Re-sort by boosted score (recency boost may reorder vs pure RRF)
+  candidates.sort((a, b) => b.boostedScore - a.boostedScore);
+
+  // Normalize boosted scores to 0-1 range
+  const maxBoosted = candidates.length > 0 ? candidates[0].boostedScore : 0;
+  const MIN_SCORE_FOR_NORMALIZATION = 0.01;
+  const normalizer = maxBoosted >= MIN_SCORE_FOR_NORMALIZATION ? 1 / maxBoosted : 1;
+
+  const results = candidates.map((r) => ({
+    id: r.id,
+    text: r.text,
+    category: r.category,
+    importance: r.importance,
+    createdAt: r.createdAt,
+    score: Math.min(1, r.boostedScore * normalizer),
+    taskId: r.taskId,
+    signals: {
+      ...r.signals,
+      recency: { rank: 0, score: r.recencyScore },
+    },
+  }));
 
   // 6. Record retrieval events (fire-and-forget for latency)
   // This tracks which memories are actually being used, enabling
@@ -339,9 +344,11 @@ export async function hybridSearch(
   }
 
   // Log search timing breakdown
+  const recencyStr = recencyWeight !== 0.1 ? ` recencyWeight=${recencyWeight}` : "";
+  const asOfStr = asOf ? ` asOf=${asOf}` : "";
   logger?.info?.(
     `memory-neo4j: [bench] hybridSearch ${(tFuse - t0).toFixed(0)}ms (embed=${(tEmbed - t0).toFixed(0)}ms, signals=${(tSignals - tEmbed).toFixed(0)}ms, fuse=${(tFuse - tSignals).toFixed(0)}ms) ` +
-      `type=${queryType} vec=${vectorResults.length} bm25=${bm25Results.length} graph=${graphResults.length} → ${results.length} results`,
+      `type=${queryType} vec=${vectorResults.length} bm25=${bm25Results.length} graph=${graphResults.length} → ${results.length} results${recencyStr}${asOfStr}`,
   );
 
   return results;

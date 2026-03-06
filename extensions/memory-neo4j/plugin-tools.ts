@@ -38,16 +38,24 @@ export function registerMemoryTools(
           includeExpired: Type.Optional(
             Type.Boolean({ description: "Include superseded/expired memories (default: false)" }),
           ),
+          asOf: Type.Optional(
+            Type.String({
+              description:
+                "ISO-8601 date — recall memories valid at this point in time (e.g. 2026-01-01)",
+            }),
+          ),
         }),
         async execute(_toolCallId: string, params: unknown) {
           const {
             query,
             limit: rawLimit = 5,
             includeExpired = false,
+            asOf,
           } = params as {
             query: string;
             limit?: number;
             includeExpired?: boolean;
+            asOf?: string;
           };
           const limit = Math.floor(Math.min(50, Math.max(1, rawLimit)));
 
@@ -58,7 +66,13 @@ export function registerMemoryTools(
             limit,
             agentId,
             extractionConfig.enabled,
-            { graphSearchDepth: cfg.graphSearchDepth, logger, includeExpired },
+            {
+              graphSearchDepth: cfg.graphSearchDepth,
+              logger,
+              includeExpired,
+              asOf,
+              recencyWeight: cfg.recencyWeight,
+            },
           );
 
           if (results.length === 0) {

@@ -80,6 +80,12 @@ export type MemoryNeo4jConfig = {
     /** Batch size for Phase 3c retroactive conflict scan (default: 50) */
     sleepScanBatchSize: number;
   };
+  /**
+   * Multiplicative weight for the recency boost applied after RRF fusion (OP-121).
+   * Formula: rrfScore * (1 + recencyWeight * exp(-daysSince / 365))
+   * Default: 0.1. Set to 0 to disable recency boost.
+   */
+  recencyWeight: number;
 };
 
 /**
@@ -293,6 +299,7 @@ export const memoryNeo4jConfigSchema = {
         "decayCurves",
         "sleepCycle",
         "conflictDetection",
+        "recencyWeight",
       ],
       "memory-neo4j config",
     );
@@ -460,6 +467,16 @@ export const memoryNeo4jConfigSchema = {
         ? Math.max(1, Math.floor(cdRaw.sleepScanBatchSize))
         : 50;
 
+    // Parse recencyWeight: must be a number >= 0, default 0.1
+    const rawRecencyWeight = cfg.recencyWeight;
+    let recencyWeight = 0.1;
+    if (typeof rawRecencyWeight === "number") {
+      if (rawRecencyWeight < 0) {
+        throw new Error(`recencyWeight must be >= 0, got: ${rawRecencyWeight}`);
+      }
+      recencyWeight = rawRecencyWeight;
+    }
+
     // Sec-3: ReDoS length guard — reject patterns > 200 chars before compilation
     const autoCaptureSkipPatternRaw =
       typeof cfg.autoCaptureSkipPattern === "string" && cfg.autoCaptureSkipPattern
@@ -530,6 +547,7 @@ export const memoryNeo4jConfigSchema = {
         maxCandidates: cdMaxCandidates,
         sleepScanBatchSize: cdBatchSize,
       },
+      recencyWeight,
     };
   },
 };

@@ -5,6 +5,7 @@
  * Focuses on behavioral contracts, not implementation details.
  */
 
+import neo4j from "neo4j-driver";
 import type { Driver } from "neo4j-driver";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Neo4jMemoryClient } from "./neo4j-client.js";
@@ -955,7 +956,7 @@ describe("Neo4jMemoryClient", () => {
 
       expect(mockSession.run).toHaveBeenCalledWith(
         expect.stringContaining("LIMIT $limit"),
-        expect.objectContaining({ limit: 50 }),
+        expect.objectContaining({ limit: neo4j.int(50) }),
       );
     });
 
@@ -966,7 +967,7 @@ describe("Neo4jMemoryClient", () => {
 
       expect(mockSession.run).toHaveBeenCalledWith(
         expect.stringContaining("LIMIT $limit"),
-        expect.objectContaining({ limit: 100 }),
+        expect.objectContaining({ limit: neo4j.int(100) }),
       );
     });
   });

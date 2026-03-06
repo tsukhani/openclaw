@@ -135,6 +135,7 @@ export type HybridSearchResult = {
     vector: SignalAttribution;
     bm25: SignalAttribution;
     graph: SignalAttribution;
+    recency?: SignalAttribution;
   };
 };
 

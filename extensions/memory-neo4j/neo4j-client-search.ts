@@ -22,6 +22,31 @@ for (const rt of ALLOWED_RELATIONSHIP_TYPES) {
 }
 
 /**
+ * Build a temporal filter clause for Cypher queries.
+ * - asOf provided: point-in-time filter (asOf takes precedence over includeExpired)
+ * - includeExpired=false (default): active-only filter (validUntil IS NULL)
+ * - includeExpired=true: no temporal filter
+ *
+ * @param prefix Node alias prefix (e.g. "node." or "m.")
+ */
+function buildTemporalFilter(
+  prefix: string,
+  includeExpired?: boolean,
+  asOf?: string,
+): { filter: string; params: Record<string, string> } {
+  if (asOf) {
+    return {
+      filter: `AND ${prefix}validFrom <= $asOf AND (${prefix}validUntil IS NULL OR ${prefix}validUntil > $asOf)`,
+      params: { asOf },
+    };
+  }
+  if (!includeExpired) {
+    return { filter: `AND ${prefix}validUntil IS NULL`, params: {} };
+  }
+  return { filter: "", params: {} };
+}
+
+/**
  * Signal 1: HNSW vector similarity search.
  * Returns memories ranked by cosine similarity to the query embedding.
  */
@@ -32,9 +57,14 @@ export async function vectorSearch(
   minScore: number = 0.1,
   agentId?: string,
   includeExpired?: boolean,
+  asOf?: string,
 ): Promise<SearchSignalResult[]> {
   const agentFilter = agentId ? "AND node.agentId = $agentId" : "";
-  const expiredFilter = includeExpired ? "" : "AND node.validUntil IS NULL";
+  const { filter: expiredFilter, params: temporalParams } = buildTemporalFilter(
+    "node.",
+    includeExpired,
+    asOf,
+  );
   const result = await session.run(
     `CALL db.index.vector.queryNodes('memory_embedding_index', $limit, $embedding)
      YIELD node, score
@@ -49,6 +79,7 @@ export async function vectorSearch(
       limit: neo4j.int(Math.floor(limit)),
       minScore,
       ...(agentId ? { agentId } : {}),
+      ...temporalParams,
     },
   );
 
@@ -73,9 +104,14 @@ export async function bm25Search(
   limit: number,
   agentId?: string,
   includeExpired?: boolean,
+  asOf?: string,
 ): Promise<SearchSignalResult[]> {
   const agentFilter = agentId ? "AND node.agentId = $agentId" : "";
-  const expiredFilter = includeExpired ? "" : "AND node.validUntil IS NULL";
+  const { filter: expiredFilter, params: temporalParams } = buildTemporalFilter(
+    "node.",
+    includeExpired,
+    asOf,
+  );
   const result = await session.run(
     `CALL db.index.fulltext.queryNodes('memory_fulltext_index', $query)
      YIELD node, score
@@ -90,6 +126,7 @@ export async function bm25Search(
       query,
       limit: neo4j.int(Math.floor(limit)),
       ...(agentId ? { agentId } : {}),
+      ...temporalParams,
     },
   );
 
@@ -136,12 +173,17 @@ export async function graphSearch(
   agentId?: string,
   maxHops: number = 1,
   includeExpired?: boolean,
+  asOf?: string,
 ): Promise<SearchSignalResult[]> {
   // Single query: entity fulltext lookup → direct mentions + N-hop spreading activation
   const agentFilterM = agentId ? "AND m.agentId = $agentId" : "";
   const agentFilterM2 = agentId ? "AND m2.agentId = $agentId" : "";
-  const expiredFilterM = includeExpired ? "" : "AND m.validUntil IS NULL";
-  const expiredFilterM2 = includeExpired ? "" : "AND m2.validUntil IS NULL";
+  const { filter: expiredFilterM, params: temporalParamsM } = buildTemporalFilter(
+    "m.",
+    includeExpired,
+    asOf,
+  );
+  const { filter: expiredFilterM2 } = buildTemporalFilter("m2.", includeExpired, asOf);
   // Variable-length relationship pattern: 1..maxHops hops through entity relationships
   const hopRange = `1..${Math.max(1, Math.min(3, maxHops))}`;
   const result = await session.run(
@@ -182,7 +224,7 @@ export async function graphSearch(
             row.importance AS importance, row.createdAt AS createdAt,
             row.taskId AS taskId,
             max(row.score) AS graphScore`,
-    { query, firingThreshold, ...(agentId ? { agentId } : {}) },
+    { query, firingThreshold, ...(agentId ? { agentId } : {}), ...temporalParamsM },
   );
 
   // Deduplicate by id, keeping highest score

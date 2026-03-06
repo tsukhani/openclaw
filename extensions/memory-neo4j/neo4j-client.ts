@@ -319,6 +319,7 @@ export class Neo4jMemoryClient {
     minScore: number = 0.1,
     agentId?: string,
     includeExpired?: boolean,
+    asOf?: string,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     try {
@@ -332,6 +333,7 @@ export class Neo4jMemoryClient {
             minScore,
             agentId,
             includeExpired,
+            asOf,
           );
         } finally {
           await session.close();
@@ -353,6 +355,7 @@ export class Neo4jMemoryClient {
     limit: number,
     agentId?: string,
     includeExpired?: boolean,
+    asOf?: string,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     const escaped = escapeLucene(query);
@@ -364,7 +367,7 @@ export class Neo4jMemoryClient {
       return await this.retryOnTransient(async () => {
         const session = this.driver!.session();
         try {
-          return await Search.bm25Search(session, escaped, limit, agentId, includeExpired);
+          return await Search.bm25Search(session, escaped, limit, agentId, includeExpired, asOf);
         } finally {
           await session.close();
         }
@@ -392,6 +395,7 @@ export class Neo4jMemoryClient {
     agentId?: string,
     maxHops: number = 1,
     includeExpired?: boolean,
+    asOf?: string,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     const escaped = escapeLucene(query);
@@ -411,6 +415,7 @@ export class Neo4jMemoryClient {
             agentId,
             maxHops,
             includeExpired,
+            asOf,
           );
         } finally {
           await session.close();
