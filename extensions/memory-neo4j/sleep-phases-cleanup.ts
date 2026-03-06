@@ -21,7 +21,7 @@ export async function runOrphanCleanup(
   options: SleepCycleOptions,
   result: SleepCycleResult,
 ): Promise<void> {
-  const { abortSignal, singleUseTagMinAgeDays = 14, onPhaseStart, onProgress } = options;
+  const { agentId, abortSignal, singleUseTagMinAgeDays = 14, onPhaseStart, onProgress } = options;
 
   if (abortSignal?.aborted) return;
 
@@ -29,6 +29,15 @@ export async function runOrphanCleanup(
   logger.info("memory-neo4j: [sleep] Phase 4: Orphan Cleanup");
 
   try {
+    // Expire entity relationships no longer supported by any active memory for this agent.
+    // Run before orphan entity deletion so expiry is recorded before the entity nodes vanish.
+    if (!abortSignal?.aborted && agentId) {
+      const expired = await db.expireOrphanedEntityRelationships(agentId);
+      if (expired > 0) {
+        onProgress?.("cleanup", `Expired ${expired} orphaned entity relationships`);
+      }
+    }
+
     // Clean up orphan entities
     if (!abortSignal?.aborted) {
       const orphanEntities = await db.findOrphanEntities();

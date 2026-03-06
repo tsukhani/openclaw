@@ -86,10 +86,11 @@ export class Neo4jMemoryClient {
     await Indexes.ensureIndexes(this.driver, this.dimensions, this.logger);
     this.indexesReady = true;
 
-    // Backfill temporal fields for pre-existing memories (idempotent)
+    // Backfill temporal fields for pre-existing memories and entity relationships (idempotent)
     const migrateSession = this.driver.session();
     try {
       await Sleep.migrateTemporalFields(migrateSession);
+      await Sleep.migrateEntityRelationshipTemporalFields(migrateSession);
     } finally {
       await migrateSession.close();
     }
@@ -905,6 +906,24 @@ export class Neo4jMemoryClient {
     const session = this.driver!.session();
     try {
       return await Sleep.migrateTemporalFields(session);
+    } finally {
+      await session.close();
+    }
+  }
+
+  /**
+   * Expire entity-to-entity relationships no longer supported by active memories.
+   * A relationship is expired when no active (validUntil IS NULL) memory for this
+   * agent mentions both connected entities.
+   *
+   * @param agentId  Agent scope for the memory lookup
+   * @returns        Number of relationships expired
+   */
+  async expireOrphanedEntityRelationships(agentId: string): Promise<number> {
+    await this.ensureInitialized();
+    const session = this.driver!.session();
+    try {
+      return await Sleep.expireOrphanedEntityRelationships(session, agentId);
     } finally {
       await session.close();
     }

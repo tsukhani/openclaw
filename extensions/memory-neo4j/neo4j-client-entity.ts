@@ -128,7 +128,8 @@ export async function batchEntityOperations(
            MATCH (e1:Entity {name: r.source})
            MATCH (e2:Entity {name: r.target})
            MERGE (e1)-[rel:${relType}]->(e2)
-           ON CREATE SET rel.confidence = r.confidence, rel.createdAt = $now
+           ON CREATE SET rel.confidence = r.confidence, rel.createdAt = $now,
+                         rel.validFrom = $now, rel.validUntil = null
            ON MATCH SET rel.confidence = CASE WHEN r.confidence > rel.confidence THEN r.confidence ELSE rel.confidence END`,
           {
             rels: rels.map((r) => ({

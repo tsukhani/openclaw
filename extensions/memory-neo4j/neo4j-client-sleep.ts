@@ -10,7 +10,7 @@ import type { ExtractionConfig } from "./config.js";
 import { stripCodeFences } from "./extractor.js";
 import { callOpenRouter } from "./llm-client.js";
 import type { Logger } from "./schema.js";
-import { makePairKey } from "./schema.js";
+import { ALLOWED_RELATIONSHIP_TYPES, makePairKey } from "./schema.js";
 
 // --------------------------------------------------------------------------
 // Sleep Cycle: Deduplication
@@ -670,6 +670,76 @@ export async function migrateTemporalFields(session: Session): Promise<number> {
     totalUpdated += batchUpdated;
   } while (batchUpdated > 0);
   return totalUpdated;
+}
+
+/**
+ * Backfill temporal fields on existing entity-to-entity relationships that lack validFrom.
+ * Sets validFrom = COALESCE(rel.createdAt, $now) and validUntil = null.
+ * Runs once per relType per batch to avoid unbounded transactions on large graphs.
+ *
+ * @returns Total number of relationships updated
+ */
+export async function migrateEntityRelationshipTemporalFields(session: Session): Promise<number> {
+  // SAFETY: ALLOWED_RELATIONSHIP_TYPES values are validated as /^[A-Z_]+$/ at module load
+  // in neo4j-client-entity.ts; safe to interpolate here.
+  const now = new Date().toISOString();
+  let totalUpdated = 0;
+  for (const relType of ALLOWED_RELATIONSHIP_TYPES) {
+    let batchUpdated: number;
+    do {
+      const result = await session.run(
+        `MATCH (e1:Entity)-[rel:${relType}]->(e2:Entity)
+         WHERE rel.validFrom IS NULL
+         WITH rel LIMIT 1000
+         SET rel.validFrom = COALESCE(rel.createdAt, $now), rel.validUntil = null
+         RETURN count(rel) AS updated`,
+        { now },
+      );
+      const raw = result.records[0]?.get("updated");
+      batchUpdated = typeof raw === "number" ? raw : Number(raw ?? 0);
+      totalUpdated += batchUpdated;
+    } while (batchUpdated > 0);
+  }
+  return totalUpdated;
+}
+
+/**
+ * Expire entity-to-entity relationships that are no longer supported by any active memory.
+ *
+ * A relationship (e1)-[rel]->(e2) is expired when:
+ * - rel.validUntil IS NULL (still considered active), AND
+ * - No active memory (validUntil IS NULL) for this agent mentions both e1 and e2.
+ *
+ * Called during the orphan cleanup phase after memories are superseded/pruned.
+ *
+ * @param agentId  Agent scope — only memories for this agent are checked
+ * @returns        Number of relationships expired
+ */
+export async function expireOrphanedEntityRelationships(
+  session: Session,
+  agentId: string,
+): Promise<number> {
+  // SAFETY: ALLOWED_RELATIONSHIP_TYPES values are validated as /^[A-Z_]+$/ at module load
+  // in neo4j-client-entity.ts; safe to interpolate here.
+  const now = new Date().toISOString();
+  let totalExpired = 0;
+  for (const relType of ALLOWED_RELATIONSHIP_TYPES) {
+    const result = await session.run(
+      `MATCH (e1:Entity)-[rel:${relType}]->(e2:Entity)
+       WHERE rel.validUntil IS NULL
+       AND NOT EXISTS {
+         MATCH (m:Memory)-[:MENTIONS]->(e1)
+         WHERE m.validUntil IS NULL AND m.agentId = $agentId
+         MATCH (m)-[:MENTIONS]->(e2)
+       }
+       SET rel.validUntil = $now
+       RETURN count(rel) AS expired`,
+      { agentId, now },
+    );
+    const raw = result.records[0]?.get("expired");
+    totalExpired += typeof raw === "number" ? raw : Number(raw ?? 0);
+  }
+  return totalExpired;
 }
 
 /**

@@ -184,6 +184,12 @@ export async function graphSearch(
     asOf,
   );
   const { filter: expiredFilterM2 } = buildTemporalFilter("m2.", includeExpired, asOf);
+  // Only traverse entity relationships that are still active (not expired)
+  const expiredRelFilter = asOf
+    ? "AND (r.validUntil IS NULL OR r.validUntil > $asOf)"
+    : includeExpired
+      ? ""
+      : "AND (r.validUntil IS NULL OR r.validUntil >= $now)";
   // Variable-length relationship pattern: 1..maxHops hops through entity relationships
   const hopRange = `1..${Math.max(1, Math.min(3, maxHops))}`;
   const result = await session.run(
@@ -205,9 +211,10 @@ export async function graphSearch(
        score: coalesce(rm.confidence, 1.0)
      }) AS directResults
 
-     // N-hop spreading activation
+     // N-hop spreading activation — only traverse active (non-expired) relationships
      OPTIONAL MATCH (entity)-[rels:${RELATIONSHIP_TYPE_PATTERN}*${hopRange}]-(e2:Entity)
-     WHERE ALL(r IN rels WHERE coalesce(r.confidence, 0.7) >= $firingThreshold)
+     WHERE ALL(r IN rels WHERE coalesce(r.confidence, 0.7) >= $firingThreshold
+       ${expiredRelFilter})
      OPTIONAL MATCH (e2)<-[rm2:MENTIONS]-(m2:Memory)
      WHERE m2 IS NOT NULL ${agentFilterM2} ${expiredFilterM2}
      WITH directResults, collect({
@@ -224,7 +231,7 @@ export async function graphSearch(
             row.importance AS importance, row.createdAt AS createdAt,
             row.taskId AS taskId,
             max(row.score) AS graphScore`,
-    { query, firingThreshold, ...(agentId ? { agentId } : {}), ...temporalParamsM },
+    { query, firingThreshold, now: new Date().toISOString(), ...(agentId ? { agentId } : {}), ...temporalParamsM },
   );
 
   // Deduplicate by id, keeping highest score

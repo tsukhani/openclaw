@@ -1,6 +1,9 @@
 /**
  * Tests for OP-82 bi-temporal memory features:
  * supersedeMemory, migrateTemporalFields, detectConflicts
+ *
+ * Tests for OP-122 temporal validity on entity-to-entity relationships:
+ * batchEntityOperations (validFrom/validUntil), expireOrphanedEntityRelationships, graphSearch
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -51,6 +54,18 @@ function makeClient() {
   (client as any).driver = driver;
   (client as any).indexesReady = true;
   return { client, driver, session, logger };
+}
+
+// ============================================================================
+// Helpers shared by OP-122 tests
+// ============================================================================
+
+function createMockExecuteWrite() {
+  return vi.fn().mockImplementation(async (fn: (tx: any) => Promise<void>) => {
+    const tx = { run: vi.fn().mockResolvedValue({ records: [] }) };
+    await fn(tx);
+    return tx;
+  });
 }
 
 // ============================================================================
@@ -234,5 +249,106 @@ describe("detectConflicts", () => {
     // Should only call supersedeMemory for "other-id", not "new-id"
     expect(supersedeSpy).toHaveBeenCalledWith("other-id", "new-id");
     expect(supersedeSpy).not.toHaveBeenCalledWith("new-id", expect.anything());
+  });
+});
+
+// ============================================================================
+// OP-122: batchEntityOperations — validFrom/validUntil on new relationships
+// ============================================================================
+
+describe("batchEntityOperations (OP-122 temporal fields)", () => {
+  it("sets validFrom and validUntil=null ON CREATE for inter-entity relationships", async () => {
+    const { client, session } = makeClient();
+
+    // executeWrite needs to delegate to a tx
+    const txRun = vi.fn().mockResolvedValue({ records: [] });
+    session.executeWrite = vi
+      .fn()
+      .mockImplementation(async (fn: (tx: any) => Promise<void>) => fn({ run: txRun }));
+
+    await client.batchEntityOperations(
+      "mem-1",
+      [
+        { id: "e1", name: "Alice", type: "person" },
+        { id: "e2", name: "Acme", type: "organization" },
+      ],
+      [{ source: "alice", target: "acme", type: "WORKS_AT", confidence: 0.9 }],
+      [],
+    );
+
+    // Find the MERGE call for WORKS_AT
+    const mergeCall = txRun.mock.calls.find(
+      ([q]: [string]) => typeof q === "string" && q.includes("MERGE (e1)-[rel:WORKS_AT]"),
+    );
+    expect(mergeCall).toBeDefined();
+    const [query] = mergeCall!;
+    expect(query).toContain("rel.validFrom = $now");
+    expect(query).toContain("rel.validUntil = null");
+    // ON MATCH must NOT touch validFrom/validUntil
+    const onMatchPart = query.slice(query.indexOf("ON MATCH"));
+    expect(onMatchPart).not.toContain("validFrom");
+    expect(onMatchPart).not.toContain("validUntil");
+  });
+});
+
+// ============================================================================
+// OP-122: expireOrphanedEntityRelationships
+// ============================================================================
+
+describe("expireOrphanedEntityRelationships (OP-122)", () => {
+  it("sets validUntil on relationships whose memories are all superseded", async () => {
+    const { client, session } = makeClient();
+
+    // Each relType triggers one session.run; return count=1 for the first, 0 for the rest
+    session.run
+      .mockResolvedValueOnce({ records: [{ get: vi.fn().mockReturnValue(1) }] })
+      .mockResolvedValue({ records: [{ get: vi.fn().mockReturnValue(0) }] });
+
+    const expired = await client.expireOrphanedEntityRelationships("agent-1");
+
+    expect(expired).toBeGreaterThan(0);
+    const firstCall = session.run.mock.calls[0];
+    const [query, params] = firstCall as [string, Record<string, unknown>];
+    expect(query).toContain("rel.validUntil IS NULL");
+    expect(query).toContain("NOT EXISTS");
+    expect(query).toContain("SET rel.validUntil = $now");
+    expect(params).toMatchObject({ agentId: "agent-1" });
+    expect(typeof params.now).toBe("string");
+    expect(session.close).toHaveBeenCalled();
+  });
+
+  it("returns 0 when no relationships are orphaned", async () => {
+    const { client, session } = makeClient();
+    session.run.mockResolvedValue({ records: [{ get: vi.fn().mockReturnValue(0) }] });
+
+    const expired = await client.expireOrphanedEntityRelationships("agent-1");
+    expect(expired).toBe(0);
+  });
+});
+
+// ============================================================================
+// OP-122: graphSearch — validity filter on N-hop rels
+// ============================================================================
+
+describe("graphSearch validity filter (OP-122)", () => {
+  it("includes validUntil filter in N-hop traversal when includeExpired is false", async () => {
+    const { client, session } = makeClient();
+    session.run.mockResolvedValue({ records: [] });
+
+    await client.graphSearch("alice", 10, 0.3, "agent-1", 1, false);
+
+    const [[query]] = session.run.mock.calls as [[string, Record<string, unknown>]];
+    expect(query).toContain("r.validUntil IS NULL OR r.validUntil >= $now");
+  });
+
+  it("omits validUntil filter in N-hop traversal when includeExpired is true", async () => {
+    const { client, session } = makeClient();
+    session.run.mockResolvedValue({ records: [] });
+
+    await client.graphSearch("alice", 10, 0.3, "agent-1", 1, true);
+
+    const [[query]] = session.run.mock.calls as [[string, Record<string, unknown>]];
+    // Should not contain the rel validUntil guard (memory filters already absent)
+    expect(query).not.toContain("r.validUntil IS NULL OR r.validUntil >= $now");
   });
 });
