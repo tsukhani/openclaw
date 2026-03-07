@@ -76,6 +76,7 @@ export function registerMemoryTools(
               includeExpired,
               asOf,
               recencyWeight: cfg.recencyWeight,
+              ...(cfg.reranker?.enabled ? { rerankerConfig: cfg.reranker, extractionConfig } : {}),
             },
           );
           metrics.histogram("auto_recall.latency_ms", performance.now() - t0Recall);

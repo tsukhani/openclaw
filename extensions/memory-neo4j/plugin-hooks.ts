@@ -230,7 +230,13 @@ export function registerMemoryHooks(
                 3,
                 agentId,
                 extractionConfig.enabled,
-                { graphSearchDepth: cfg.graphSearchDepth, logger },
+                {
+                  graphSearchDepth: cfg.graphSearchDepth,
+                  logger,
+                  ...(cfg.reranker?.enabled
+                    ? { rerankerConfig: cfg.reranker, extractionConfig }
+                    : {}),
+                },
               );
               const tSearch = performance.now();
 
