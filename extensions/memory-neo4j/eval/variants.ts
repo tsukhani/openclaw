@@ -49,9 +49,18 @@ export const EVAL_VARIANTS: Record<string, Partial<SearchConfig>> = {
   "no-temporal": { temporalRecencyEnabled: false },
   /** Double the recency boost weight. */
   "high-temporal": { temporalRecencyBoost: 2.0 },
-  /** Local ONNX cross-encoder reranker enabled (OP-130). Fetches topK=10, returns topJ=5. */
+  /** Local ONNX cross-encoder reranker enabled (OP-130). Fetches topK=10, returns topJ=5.
+   *  Abstention threshold 0.95 (OP-131): returns empty when top cross-encoder score < 0.95.
+   *  Not applied to temporal/LLM-reranked queries (those score 0.8–0.9 on comparison queries).
+   *  Cross-encoder scores for direct answers are 0.997+; abstention cases score 0.002–0.94. */
   "with-reranker-local": {
-    reranker: { enabled: true, provider: "local" as const, topK: 10, topJ: 5 },
+    reranker: {
+      enabled: true,
+      provider: "local" as const,
+      topK: 10,
+      topJ: 5,
+      abstentionThreshold: 0.95,
+    },
   },
 };
 

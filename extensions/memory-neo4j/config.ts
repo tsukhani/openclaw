@@ -586,7 +586,7 @@ export const memoryNeo4jConfigSchema = {
     const rerankerRaw = cfg.reranker as Record<string, unknown> | undefined;
     assertAllowedKeys(
       rerankerRaw ?? {},
-      ["enabled", "provider", "model", "topK", "topJ", "minScore"],
+      ["enabled", "provider", "model", "topK", "topJ", "minScore", "abstentionThreshold"],
       "reranker config",
     );
     let reranker: RerankerConfig | undefined;
@@ -609,6 +609,10 @@ export const memoryNeo4jConfigSchema = {
         typeof rerankerRaw.minScore === "number" && rerankerRaw.minScore >= 0
           ? rerankerRaw.minScore
           : undefined;
+      const rrAbstentionThreshold =
+        typeof rerankerRaw.abstentionThreshold === "number" && rerankerRaw.abstentionThreshold >= 0
+          ? rerankerRaw.abstentionThreshold
+          : undefined;
       reranker = {
         enabled: rrEnabled,
         provider: rrProvider,
@@ -616,6 +620,7 @@ export const memoryNeo4jConfigSchema = {
         topK: rrTopK,
         topJ: rrTopJ,
         minScore: rrMinScore,
+        abstentionThreshold: rrAbstentionThreshold,
       };
     }
 

@@ -24,11 +24,17 @@ export async function evaluateContextCompleteness(
   retrievedTexts: string[],
 ): Promise<ContextCompletenessResult> {
   if (retrievedTexts.length === 0) {
+    // Abstention cases have gold_memory_ids=[] — returning empty means the system
+    // correctly recognised there is no relevant memory to retrieve (OP-131).
+    // Treat this as COMPLETE for abstention; INSUFFICIENT for all other abilities.
+    const isAbstention = ability === "abstention";
     return {
       caseId,
       ability,
-      verdict: "INSUFFICIENT",
-      reasoning: "No memories were retrieved",
+      verdict: isAbstention ? "COMPLETE" : "INSUFFICIENT",
+      reasoning: isAbstention
+        ? "System correctly abstained — no memories retrieved for a query with no relevant stored facts"
+        : "No memories were retrieved",
       judgeSucceeded: true,
     };
   }

@@ -108,7 +108,29 @@ export async function rerankCandidates(
       minScore > 0 ? reranked.filter((r) => (r.rerankScore ?? 0) >= minScore) : reranked;
 
     const topJ = config.topJ ?? candidates.length;
-    const final = filtered.slice(0, topJ);
+    const sliced = filtered.slice(0, topJ);
+
+    // Abstention filter (OP-131): if top result score is below threshold, return empty
+    // rather than injecting low-confidence noise into context.
+    // Skip for temporal/LLM-reranked queries — the LLM reranker assigns moderate scores
+    // (0.8–0.9) to comparison-type queries where multiple memories are jointly relevant,
+    // so a score threshold would incorrectly suppress valid results on those paths.
+    const abstentionThreshold = config.abstentionThreshold ?? 0;
+    if (abstentionThreshold > 0 && sliced.length > 0 && !temporal) {
+      const topScore = sliced[0].rerankScore ?? 0;
+      if (topScore < abstentionThreshold) {
+        const latencyMs = Date.now() - t0;
+        metricsCollector.increment("reranker.calls");
+        metricsCollector.increment("reranker.abstentions");
+        metricsCollector.histogram("reranker.latency", latencyMs);
+        logger?.info(
+          `memory-neo4j: [abstention] score=${topScore.toFixed(3)} below threshold=${abstentionThreshold}, returning empty`,
+        );
+        return [];
+      }
+    }
+
+    const final = sliced;
 
     const latencyMs = Date.now() - t0;
     metricsCollector.increment("reranker.calls");

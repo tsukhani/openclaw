@@ -176,6 +176,13 @@ export interface RerankerConfig {
   topJ?: number;
   /** Drop results below this rerank score. Default: 0 (keep all). */
   minScore?: number;
+  /**
+   * Abstention threshold (OP-131): if the top result score is below this value,
+   * return empty results rather than low-confidence noise. Default: 0 (disabled).
+   * When reranker is active, compared against rerankScore [0,1].
+   * When no reranker is active, compared against normalized RRF score [0,1].
+   */
+  abstentionThreshold?: number;
 }
 
 // ============================================================================

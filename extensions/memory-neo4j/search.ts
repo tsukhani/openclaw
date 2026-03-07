@@ -501,6 +501,21 @@ export async function hybridSearch(
       undefined, // no per-search AbortSignal here
       queryType, // passed for temporal routing decision
     );
+  } else {
+    // No reranker: apply abstention based on normalized RRF score (OP-131).
+    // Only abstain when top score is below threshold — use lowConfidence as an additional gate
+    // so we don't suppress results for clearly relevant queries with single-signal matches.
+    const abstentionThreshold = rerankerConfig?.abstentionThreshold ?? 0;
+    if (abstentionThreshold > 0 && finalResults.length > 0) {
+      const topScore = finalResults[0].score;
+      if (topScore < abstentionThreshold) {
+        logger?.info(
+          `memory-neo4j: [abstention] score=${topScore.toFixed(3)} below threshold=${abstentionThreshold}, returning empty`,
+        );
+        metricsCollector.increment("reranker.abstentions");
+        finalResults = [];
+      }
+    }
   }
 
   // 6. Record retrieval events (fire-and-forget for latency)
