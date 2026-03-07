@@ -1619,11 +1619,10 @@ describe("withRetry", () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
-  it("should return null when all 3 attempts fail with transient errors", async () => {
+  it("should throw when all 3 attempts fail with transient errors", async () => {
     const transientErr = new Error("OpenAI-compatible API error 503: Service Unavailable");
     const fn = vi.fn().mockRejectedValue(transientErr);
-    const result = await withRetry(fn, 3, 1);
-    expect(result).toBeNull();
+    await expect(withRetry(fn, 3, 1)).rejects.toThrow("503");
     expect(fn).toHaveBeenCalledTimes(3);
   });
 
@@ -1634,7 +1633,7 @@ describe("withRetry", () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it("should return null immediately when abort signal is already aborted", async () => {
+  it("should throw AbortError when abort signal is already aborted", async () => {
     const controller = new AbortController();
     controller.abort();
     const fn = vi.fn().mockResolvedValue("ok");
@@ -1642,8 +1641,9 @@ describe("withRetry", () => {
     // but first attempt still runs; abort is checked after the throw
     const transientErr = new Error("OpenAI-compatible API error 503: unavailable");
     fn.mockRejectedValueOnce(transientErr);
-    const result = await withRetry(fn, 3, 1, controller.signal);
-    expect(result).toBeNull();
+    await expect(withRetry(fn, 3, 1, controller.signal)).rejects.toMatchObject({
+      name: "AbortError",
+    });
     // fn called once, then abort signal detected after first failure
     expect(fn).toHaveBeenCalledTimes(1);
   });

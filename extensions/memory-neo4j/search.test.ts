@@ -539,6 +539,7 @@ describe("hybridSearch", () => {
       true,
       undefined,
       undefined,
+      undefined,
     );
   });
 
@@ -564,6 +565,7 @@ describe("hybridSearch", () => {
       "agent-1",
       expect.any(Number),
       false,
+      undefined,
       3,
       undefined,
     );
@@ -592,6 +594,7 @@ describe("hybridSearch", () => {
       expect.any(Number),
       false,
       undefined,
+      undefined,
       ["WORKS_AT", "KNOWS"],
     );
   });
@@ -617,6 +620,7 @@ describe("hybridSearch", () => {
       "agent-1",
       2, // default depth
       false,
+      undefined,
       undefined,
       undefined,
     );
@@ -706,6 +710,8 @@ describe("hybridSearch — asOf parameter (OP-120)", () => {
       expect.any(Number),
       false,
       "2025-06-15T00:00:00Z",
+      undefined,
+      undefined,
     );
   });
 });

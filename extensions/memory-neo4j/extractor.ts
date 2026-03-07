@@ -555,18 +555,26 @@ export async function withRetry<T>(
   baseDelayMs: number,
   abortSignal?: AbortSignal,
 ): Promise<T | null> {
+  let lastErr: unknown;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       return await fn();
     } catch (err) {
-      if (abortSignal?.aborted) return null;
+      if (abortSignal?.aborted) {
+        const abortErr = new DOMException("Aborted", "AbortError");
+        throw abortErr;
+      }
       // Non-transient errors (4xx client errors, content policy) — surface to caller
       if (!isTransientError(err)) throw err;
-      // All attempts exhausted
-      if (attempt >= maxAttempts - 1) return null;
+      lastErr = err;
+      // All attempts exhausted — throw the last transient error so callers can return "transient"
+      if (attempt >= maxAttempts - 1) throw lastErr;
       // Wait before next retry, honouring abort signal
       await abortableDelay(baseDelayMs * 3 ** attempt, abortSignal);
-      if (abortSignal?.aborted) return null;
+      if (abortSignal?.aborted) {
+        const abortErr = new DOMException("Aborted", "AbortError");
+        throw abortErr;
+      }
     }
   }
   return null;
@@ -615,16 +623,17 @@ Return JSON: {"keep": "a"|"b"|"both", "reason": "brief explanation"}`,
       500,
       abortSignal,
     );
-    // null = all retries exhausted or aborted — store pair for retry on next sleep cycle
-    if (!content) return "transient";
+    // null = callLlm returned empty content on a successful 200 response — skip this pair
+    if (!content) return "skip";
 
     const parsed = JSON.parse(stripCodeFences(content)) as { keep?: string };
     const keep = parsed.keep;
     if (keep === "a" || keep === "b" || keep === "both") return keep;
     return "skip";
   } catch (err) {
-    // Non-transient errors re-thrown by withRetry (400, 401, content policy, JSON parse)
-    if (isTransientError(err)) return "transient"; // defensive
+    // withRetry throws on: all retries exhausted (transient) or abort signal fired.
+    // Non-transient errors (4xx, content policy, JSON parse) are re-thrown directly.
+    if (isTransientError(err)) return "transient";
     return "skip";
   }
 }
