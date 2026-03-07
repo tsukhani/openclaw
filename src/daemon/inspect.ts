@@ -117,6 +117,25 @@ function isOpenClawGatewaySystemdService(name: string, contents: string): boolea
   return contents.toLowerCase().includes("gateway");
 }
 
+/**
+ * Returns true if the service's ExecStart line actually invokes the openclaw
+ * gateway binary/command — as opposed to a service that merely references an
+ * ".openclaw" path (e.g. a script living under ~/.openclaw/workspace/).
+ *
+ * This prevents services like claude-relay.service, whose ExecStart points at a
+ * Node script under ~/.openclaw/workspace/, from being mistaken for a gateway.
+ */
+function execStartRunsOpenClawGateway(contents: string): boolean {
+  // Match the ExecStart value (may span a continuation line via backslash)
+  const match = contents.match(/^ExecStart\s*=\s*(.+)$/im);
+  if (!match) {
+    return false;
+  }
+  const cmd = match[1].toLowerCase();
+  // Must invoke openclaw AND include the "gateway" subcommand
+  return cmd.includes("openclaw") && cmd.includes("gateway");
+}
+
 function isOpenClawGatewayTaskName(name: string): boolean {
   const normalized = name.trim().toLowerCase();
   if (!normalized) {
@@ -259,8 +278,22 @@ async function scanSystemdDir(params: {
     if (!marker) {
       continue;
     }
-    if (marker === "openclaw" && isOpenClawGatewaySystemdService(name, contents)) {
-      continue;
+    if (marker === "openclaw") {
+      // Only treat a service as "gateway-like" if it is actually running the
+      // openclaw gateway process.  A service that merely references an
+      // ".openclaw" path (e.g. scripts under ~/.openclaw/workspace/) is NOT
+      // a gateway candidate and must be silently ignored.
+      const isGatewayCandidate =
+        hasGatewayServiceMarker(contents) ||
+        execStartRunsOpenClawGateway(contents) ||
+        name.startsWith("openclaw-gateway");
+      if (!isGatewayCandidate) {
+        continue;
+      }
+      // The candidate IS our own gateway service — skip it.
+      if (isOpenClawGatewaySystemdService(name, contents)) {
+        continue;
+      }
     }
     results.push({
       platform: "linux",
