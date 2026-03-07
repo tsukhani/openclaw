@@ -11,7 +11,7 @@ import path from "node:path";
 import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
 import { stripCodeFences } from "./extractor.js";
-import { callOpenRouter } from "./llm-client.js";
+import { callLlm } from "./llm-client.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger } from "./schema.js";
 import type { SleepCycleOptions, SleepCycleResult } from "./sleep-cycle-types.js";
@@ -255,7 +255,7 @@ export async function runTipGeneration(
             .join("\n\n---\n\n");
 
           try {
-            const content = await callOpenRouter(
+            const content = await callLlm(
               config,
               [
                 { role: "system", content: TIP_GENERATION_SYSTEM },

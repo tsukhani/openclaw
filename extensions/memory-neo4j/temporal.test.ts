@@ -14,10 +14,11 @@ import { Neo4jMemoryClient } from "./neo4j-client.js";
 // ============================================================================
 
 vi.mock("./llm-client.js", () => ({
-  callOpenRouter: vi.fn(),
+  callLlm: vi.fn(),
+  callLlmStream: vi.fn(),
 }));
 
-import { callOpenRouter } from "./llm-client.js";
+import { callLlm } from "./llm-client.js";
 
 // ============================================================================
 // Test Helpers
@@ -159,7 +160,7 @@ describe("detectConflicts", () => {
     );
 
     expect(result).toBe(0);
-    expect(callOpenRouter).not.toHaveBeenCalled();
+    expect(callLlm).not.toHaveBeenCalled();
   });
 
   it("returns 0 when no candidates found", async () => {
@@ -176,7 +177,7 @@ describe("detectConflicts", () => {
     );
 
     expect(result).toBe(0);
-    expect(callOpenRouter).not.toHaveBeenCalled();
+    expect(callLlm).not.toHaveBeenCalled();
   });
 
   it("supersedes candidate when LLM returns SUPERSEDES", async () => {
@@ -186,7 +187,7 @@ describe("detectConflicts", () => {
       { id: "old-id", text: "old memory text", score: 0.9 },
     ]);
 
-    (callOpenRouter as ReturnType<typeof vi.fn>).mockResolvedValue(
+    (callLlm as ReturnType<typeof vi.fn>).mockResolvedValue(
       JSON.stringify({ classification: "SUPERSEDES" }),
     );
 
@@ -211,7 +212,7 @@ describe("detectConflicts", () => {
       { id: "old-id", text: "old memory text", score: 0.9 },
     ]);
 
-    (callOpenRouter as ReturnType<typeof vi.fn>).mockResolvedValue(
+    (callLlm as ReturnType<typeof vi.fn>).mockResolvedValue(
       JSON.stringify({ classification: "COMPLEMENTS" }),
     );
 
@@ -238,7 +239,7 @@ describe("detectConflicts", () => {
       { id: "other-id", text: "other memory", score: 0.85 },
     ]);
 
-    (callOpenRouter as ReturnType<typeof vi.fn>).mockResolvedValue(
+    (callLlm as ReturnType<typeof vi.fn>).mockResolvedValue(
       JSON.stringify({ classification: "SUPERSEDES" }),
     );
 

@@ -111,6 +111,7 @@ export type {
 } from "../gateway/server-methods/types.js";
 export type {
   PluginRuntime,
+  PluginRuntimeLlm,
   RuntimeLogger,
   SubagentRunParams,
   SubagentRunResult,

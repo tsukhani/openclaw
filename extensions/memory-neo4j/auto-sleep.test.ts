@@ -23,6 +23,8 @@ vi.mock("./sleep-cycle.js", () => ({
 
 // Mock heavy transitive dependencies so the module graph resolves without I/O
 vi.mock("./llm-client.js", () => ({
+  callLlm: vi.fn(),
+  callLlmStream: vi.fn(),
   callOpenRouter: vi.fn(),
   callOpenRouterStream: vi.fn(),
   isTransientError: vi.fn(() => false),

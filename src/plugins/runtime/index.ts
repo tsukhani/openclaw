@@ -3,12 +3,15 @@ import {
   getApiKeyForModel as getApiKeyForModelRaw,
   resolveApiKeyForProvider as resolveApiKeyForProviderRaw,
 } from "../../agents/model-auth.js";
+import type { OpenClawConfig } from "../../config/config.js";
+import type { OpenClawConfig } from "../../config/config.js";
 import { resolveStateDir } from "../../config/paths.js";
 import { transcribeAudioFile } from "../../media-understanding/transcribe-audio.js";
 import { textToSpeechTelephony } from "../../tts/tts.js";
 import { createRuntimeChannel } from "./runtime-channel.js";
 import { createRuntimeConfig } from "./runtime-config.js";
 import { createRuntimeEvents } from "./runtime-events.js";
+import { createPluginLlmRuntime } from "./runtime-llm.js";
 import { createRuntimeLogging } from "./runtime-logging.js";
 import { createRuntimeMedia } from "./runtime-media.js";
 import { createRuntimeSystem } from "./runtime-system.js";
@@ -47,12 +50,14 @@ function createUnavailableSubagentRuntime(): PluginRuntime["subagent"] {
 
 export type CreatePluginRuntimeOptions = {
   subagent?: PluginRuntime["subagent"];
+  cfg?: OpenClawConfig;
 };
 
 export function createPluginRuntime(_options: CreatePluginRuntimeOptions = {}): PluginRuntime {
   const runtime = {
     version: resolveVersion(),
     config: createRuntimeConfig(),
+    llm: createPluginLlmRuntime(_options.cfg),
     subagent: _options.subagent ?? createUnavailableSubagentRuntime(),
     system: createRuntimeSystem(),
     media: createRuntimeMedia(),

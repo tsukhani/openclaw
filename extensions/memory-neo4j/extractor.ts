@@ -14,12 +14,7 @@
 import { randomUUID } from "node:crypto";
 import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
-import {
-  abortableDelay,
-  callOpenRouter,
-  callOpenRouterStream,
-  isTransientError,
-} from "./llm-client.js";
+import { abortableDelay, callLlm, callLlmStream, isTransientError } from "./llm-client.js";
 import type { MetricsCollector } from "./metrics.js";
 import { NO_OP_METRICS } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
@@ -145,7 +140,7 @@ export function sanitizeMemoryText(text: string): string {
  * Max retries for transient extraction failures before marking permanently failed.
  *
  * Retry budget accounting — two layers of retry:
- *   Layer 1: callOpenRouter/callOpenRouterStream internal retries (config.maxRetries, default 2 = 3 attempts)
+ *   Layer 1: callLlm/callLlmStream internal retries (config.maxRetries, default 2 = 3 attempts)
  *   Layer 2: Sleep cycle retries (MAX_EXTRACTION_RETRIES = 3 sleep cycles)
  *   Total worst-case: 3 × 3 = 9 LLM attempts per memory
  */
@@ -184,7 +179,7 @@ export async function extractEntities(
   let content: string | null;
   try {
     // Use streaming for extraction — allows responsive abort and better latency
-    content = await callOpenRouterStream(config, messages, abortSignal);
+    content = await callLlmStream(config, messages, abortSignal);
   } catch (err) {
     // Network/timeout errors are transient — caller should retry
     return { result: null, transientFailure: isTransientError(err) };
@@ -225,7 +220,7 @@ export async function extractTagsOnly(
 
   let content: string | null;
   try {
-    content = await callOpenRouterStream(config, messages, abortSignal);
+    content = await callLlmStream(config, messages, abortSignal);
   } catch {
     return null;
   }
@@ -520,7 +515,7 @@ export async function decomposeIntoAtomicFacts(
 
   let content: string | null;
   try {
-    content = await callOpenRouterStream(config, messages, abortSignal);
+    content = await callLlmStream(config, messages, abortSignal);
   } catch {
     return null;
   }
@@ -615,7 +610,7 @@ Return JSON: {"keep": "a"|"b"|"both", "reason": "brief explanation"}`,
     // Retry up to 3 times on transient failures (429, 502, 503, network errors).
     // Returns null when all attempts exhausted or aborted — store pair for next sleep cycle.
     const content = await withRetry(
-      () => callOpenRouter(config, messages, abortSignal),
+      () => callLlm(config, messages, abortSignal),
       3,
       500,
       abortSignal,
@@ -823,7 +818,7 @@ export async function rateImportance(
   }
 
   try {
-    const content = await callOpenRouter(
+    const content = await callLlm(
       config,
       [
         { role: "system", content: IMPORTANCE_RATING_SYSTEM },
@@ -882,7 +877,7 @@ export async function classifyTemporalStaleness(
   }
 
   try {
-    const content = await callOpenRouter(
+    const content = await callLlm(
       config,
       [
         {
@@ -975,7 +970,7 @@ export async function isSemanticDuplicate(
   }
 
   try {
-    const content = await callOpenRouter(
+    const content = await callLlm(
       config,
       [
         { role: "system", content: SEMANTIC_DEDUP_SYSTEM },

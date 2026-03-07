@@ -39,6 +39,9 @@ export function createPluginRuntimeMock(overrides: DeepPartial<PluginRuntime> = 
       loadConfig: vi.fn(() => ({})) as unknown as PluginRuntime["config"]["loadConfig"],
       writeConfigFile: vi.fn() as unknown as PluginRuntime["config"]["writeConfigFile"],
     },
+    llm: {
+      callModel: vi.fn() as unknown as PluginRuntime["llm"]["callModel"],
+    },
     system: {
       enqueueSystemEvent: vi.fn() as unknown as PluginRuntime["system"]["enqueueSystemEvent"],
       requestHeartbeatNow: vi.fn() as unknown as PluginRuntime["system"]["requestHeartbeatNow"],

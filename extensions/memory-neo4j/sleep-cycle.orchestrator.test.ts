@@ -16,6 +16,8 @@ import { runSleepCycle } from "./sleep-cycle.js";
 // --------------------------------------------------------------------------
 
 vi.mock("./llm-client.js", () => ({
+  callLlm: vi.fn(),
+  callLlmStream: vi.fn(),
   callOpenRouter: vi.fn(),
   callOpenRouterStream: vi.fn(),
   isTransientError: vi.fn(() => false),
@@ -343,8 +345,8 @@ describe("runSleepCycle orchestrator", () => {
     mockFs.stat.mockResolvedValueOnce({ mtimeMs: Date.now() });
     mockFs.readFile.mockResolvedValueOnce(sessionJsonl);
 
-    const { callOpenRouter } = await import("./llm-client.js");
-    const mockCallOpenRouter = callOpenRouter as ReturnType<typeof vi.fn>;
+    const { callLlm } = await import("./llm-client.js");
+    const mockCallOpenRouter = callLlm as ReturnType<typeof vi.fn>;
 
     const tipsJson = JSON.stringify({
       tips: [

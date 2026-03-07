@@ -185,6 +185,7 @@ export function loadGatewayPlugins(params: {
     coreGatewayHandlers: params.coreGatewayHandlers,
     runtimeOptions: {
       subagent: createGatewaySubagentRuntime(),
+      cfg: params.cfg,
     },
   });
   const pluginMethods = Object.keys(pluginRegistry.gatewayHandlers);

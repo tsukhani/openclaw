@@ -8,7 +8,7 @@
 import neo4j, { type Driver, type Session } from "neo4j-driver";
 import type { ExtractionConfig } from "./config.js";
 import { stripCodeFences } from "./extractor.js";
-import { callOpenRouter } from "./llm-client.js";
+import { callLlm } from "./llm-client.js";
 import type { Logger } from "./schema.js";
 import { ALLOWED_RELATIONSHIP_TYPES, makePairKey } from "./schema.js";
 
@@ -800,7 +800,7 @@ export async function detectConflicts(
   let supersededCount = 0;
   for (const candidate of filtered) {
     try {
-      const content = await callOpenRouter(config, [
+      const content = await callLlm(config, [
         {
           role: "system",
           content: `Given two memories about potentially the same topic, classify their relationship.

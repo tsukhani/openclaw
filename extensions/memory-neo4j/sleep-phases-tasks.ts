@@ -10,7 +10,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { ExtractionConfig } from "./config.js";
 import { stripCodeFences } from "./extractor.js";
-import { callOpenRouter } from "./llm-client.js";
+import { callLlm } from "./llm-client.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger } from "./schema.js";
 import type { SleepCycleOptions, SleepCycleResult } from "./sleep-cycle-types.js";
@@ -41,7 +41,7 @@ export async function classifyTaskMemory(
       .replace(/[`"'\n\r]/g, " ")
       .trim()
       .slice(0, 200);
-    const content = await callOpenRouter(
+    const content = await callLlm(
       config,
       [
         {

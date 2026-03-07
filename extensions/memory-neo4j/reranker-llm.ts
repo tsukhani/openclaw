@@ -6,12 +6,12 @@
  * can reason about recency and prefer more recently recorded facts.
  *
  * Batches ALL candidates into a single LLM call per rerank invocation.
- * Uses the existing callOpenRouter infrastructure from llm-client.ts.
+ * Uses callLlm from llm-client.ts (native routing when in-gateway, direct HTTP otherwise).
  * Can also route to a local Ollama model for zero-cost inference.
  */
 
 import type { ExtractionConfig } from "./config.js";
-import { callOpenRouter } from "./llm-client.js";
+import { callLlm } from "./llm-client.js";
 import type { LocalRerankResult } from "./reranker-local.js";
 
 /** Memory entry with optional metadata passed to the LLM reranker. */
@@ -98,7 +98,7 @@ export async function llmRerank(
     { role: "user", content: userPrompt },
   ];
 
-  const raw = await callOpenRouter(config, messages, signal);
+  const raw = await callLlm(config, messages, signal);
 
   if (!raw) {
     return candidates.map((_, i) => ({ index: i, relevanceScore: 0 }));

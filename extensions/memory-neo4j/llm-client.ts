@@ -1,7 +1,12 @@
 /**
  * LLM API client for memory-neo4j extraction.
  *
- * Supports two API formats:
+ * Supports two call paths:
+ * - **Native (gateway mode)**: `api.runtime.llm.callModel()` via OpenClaw's model routing layer.
+ *   Provides fallbacks, cost tracking, and access to all configured providers.
+ * - **Direct HTTP (CLI/standalone mode)**: direct API calls via the extraction config.
+ *
+ * For the direct HTTP path, two API formats are supported:
  * - **Anthropic Messages API** (native): Used when baseUrl points to api.anthropic.com.
  * - **OpenAI-compatible** (OpenRouter, Ollama, etc.): Used for all other baseUrls.
  *
@@ -10,7 +15,80 @@
  * OpenAI-compatible API format instead of Anthropic's native Messages API.
  */
 
+import type { PluginRuntimeLlm } from "openclaw/plugin-sdk";
 import type { ExtractionConfig } from "./config.js";
+
+// ── Native (gateway) LLM injection ───────────────────────────────────────────
+
+let _pluginLlm: PluginRuntimeLlm | null = null;
+
+/**
+ * Called once during plugin registration to inject the runtime LLM API.
+ * When set, callLlm / callLlmStream prefer this over direct HTTP calls.
+ */
+export function setPluginLlm(llm: PluginRuntimeLlm): void {
+  _pluginLlm = llm;
+}
+
+// ── Dual-path wrappers ────────────────────────────────────────────────────────
+
+type LlmMessage = { role: string; content: string };
+
+/**
+ * Make an LLM call — prefers OpenClaw native routing when running in-gateway,
+ * falls back to direct HTTP (for CLI standalone mode).
+ */
+export async function callLlm(
+  config: ExtractionConfig,
+  prompt: string | LlmMessage[],
+  abortSignal?: AbortSignal,
+): Promise<string | null> {
+  const messages = typeof prompt === "string" ? [{ role: "user", content: prompt }] : prompt;
+
+  if (_pluginLlm) {
+    try {
+      return await _pluginLlm.callModel(
+        config.model,
+        messages as Array<{ role: "user" | "assistant" | "system"; content: string }>,
+        { abortSignal },
+      );
+    } catch (err) {
+      // Fall through to direct HTTP
+      console.warn(
+        `[memory-neo4j] native callModel failed, falling back to direct HTTP: ${String(err)}`,
+      );
+    }
+  }
+
+  return callOpenRouter(config, prompt, abortSignal);
+}
+
+/**
+ * Streaming variant — prefers OpenClaw native routing, falls back to direct HTTP.
+ * The streaming label is kept for call-site compatibility; the native path
+ * uses a non-streaming complete call (streaming is an HTTP transport detail).
+ */
+export async function callLlmStream(
+  config: ExtractionConfig,
+  prompt: string | LlmMessage[],
+  abortSignal?: AbortSignal,
+): Promise<string | null> {
+  const messages = typeof prompt === "string" ? [{ role: "user", content: prompt }] : prompt;
+
+  if (_pluginLlm) {
+    try {
+      return await _pluginLlm.callModel(
+        config.model,
+        messages as Array<{ role: "user" | "assistant" | "system"; content: string }>,
+        { abortSignal },
+      );
+    } catch {
+      // Fall through to direct HTTP
+    }
+  }
+
+  return callOpenRouterStream(config, prompt, abortSignal);
+}
 
 // Timeout for LLM and embedding fetch calls to prevent hanging indefinitely
 export const FETCH_TIMEOUT_MS = 30_000;

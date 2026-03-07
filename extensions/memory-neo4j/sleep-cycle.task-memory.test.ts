@@ -12,14 +12,16 @@ import { classifyTaskMemory } from "./sleep-phases-tasks.js";
 // Mock the LLM client so we don't make real API calls
 // --------------------------------------------------------------------------
 vi.mock("./llm-client.js", () => ({
+  callLlm: vi.fn(),
+  callLlmStream: vi.fn(),
   callOpenRouter: vi.fn(),
   callOpenRouterStream: vi.fn(),
   isTransientError: vi.fn(() => false),
 }));
 
 // Import the mocked function for controlling behavior per test
-import { callOpenRouter } from "./llm-client.js";
-const mockCallOpenRouter = vi.mocked(callOpenRouter);
+import { callLlm } from "./llm-client.js";
+const mockCallOpenRouter = vi.mocked(callLlm);
 
 // --------------------------------------------------------------------------
 // Helpers

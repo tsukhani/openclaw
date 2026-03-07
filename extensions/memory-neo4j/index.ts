@@ -23,6 +23,7 @@ import {
   vectorDimsForModel,
 } from "./config.js";
 import { Embeddings } from "./embeddings.js";
+import { setPluginLlm } from "./llm-client.js";
 import { LoggingMetricsCollector, NO_OP_METRICS, type MetricsCollector } from "./metrics.js";
 import { Neo4jMemoryClient } from "./neo4j-client.js";
 import { registerMemoryHooks } from "./plugin-hooks.js";
@@ -42,6 +43,9 @@ const memoryNeo4jPlugin = {
   configSchema: memoryNeo4jConfigSchema,
 
   register(api: OpenClawPluginApi) {
+    // Inject native LLM routing so all LLM calls go through OpenClaw's model stack
+    setPluginLlm(api.runtime.llm);
+
     // Parse configuration
     const cfg = memoryNeo4jConfigSchema.parse(api.pluginConfig);
     const extractionConfig = resolveExtractionConfig(cfg.extraction);
