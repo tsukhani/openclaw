@@ -67,6 +67,7 @@ function createMinimalConfig(): MemoryNeo4jConfig {
     decayCurves: {},
     sleepCycle: { auto: false },
     conflictDetection: { enabled: false, similarityThreshold: 0.82, maxCandidates: 5 },
+    decomposition: { enabled: false },
   } as unknown as MemoryNeo4jConfig;
 }
 
@@ -270,5 +271,147 @@ describe("registerMemoryHooks circuit breaker", () => {
     handler(validEvent, validCtx);
     await flushPromises();
     expect(mockRunAutoCapture).toHaveBeenCalledOnce();
+  });
+});
+
+// ============================================================================
+// Pre-filter integration tests (OP-86)
+// ============================================================================
+
+describe("registerMemoryHooks prefilter", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("does not call runAutoCapture when all messages are noise", async () => {
+    const { api, getHandler } = createMockApi();
+    registerMemoryHooks(
+      api,
+      mockDb,
+      mockEmbeddings,
+      createMinimalConfig(),
+      minimalExtractionConfig,
+      sleepAbortController,
+      mockLogger,
+    );
+
+    const noiseEvent = {
+      success: true,
+      // Both messages are < 15 chars — rejected by shouldCapture rule 1
+      messages: [
+        { role: "user", content: "ok" },
+        { role: "user", content: "sure" },
+      ],
+    };
+
+    const handler = getHandler("agent_end");
+    handler(noiseEvent, validCtx);
+    await flushPromises();
+
+    expect(mockRunAutoCapture).not.toHaveBeenCalled();
+  });
+
+  it("calls runAutoCapture with only messages that pass the pre-filter", async () => {
+    const { api, getHandler } = createMockApi();
+    registerMemoryHooks(
+      api,
+      mockDb,
+      mockEmbeddings,
+      createMinimalConfig(),
+      minimalExtractionConfig,
+      sleepAbortController,
+      mockLogger,
+    );
+    mockRunAutoCapture.mockResolvedValue(undefined);
+
+    const mixedEvent = {
+      success: true,
+      messages: [
+        { role: "user", content: "ok" }, // noise — < 15 chars
+        {
+          role: "user",
+          content: "Tarun prefers Sonnet for daily cron jobs", // meaningful
+        },
+      ],
+    };
+
+    const handler = getHandler("agent_end");
+    handler(mixedEvent, validCtx);
+    await flushPromises();
+
+    expect(mockRunAutoCapture).toHaveBeenCalledOnce();
+    const [messages] = mockRunAutoCapture.mock.calls[0] as [
+      Array<{ role: string; content: string }>,
+    ];
+    expect(messages).toHaveLength(1);
+    expect(messages[0].content).toBe("Tarun prefers Sonnet for daily cron jobs");
+  });
+
+  it("increments prefilter_rejected metric for noise messages", async () => {
+    const { api, getHandler } = createMockApi();
+    const mockMetrics = {
+      increment: vi.fn(),
+      histogram: vi.fn(),
+      gauge: vi.fn(),
+    };
+    registerMemoryHooks(
+      api,
+      mockDb,
+      mockEmbeddings,
+      createMinimalConfig(),
+      minimalExtractionConfig,
+      sleepAbortController,
+      mockLogger,
+      mockMetrics,
+    );
+    mockRunAutoCapture.mockResolvedValue(undefined);
+
+    const handler = getHandler("agent_end");
+    handler(
+      {
+        success: true,
+        messages: [
+          { role: "user", content: "ok" }, // rejected
+          { role: "user", content: "Tarun prefers Sonnet for daily cron jobs" }, // passed
+        ],
+      },
+      validCtx,
+    );
+    await flushPromises();
+
+    expect(mockMetrics.increment).toHaveBeenCalledWith("auto_capture.prefilter_rejected");
+    expect(mockMetrics.increment).toHaveBeenCalledWith("auto_capture.prefilter_passed");
+  });
+
+  it("passes all messages through when none are noise", async () => {
+    const { api, getHandler } = createMockApi();
+    registerMemoryHooks(
+      api,
+      mockDb,
+      mockEmbeddings,
+      createMinimalConfig(),
+      minimalExtractionConfig,
+      sleepAbortController,
+      mockLogger,
+    );
+    mockRunAutoCapture.mockResolvedValue(undefined);
+
+    const meaningfulEvent = {
+      success: true,
+      messages: [
+        { role: "user", content: "Tarun prefers Sonnet for daily cron jobs" },
+        { role: "user", content: "The reranker service runs on port 4124" },
+      ],
+    };
+
+    const handler = getHandler("agent_end");
+    handler(meaningfulEvent, validCtx);
+    await flushPromises();
+
+    expect(mockRunAutoCapture).toHaveBeenCalledOnce();
+    const [messages] = mockRunAutoCapture.mock.calls[0] as [
+      Array<{ role: string; content: string }>,
+    ];
+    expect(messages).toHaveLength(2);
   });
 });

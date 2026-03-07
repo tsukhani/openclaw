@@ -8,6 +8,7 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { runAutoCapture } from "./auto-capture.js";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import { shouldCapture } from "./extractor.js";
 import type { MetricsCollector } from "./metrics.js";
 import { NO_OP_METRICS } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
@@ -474,10 +475,30 @@ export function registerMemoryHooks(
       const agentId = ctx.agentId || "default";
       const t0Capture = performance.now();
 
+      // Phase 1: heuristic pre-filter (OP-86) — reject obvious noise before any LLM call
+      const filteredMessages = event.messages.filter((msg: unknown) => {
+        const content =
+          typeof (msg as { content?: unknown }).content === "string"
+            ? (msg as { content: string }).content
+            : "";
+        if (!shouldCapture(content)) {
+          logger.debug?.(`memory-neo4j: prefilter rejected "${content.slice(0, 60)}"`);
+          metrics.increment("auto_capture.prefilter_rejected");
+          return false;
+        }
+        metrics.increment("auto_capture.prefilter_passed");
+        return true;
+      });
+
+      if (filteredMessages.length === 0) {
+        logger.debug?.("memory-neo4j: prefilter rejected all messages, skipping auto-capture");
+        return;
+      }
+
       // Fire-and-forget: run auto-capture asynchronously so it doesn't
       // block the agent_end hook (which otherwise adds 2-10s per turn).
       void runAutoCapture(
-        event.messages,
+        filteredMessages,
         agentId,
         sessionKey,
         db,

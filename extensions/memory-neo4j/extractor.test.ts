@@ -19,6 +19,8 @@ import {
   SEMANTIC_DEDUP_VECTOR_THRESHOLD,
   sanitizeMemoryText,
   MAX_EXTRACTION_TEXT_CHARS,
+  shouldCapture,
+  NOISE_PATTERNS,
 } from "./extractor.js";
 import { isTransientError } from "./llm-client.js";
 import {
@@ -2904,5 +2906,188 @@ describe("sanitizeMemoryText", () => {
   it("does not strip lines that merely contain role words mid-sentence", () => {
     const text = "The user said that the system works well";
     expect(sanitizeMemoryText(text)).toBe(text);
+  });
+});
+
+// ============================================================================
+// shouldCapture() — OP-86 heuristic pre-filter
+// ============================================================================
+
+describe("shouldCapture", () => {
+  // --- Rule 1: Too short ---
+
+  it("rejects empty and whitespace-only strings", () => {
+    expect(shouldCapture("")).toBe(false);
+    expect(shouldCapture("   ")).toBe(false);
+    expect(shouldCapture("\n\n\n")).toBe(false);
+  });
+
+  it("rejects text below 15-char trimmed threshold", () => {
+    expect(shouldCapture("ok")).toBe(false);
+    expect(shouldCapture("sure")).toBe(false);
+    expect(shouldCapture("yes")).toBe(false);
+    expect(shouldCapture("short text")).toBe(false); // 10 chars
+    expect(shouldCapture("fourteen char!")).toBe(false); // 14 chars
+  });
+
+  // --- Rule 2: Greeting/filler patterns ---
+
+  it("rejects greeting and acknowledgement words", () => {
+    expect(shouldCapture("Thanks!")).toBe(false);
+    expect(shouldCapture("noted.")).toBe(false);
+  });
+
+  it("rejects filler phrases (full message match)", () => {
+    expect(shouldCapture("Let me check")).toBe(false); // 12 chars — also rejected by length
+    expect(shouldCapture("working on it!")).toBe(false); // 14 chars — also length
+    expect(shouldCapture("no problem.")).toBe(false);
+  });
+
+  it("rejects filler phrase followed by a Malaysian particle", () => {
+    // "Sounds good lah" = 15 chars, passes length rule, must be caught by filler pattern
+    expect(shouldCapture("Sounds good lah")).toBe(false);
+    expect(shouldCapture("Sounds good lor")).toBe(false);
+    expect(shouldCapture("no problem lah.")).toBe(false);
+  });
+
+  it("does NOT reject meaningful messages that start with a filler phrase", () => {
+    // Contains substantial content beyond the filler
+    expect(shouldCapture("Sounds good, let's proceed with the Neo4j migration plan")).toBe(true);
+  });
+
+  // --- Rule 3: System markup ---
+
+  it("rejects system markup keywords at start of message", () => {
+    // HEARTBEAT_OK is < 15 chars (caught by rule 1), but longer variants must also be rejected
+    expect(shouldCapture("HEARTBEAT_OK")).toBe(false);
+    expect(shouldCapture("HEARTBEAT_OK - gateway alive and responding")).toBe(false);
+    expect(shouldCapture("NO_REPLY")).toBe(false);
+    expect(shouldCapture("NO_REPLY - agent did not respond in time")).toBe(false);
+  });
+
+  it("rejects messages starting with XML function call tags", () => {
+    expect(shouldCapture("<function_calls>some tool call content here")).toBe(false);
+    expect(shouldCapture("<function name='search'>query text here please")).toBe(false);
+  });
+
+  it("rejects messages starting with tool_call markers", () => {
+    expect(shouldCapture("tool_call: run command xyz right here")).toBe(false);
+    expect(shouldCapture("`tool search query content here please")).toBe(false);
+  });
+
+  it("rejects inter-session and queued message headers", () => {
+    expect(shouldCapture("[Inter-session message] something something here more text")).toBe(false);
+    expect(shouldCapture("[Queued messages from user] pending items here")).toBe(false);
+  });
+
+  // --- Rule 4: Code dumps ---
+
+  it("rejects code dumps (>10 indented lines, no sentence-ending punctuation)", () => {
+    const codeDump = [
+      "function initialise() {",
+      "  const alpha = 1;",
+      "  const beta = 2;",
+      "  if (alpha > 0) {",
+      "    return alpha + beta;",
+      "  }",
+      "  return 0;",
+      "}",
+      "",
+      "class Processor extends BaseProcessor {",
+      "  constructor() {",
+      "    super();",
+      "  }",
+      "}",
+    ].join("\n");
+    expect(shouldCapture(codeDump)).toBe(false);
+  });
+
+  it("accepts code with embedded prose sentences (mixed content)", () => {
+    // Has sentence-ending punctuation — should not be rejected as code dump
+    const mixed =
+      Array.from({ length: 12 }, (_, i) => `  const x${i} = ${i};`).join("\n") +
+      "\nThis function initialises the counter variables.";
+    expect(shouldCapture(mixed)).toBe(true);
+  });
+
+  it("accepts code blocks with fewer than 10 lines", () => {
+    const shortCode = ["function foo() {", "  return 42;", "}"].join("\n");
+    expect(shouldCapture(shortCode + " — returns the answer")).toBe(true);
+  });
+
+  // --- Rule 5: Pure JSON/XML ---
+
+  it("rejects pure JSON objects and arrays", () => {
+    expect(shouldCapture('{"key": "value", "count": 42}')).toBe(false);
+    expect(shouldCapture('["item1", "item2", "item3", "item4"]')).toBe(false);
+  });
+
+  it("rejects XML declarations", () => {
+    expect(shouldCapture('<?xml version="1.0" encoding="UTF-8"?>')).toBe(false);
+  });
+
+  it("does NOT reject text that starts with { but is not valid JSON", () => {
+    expect(shouldCapture("{this is not valid JSON at all, just prose text}")).toBe(true);
+  });
+
+  // --- Rule 6: Tool output ---
+
+  it("rejects command exit output", () => {
+    expect(shouldCapture("(Command exited with code 0) process finished ok")).toBe(false);
+    expect(shouldCapture("(Command exited with code 1)\nError: file not found")).toBe(false);
+  });
+
+  it("rejects HTTP response lines", () => {
+    expect(shouldCapture("HTTP/1.1 200 OK Content-Type: application/json")).toBe(false);
+    expect(shouldCapture("HTTP/1.0 404 Not Found Server: nginx")).toBe(false);
+  });
+
+  it("rejects shell prompt lines", () => {
+    expect(shouldCapture("$ ls -la /home/user then do something else")).toBe(false);
+  });
+
+  // --- Rule 7: Repetitive content ---
+
+  it("rejects single word repeated many times", () => {
+    expect(shouldCapture("hello hello hello hello hello")).toBe(false);
+    expect(shouldCapture("yes yes yes yes yes yes yes")).toBe(false);
+  });
+
+  it("rejects emoji spam (same emoji token repeated)", () => {
+    expect(shouldCapture("🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉 🎉")).toBe(false);
+  });
+
+  it("does NOT reject text where tokens are varied", () => {
+    expect(shouldCapture("the quick brown fox jumps over")).toBe(true);
+  });
+
+  // --- Acceptance cases ---
+
+  it("accepts meaningful factual content", () => {
+    expect(shouldCapture("Tarun prefers Sonnet for daily cron jobs")).toBe(true);
+    expect(shouldCapture("The reranker service runs on port 4124")).toBe(true);
+    expect(shouldCapture("Decided to use Neo4j for the memory graph storage layer")).toBe(true);
+  });
+
+  it("accepts short but meaningful messages over the length threshold", () => {
+    expect(shouldCapture("Meeting at 3pm tomorrow")).toBe(true);
+    expect(shouldCapture("Server is down again")).toBe(true); // 20 chars
+  });
+
+  it("accepts personal preferences and facts", () => {
+    expect(shouldCapture("I strongly prefer TypeScript over JavaScript for all projects")).toBe(
+      true,
+    );
+    expect(shouldCapture("The database migration failed on staging environment")).toBe(true);
+  });
+
+  // --- NOISE_PATTERNS exported constant ---
+
+  it("exports NOISE_PATTERNS constant with expected keys", () => {
+    expect(NOISE_PATTERNS).toHaveProperty("GREETING_WORD");
+    expect(NOISE_PATTERNS).toHaveProperty("FILLER_PHRASE");
+    expect(NOISE_PATTERNS).toHaveProperty("PARTICLE");
+    expect(NOISE_PATTERNS).toHaveProperty("SYSTEM_MARKUP");
+    expect(NOISE_PATTERNS).toHaveProperty("TOOL_OUTPUT");
   });
 });
