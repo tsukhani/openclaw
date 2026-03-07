@@ -315,7 +315,7 @@ describe("runSleepCycle orchestrator", () => {
 
   it("OP-107: calls embedBatch once for all tips and storeManyMemories once", async () => {
     const fs = await import("node:fs/promises");
-    const mockFs = fs.default as {
+    const mockFs = fs.default as unknown as {
       readdir: ReturnType<typeof vi.fn>;
       stat: ReturnType<typeof vi.fn>;
       readFile: ReturnType<typeof vi.fn>;

@@ -209,7 +209,7 @@ describe("Neo4jMemoryClient", () => {
         text: "Remember to buy groceries tomorrow",
         embedding: [0.1],
         importance: 0.3,
-        category: "task",
+        category: "other",
         source: "user",
         extractionStatus: "pending",
         agentId: "default",
@@ -1287,7 +1287,7 @@ describe("Neo4jMemoryClient", () => {
               const data: Record<string, unknown> = {
                 id: "m1",
                 text: "task memory",
-                category: "task",
+                category: "other",
                 importance: 0.7,
               };
               return data[key];
@@ -1302,7 +1302,7 @@ describe("Neo4jMemoryClient", () => {
       expect(result[0]).toMatchObject({
         id: "m1",
         text: "task memory",
-        category: "task",
+        category: "other",
         importance: 0.7,
       });
       expect(mockSession.run).toHaveBeenCalledWith(

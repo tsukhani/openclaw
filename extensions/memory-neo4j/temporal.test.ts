@@ -28,6 +28,7 @@ function createMockSession() {
   return {
     run: vi.fn().mockResolvedValue({ records: [] }),
     close: vi.fn().mockResolvedValue(undefined),
+    executeWrite: vi.fn(),
   };
 }
 
@@ -348,7 +349,7 @@ describe("batchEntityOperations (OP-122 temporal fields)", () => {
 
     // Find the MERGE call for WORKS_AT
     const mergeCall = txRun.mock.calls.find(
-      ([q]: [string]) => typeof q === "string" && q.includes("MERGE (e1)-[rel:WORKS_AT]"),
+      (args: any[]) => typeof args[0] === "string" && args[0].includes("MERGE (e1)-[rel:WORKS_AT]"),
     );
     expect(mergeCall).toBeDefined();
     const [query] = mergeCall!;
@@ -379,7 +380,7 @@ describe("batchEntityOperations (OP-122 temporal fields)", () => {
     );
 
     const mergeCall = txRun.mock.calls.find(
-      ([q]: [string]) => typeof q === "string" && q.includes("MERGE (e1)-[rel:WORKS_AT]"),
+      (args: any[]) => typeof args[0] === "string" && args[0].includes("MERGE (e1)-[rel:WORKS_AT]"),
     );
     expect(mergeCall).toBeDefined();
     const [query] = mergeCall!;

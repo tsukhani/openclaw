@@ -8,6 +8,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ExtractionConfig } from "./config.js";
+import type { Embeddings } from "./embeddings.js";
 import type { Logger } from "./schema.js";
 import { CREDENTIAL_PATTERNS, detectCredential } from "./sleep-cycle-types.js";
 import { runSleepCycle } from "./sleep-cycle.js";
@@ -215,7 +216,7 @@ const mockLogger: Logger = {
 const mockEmbeddings = {
   embed: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
   embedBatch: vi.fn().mockResolvedValue([[0.1, 0.2, 0.3]]),
-};
+} as unknown as Embeddings;
 
 const mockConfig: ExtractionConfig = {
   enabled: false, // disable LLM-dependent phases

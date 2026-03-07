@@ -13,7 +13,7 @@
  */
 
 import { Cron } from "croner";
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/core";
 import { registerCli } from "./cli.js";
 import {
   DEFAULT_EMBEDDING_DIMS,
