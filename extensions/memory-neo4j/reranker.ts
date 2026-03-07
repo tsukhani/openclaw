@@ -66,7 +66,10 @@ export async function rerankCandidates(
 
     // Route temporal/update queries to LLM reranker with timestamp context.
     // Cross-encoders can't reason about recency — LLM can with date metadata.
-    if (config.provider === "llm" || temporal) {
+    // Exception: extraction/short/entity queries always use cross-encoder (LLM adds noise for simple fact lookups).
+    const forceCrossEncoder =
+      queryType === "extraction" || queryType === "short" || queryType === "entity";
+    if (!forceCrossEncoder && (config.provider === "llm" || temporal)) {
       const { llmRerank } = await import("./reranker-llm.js");
       const candidatesWithDates = candidates.map((c) => ({
         text: c.text,
