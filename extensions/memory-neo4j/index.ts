@@ -12,6 +12,7 @@
  * Architecture decisions: see docs/memory-neo4j/ARCHITECTURE.md
  */
 
+import { Cron } from "croner";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { registerCli } from "./cli.js";
 import {
@@ -111,7 +112,7 @@ const memoryNeo4jPlugin = {
 
     const sleepAbortController = new AbortController();
     let sleepCycleRunning = false;
-    let autoSleepTimerId: ReturnType<typeof setTimeout> | null = null;
+    let cronJob: Cron | null = null;
 
     registerMemoryHooks(
       api,
@@ -144,41 +145,38 @@ const memoryNeo4jPlugin = {
           // Tools will retry initialization on first use.
         }
 
-        if (cfg.sleepCycle.auto) {
-          const intervalMs = cfg.sleepCycle.autoIntervalMs ?? 10_800_000; // default 3h
-
-          const scheduleNext = (): void => {
-            autoSleepTimerId = setTimeout(async () => {
-              if (sleepAbortController.signal.aborted) return;
-              if (sleepCycleRunning) {
-                api.logger.debug?.("memory-neo4j: auto sleep-cycle skipped (already running)");
-                scheduleNext();
-                return;
-              }
-              sleepCycleRunning = true;
-              try {
-                api.logger.info("memory-neo4j: starting auto sleep-cycle");
-                await runSleepCycle(db, embeddings, extractionConfig, api.logger, {
-                  abortSignal: sleepAbortController.signal,
-                });
-                api.logger.info("memory-neo4j: auto sleep-cycle complete");
-              } catch (err) {
-                api.logger.error(`memory-neo4j: auto sleep-cycle error — ${String(err)}`);
-              } finally {
-                sleepCycleRunning = false;
-                if (!sleepAbortController.signal.aborted) scheduleNext();
-              }
-            }, intervalMs);
-          };
-
-          scheduleNext();
-          api.logger.info(`memory-neo4j: auto sleep-cycle enabled (interval: ${intervalMs}ms)`);
+        if (cfg.sleepCycle.schedule) {
+          const schedule = cfg.sleepCycle.schedule;
+          const tz = cfg.sleepCycle.tz ?? "local";
+          cronJob = new Cron(schedule, { timezone: tz, protect: true }, async () => {
+            if (sleepAbortController.signal.aborted) return;
+            // protect:true prevents overlapping runs; guard flag is an extra safeguard
+            if (sleepCycleRunning) {
+              api.logger.debug?.("memory-neo4j: auto sleep-cycle skipped (already running)");
+              return;
+            }
+            sleepCycleRunning = true;
+            try {
+              api.logger.info("memory-neo4j: starting auto sleep-cycle");
+              await runSleepCycle(db, embeddings, extractionConfig, api.logger, {
+                abortSignal: sleepAbortController.signal,
+              });
+              api.logger.info("memory-neo4j: auto sleep-cycle complete");
+            } catch (err) {
+              api.logger.error(`memory-neo4j: auto sleep-cycle error — ${String(err)}`);
+            } finally {
+              sleepCycleRunning = false;
+            }
+          });
+          api.logger.info(
+            `memory-neo4j: auto sleep-cycle scheduled (cron: ${schedule}, tz: ${tz})`,
+          );
         }
       },
       stop: async () => {
-        if (autoSleepTimerId !== null) {
-          clearTimeout(autoSleepTimerId);
-          autoSleepTimerId = null;
+        if (cronJob !== null) {
+          cronJob.stop();
+          cronJob = null;
         }
         sleepAbortController.abort();
         if (metrics instanceof LoggingMetricsCollector) {

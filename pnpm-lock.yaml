@@ -429,6 +429,9 @@ importers:
       '@sinclair/typebox':
         specifier: 0.34.48
         version: 0.34.48
+      croner:
+        specifier: ^10.0.1
+        version: 10.0.1
       neo4j-driver:
         specifier: ^5.27.0
         version: 5.28.3

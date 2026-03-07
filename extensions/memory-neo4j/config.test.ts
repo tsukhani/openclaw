@@ -478,30 +478,48 @@ describe("memoryNeo4jConfigSchema.parse", () => {
   });
 
   describe("sleepCycle config section", () => {
-    it("should default sleepCycle.auto to true", () => {
+    it("should default sleepCycle.schedule to null (disabled)", () => {
       const config = memoryNeo4jConfigSchema.parse({
         neo4j: { uri: "bolt://localhost:7687", password: "" },
         embedding: { provider: "ollama" },
       });
-      expect(config.sleepCycle.auto).toBe(true);
+      expect(config.sleepCycle.schedule).toBeNull();
     });
 
-    it("should respect explicit sleepCycle.auto = false", () => {
+    it("should accept a cron expression for sleepCycle.schedule", () => {
       const config = memoryNeo4jConfigSchema.parse({
         neo4j: { uri: "bolt://localhost:7687", password: "" },
         embedding: { provider: "ollama" },
-        sleepCycle: { auto: false },
+        sleepCycle: { schedule: "0 3 * * *" },
       });
-      expect(config.sleepCycle.auto).toBe(false);
+      expect(config.sleepCycle.schedule).toBe("0 3 * * *");
     });
 
-    it("should still accept autoIntervalMs without error (backwards compat)", () => {
+    it("should accept deprecated auto/autoIntervalMs without error (backwards compat, emits warning)", () => {
       const config = memoryNeo4jConfigSchema.parse({
         neo4j: { uri: "bolt://localhost:7687", password: "" },
         embedding: { provider: "ollama" },
-        sleepCycle: { autoIntervalMs: 3600000 },
+        sleepCycle: { auto: true, autoIntervalMs: 3600000 },
       });
-      expect(config.sleepCycle.auto).toBe(true);
+      // Deprecated fields are ignored; schedule defaults to null
+      expect(config.sleepCycle.schedule).toBeNull();
+    });
+
+    it("should default sleepCycle.tz to 'local'", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.sleepCycle.tz).toBe("local");
+    });
+
+    it("should respect explicit sleepCycle.tz", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        sleepCycle: { schedule: "0 3 * * *", tz: "America/New_York" },
+      });
+      expect(config.sleepCycle.tz).toBe("America/New_York");
     });
 
     it("should reject unknown sleepCycle keys", () => {

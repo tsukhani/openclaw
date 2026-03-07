@@ -77,9 +77,15 @@ export type MemoryNeo4jConfig = {
    */
   decayCurves: Record<string, { halfLifeDays: number }>;
   sleepCycle: {
-    auto: boolean;
-    /** Interval in milliseconds between auto sleep-cycle runs. Default: 10800000 (3h). */
-    autoIntervalMs?: number;
+    /**
+     * Cron expression controlling when the sleep cycle runs automatically.
+     * Example: "0 3 * * *" runs at 03:00 every night.
+     * Set to null (default) to disable automatic scheduling — opt-in.
+     * @deprecated `auto`/`autoIntervalMs` fields are no longer supported; use `schedule` instead.
+     */
+    schedule: string | null;
+    /** Timezone for the cron schedule. Defaults to "local". Example: "America/New_York". */
+    tz: string;
   };
   conflictDetection: {
     /** Enable LLM-based conflict detection on new memory store */
@@ -493,15 +499,28 @@ export const memoryNeo4jConfigSchema = {
 
     // Parse sleepCycle section (optional with defaults)
     const sleepCycleRaw = cfg.sleepCycle as Record<string, unknown> | undefined;
-    assertAllowedKeys(sleepCycleRaw ?? {}, ["auto", "autoIntervalMs"], "sleepCycle config");
-    const sleepCycleAuto = sleepCycleRaw?.auto !== false; // enabled by default
-    const rawAutoIntervalMs = sleepCycleRaw?.autoIntervalMs;
-    const sleepCycleAutoIntervalMs =
-      typeof rawAutoIntervalMs === "number" &&
-      Number.isInteger(rawAutoIntervalMs) &&
-      rawAutoIntervalMs > 0
-        ? rawAutoIntervalMs
-        : 10_800_000; // default 3h
+    assertAllowedKeys(
+      sleepCycleRaw ?? {},
+      ["auto", "autoIntervalMs", "schedule", "tz"],
+      "sleepCycle config",
+    );
+    // Backward-compat: warn if deprecated auto/autoIntervalMs keys are present
+    if (sleepCycleRaw?.auto !== undefined || sleepCycleRaw?.autoIntervalMs !== undefined) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "memory-neo4j: sleepCycle.auto and sleepCycle.autoIntervalMs are deprecated and ignored. " +
+          'Use sleepCycle.schedule (cron expression, e.g. "0 3 * * *") instead.',
+      );
+    }
+    // schedule: cron expression string, or null/undefined to disable
+    const rawSchedule = sleepCycleRaw?.schedule;
+    const sleepCycleSchedule: string | null =
+      typeof rawSchedule === "string" && rawSchedule.length > 0 ? rawSchedule : null;
+    // tz: timezone string for the schedule, defaults to "local"
+    const sleepCycleTz =
+      typeof sleepCycleRaw?.tz === "string" && sleepCycleRaw.tz.length > 0
+        ? sleepCycleRaw.tz
+        : "local";
 
     // Parse conflictDetection section (optional with defaults)
     const cdRaw = cfg.conflictDetection as Record<string, unknown> | undefined;
@@ -652,8 +671,8 @@ export const memoryNeo4jConfigSchema = {
       graphRelTypes,
       decayCurves,
       sleepCycle: {
-        auto: sleepCycleAuto,
-        autoIntervalMs: sleepCycleAutoIntervalMs,
+        schedule: sleepCycleSchedule,
+        tz: sleepCycleTz,
       },
       conflictDetection: {
         enabled: cdEnabled,
