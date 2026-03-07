@@ -80,9 +80,13 @@
       "label": "Decay Curves",
       "help": "Per-category decay curve overrides. Example: {\"fact\": {\"halfLifeDays\": 60}, \"other\": {\"halfLifeDays\": 14}}"
     },
-    "sleepCycle.auto": {
-      "label": "Auto Sleep Cycle",
-      "help": "Automatically run memory consolidation (dedup, extraction, decay) daily at 3:00 AM local time (default: on)"
+    "sleepCycle.schedule": {
+      "label": "Sleep Cycle Schedule",
+      "help": "Cron expression for automatic memory consolidation (e.g. '0 3 * * *' for 3:00 AM daily). Set to null to disable."
+    },
+    "sleepCycle.tz": {
+      "label": "Sleep Cycle Timezone",
+      "help": "Timezone for the cron schedule (e.g. 'America/New_York'). Defaults to local timezone."
     }
   },
   "configSchema": {
@@ -201,7 +205,9 @@
         "additionalProperties": false,
         "properties": {
           "auto": { "type": "boolean" },
-          "autoIntervalMs": { "type": "number", "minimum": 1 }
+          "autoIntervalMs": { "type": "number", "minimum": 1 },
+          "schedule": { "type": ["string", "null"] },
+          "tz": { "type": "string" }
         }
       },
       "conflictDetection": {
@@ -214,6 +220,46 @@
           "maxCandidates": { "type": "number", "minimum": 1 },
           "sleepScanBatchSize": { "type": "number", "minimum": 1 }
         }
+      },
+      "recencyWeight": {
+        "type": "number",
+        "minimum": 0
+      },
+      "decomposition": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean" }
+        }
+      },
+      "metrics": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "logIntervalMs": { "type": "number", "minimum": 1 }
+        }
+      },
+      "reranker": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "provider": { "type": "string", "enum": ["local", "llm", "none"] },
+          "model": { "type": "string" },
+          "topK": { "type": "number", "minimum": 1 },
+          "topJ": { "type": "number", "minimum": 1 },
+          "minScore": { "type": "number", "minimum": 0 },
+          "abstentionThreshold": { "type": "number", "minimum": 0 }
+        }
+      },
+      "graphSeedCap": {
+        "type": "number",
+        "minimum": 1
+      },
+      "graphRelTypes": {
+        "type": ["array", "null"],
+        "items": { "type": "string" }
       }
     },
     "required": ["neo4j"]
