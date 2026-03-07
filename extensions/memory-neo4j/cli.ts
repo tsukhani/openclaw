@@ -942,6 +942,11 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
         .option("--save-baseline <path>", "Save current results as new baseline JSON")
         .option("--variant-a <name>", "A/B test: run variant A (requires --variant-b)")
         .option("--variant-b <name>", "A/B test: run variant B and compare against --variant-a")
+        .option(
+          "--production",
+          "Production mode: skip memory ingestion, query existing production memories (agentId=main)",
+        )
+        .option("--agent-id <id>", "Agent ID to query in production mode (default: main)")
         .action(
           async (opts: {
             dataset: string;
@@ -958,6 +963,8 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
             saveBaseline?: string;
             variantA?: string;
             variantB?: string;
+            production?: boolean;
+            agentId?: string;
           }) => {
             const k = parseInt(opts.k, 10);
             if (Number.isNaN(k) || k < 1) {
@@ -1047,6 +1054,8 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
                 ciMode: opts.ci === true,
                 baselinePath: opts.baseline,
                 saveBaselinePath: opts.saveBaseline,
+                productionMode: opts.production === true,
+                agentId: opts.agentId,
               };
 
               await runEval(db, embeddings, extractionConfig, cfg, runOptions);
