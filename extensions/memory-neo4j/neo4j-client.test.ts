@@ -16,7 +16,7 @@ import type { StoreMemoryInput } from "./schema.js";
 // ============================================================================
 
 function createMockSession() {
-  return {
+  const session = {
     run: vi.fn().mockResolvedValue({ records: [] }),
     close: vi.fn().mockResolvedValue(undefined),
     executeWrite: vi.fn(
@@ -26,7 +26,10 @@ function createMockSession() {
         return work(mockTx);
       },
     ),
+    executeRead: null as unknown as ReturnType<typeof vi.fn>,
   };
+  session.executeRead = vi.fn().mockImplementation((fn) => fn({ run: session.run }));
+  return session;
 }
 
 function createMockDriver() {
@@ -1431,6 +1434,8 @@ describe("Neo4jMemoryClient", () => {
       mockSession.run.mockResolvedValue({ records: [] });
 
       await client.recordRetrievals(["m1", "m2", "m3"]);
+      // Flush the buffer to trigger the actual DB write
+      await (client as any).flushRetrievalBuffer();
 
       expect(mockSession.run).toHaveBeenCalledWith(
         expect.stringContaining("m.retrievalCount"),
@@ -1444,6 +1449,8 @@ describe("Neo4jMemoryClient", () => {
       mockSession.run.mockResolvedValue({ records: [] });
 
       await client.recordRetrievals(["m1"]);
+      // Flush the buffer to trigger the actual DB write
+      await (client as any).flushRetrievalBuffer();
 
       expect(mockSession.run).toHaveBeenCalledWith(
         expect.stringContaining("m.lastRetrievedAt"),

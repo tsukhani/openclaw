@@ -132,7 +132,7 @@ export async function countMemories(session: Session, agentId?: string): Promise
   const query = agentId
     ? "MATCH (m:Memory {agentId: $agentId}) RETURN count(m) AS count"
     : "MATCH (m:Memory) RETURN count(m) AS count";
-  const result = await session.run(query, agentId ? { agentId } : {});
+  const result = await session.executeRead((tx) => tx.run(query, agentId ? { agentId } : {}));
   return (result.records[0]?.get("count") as number) ?? 0;
 }
 
@@ -144,13 +144,15 @@ export async function getMemoryStats(
   session: Session,
   agentId?: string,
 ): Promise<Array<{ agentId: string; category: string; count: number; avgImportance: number }>> {
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
     WHERE ($agentId IS NULL OR m.agentId = $agentId)
     RETURN m.agentId AS agentId, m.category AS category,
            count(m) AS count, avg(m.importance) AS avgImportance
     ORDER BY agentId, category`,
-    { agentId: agentId ?? null },
+      { agentId: agentId ?? null },
+    ),
   );
   return result.records.map((r) => {
     const countVal = r.get("count");
@@ -176,18 +178,20 @@ export async function listByCategory(
   agentId?: string,
 ): Promise<{ id: string; text: string; category: string; importance: number }[]> {
   const agentFilter = agentId ? "AND m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE m.category = $category AND m.importance >= $minImportance ${agentFilter}
      RETURN m.id AS id, m.text AS text, m.category AS category, m.importance AS importance
      ORDER BY m.importance DESC
      LIMIT $limit`,
-    {
-      category,
-      minImportance,
-      limit: neo4j.int(Math.floor(limit)),
-      ...(agentId ? { agentId } : {}),
-    },
+      {
+        category,
+        minImportance,
+        limit: neo4j.int(Math.floor(limit)),
+        ...(agentId ? { agentId } : {}),
+      },
+    ),
   );
 
   return result.records.map((r) => ({
@@ -210,11 +214,13 @@ export async function listCoreForInjection(
   agentId?: string,
 ): Promise<{ id: string; text: string; category: string; importance: number }[]> {
   const agentFilter = agentId ? "AND m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE m.category = 'core' ${agentFilter}
      RETURN m.id AS id, m.text AS text, m.category AS category, m.importance AS importance`,
-    agentId ? { agentId } : {},
+      agentId ? { agentId } : {},
+    ),
   );
 
   return result.records.map((r) => ({
@@ -235,12 +241,14 @@ export async function findMemoriesByTaskId(
   agentId?: string,
 ): Promise<Array<{ id: string; text: string; category: string; importance: number }>> {
   const agentFilter = agentId ? "AND m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE m.taskId = $taskId ${agentFilter}
      RETURN m.id AS id, m.text AS text, m.category AS category, m.importance AS importance
      ORDER BY m.createdAt ASC`,
-    { taskId, ...(agentId ? { agentId } : {}) },
+      { taskId, ...(agentId ? { agentId } : {}) },
+    ),
   );
   return result.records.map((r) => ({
     id: r.get("id") as string,
@@ -340,18 +348,20 @@ export async function searchMemoriesByKeywords(
   }
   const query = escaped.join(" OR ");
   const agentFilter = agentId ? "AND node.agentId = $agentId" : "";
-  const result = await session.run(
-    `CALL db.index.fulltext.queryNodes('memory_fulltext_index', $query)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `CALL db.index.fulltext.queryNodes('memory_fulltext_index', $query)
      YIELD node, score
      WHERE true ${agentFilter}
      RETURN node.id AS id, node.text AS text, node.category AS category
      ORDER BY score DESC
      LIMIT $limit`,
-    {
-      query,
-      limit: neo4j.int(Math.floor(limit)),
-      ...(agentId ? { agentId } : {}),
-    },
+      {
+        query,
+        limit: neo4j.int(Math.floor(limit)),
+        ...(agentId ? { agentId } : {}),
+      },
+    ),
   );
 
   return result.records.map((r) => ({

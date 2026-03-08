@@ -25,11 +25,14 @@ import { callLlm } from "./llm-client.js";
 // ============================================================================
 
 function createMockSession() {
-  return {
+  const session = {
     run: vi.fn().mockResolvedValue({ records: [] }),
     close: vi.fn().mockResolvedValue(undefined),
     executeWrite: vi.fn(),
+    executeRead: null as unknown as ReturnType<typeof vi.fn>,
   };
+  session.executeRead = vi.fn().mockImplementation((fn) => fn({ run: session.run }));
+  return session;
 }
 
 function createMockDriver(session: ReturnType<typeof createMockSession>) {

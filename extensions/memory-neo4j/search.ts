@@ -391,24 +391,42 @@ export async function hybridSearch(
   const [vW, bW, gW, freshnessW] = weightOverride ?? getAdaptiveWeights(queryType, graphEnabled);
   const weights: [number, number, number, number] = [vW, bW, gW, freshnessW];
 
-  // 3. Run signals in parallel
-  const [vectorResults, bm25Results, graphResults] = await Promise.all([
-    db.vectorSearch(queryEmbedding, candidateLimit, 0.1, agentId, includeExpired, asOf),
-    db.bm25Search(query, candidateLimit, agentId, includeExpired, asOf),
-    graphEnabled
-      ? db.graphSearch(
-          query,
-          candidateLimit,
-          graphFiringThreshold,
-          agentId,
-          graphSearchDepth,
-          includeExpired,
-          asOf,
-          graphSeedCap,
-          graphRelTypes,
-        )
-      : Promise.resolve([] as SearchSignalResult[]),
-  ]);
+  // 3. Run signals in parallel using a shared session to avoid 3 session
+  //    creation+teardown round-trips (Finding 1: session reuse for hybrid search)
+  const sharedSession = db.getSession();
+  let vectorResults: SearchSignalResult[];
+  let bm25Results: SearchSignalResult[];
+  let graphResults: SearchSignalResult[];
+  try {
+    [vectorResults, bm25Results, graphResults] = await Promise.all([
+      db.vectorSearch(
+        queryEmbedding,
+        candidateLimit,
+        0.1,
+        agentId,
+        includeExpired,
+        asOf,
+        sharedSession,
+      ),
+      db.bm25Search(query, candidateLimit, agentId, includeExpired, asOf, sharedSession),
+      graphEnabled
+        ? db.graphSearch(
+            query,
+            candidateLimit,
+            graphFiringThreshold,
+            agentId,
+            graphSearchDepth,
+            includeExpired,
+            asOf,
+            graphSeedCap,
+            graphRelTypes,
+            sharedSession,
+          )
+        : Promise.resolve([] as SearchSignalResult[]),
+    ]);
+  } finally {
+    await sharedSession.close();
+  }
   const tSignals = performance.now();
 
   // 4. Build temporal freshness signal from validFrom dates across all candidates (OP-129).

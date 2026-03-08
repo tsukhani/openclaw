@@ -37,6 +37,28 @@ export async function updateExtractionStatus(
 }
 
 /**
+ * Batch-update extraction status for multiple memories.
+ * Used by sleep cycle to mark a batch of memories as failed/skipped in one query.
+ */
+export async function updateExtractionStatusBatch(
+  session: Session,
+  ids: string[],
+  status: ExtractionStatus,
+  options?: { incrementRetries?: boolean },
+): Promise<void> {
+  if (ids.length === 0) return;
+  const retryClause = options?.incrementRetries
+    ? ", m.extractionRetries = coalesce(m.extractionRetries, 0) + 1"
+    : "";
+  await session.run(
+    `UNWIND $ids AS id
+     MATCH (m:Memory {id: id})
+     SET m.extractionStatus = $status, m.updatedAt = $now${retryClause}`,
+    { ids, status, now: new Date().toISOString() },
+  );
+}
+
+/**
  * Batch all entity operations from an extraction result into a single managed
  * transaction. Replaces the previous pattern of N individual session-per-call
  * operations with a single atomic write.
@@ -188,15 +210,17 @@ export async function listPendingExtractions(
   agentId?: string,
 ): Promise<Array<{ id: string; text: string; agentId: string; extractionRetries: number }>> {
   const agentFilter = agentId ? "AND m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE m.extractionStatus IN ['pending', 'skipped'] ${agentFilter}
      AND m.validUntil IS NULL
      RETURN m.id AS id, m.text AS text, m.agentId AS agentId,
             coalesce(m.extractionRetries, 0) AS extractionRetries
      ORDER BY m.createdAt ASC
      LIMIT $limit`,
-    { limit: neo4j.int(limit), ...(agentId ? { agentId } : {}) },
+      { limit: neo4j.int(limit), ...(agentId ? { agentId } : {}) },
+    ),
   );
   return result.records.map((r) => ({
     id: r.get("id") as string,
@@ -215,11 +239,13 @@ export async function countByExtractionStatus(
   agentId?: string,
 ): Promise<Record<ExtractionStatus, number>> {
   const agentFilter = agentId ? "WHERE m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      ${agentFilter}
      RETURN m.extractionStatus AS status, count(m) AS count`,
-    agentId ? { agentId } : {},
+      agentId ? { agentId } : {},
+    ),
   );
   const counts: Record<string, number> = {
     pending: 0,
@@ -249,19 +275,21 @@ export async function listUntaggedMemories(
   maxRetries: number = 3,
 ): Promise<Array<{ id: string; text: string }>> {
   const agentFilter = agentId ? "AND m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE m.extractionStatus = 'complete' ${agentFilter}
        AND NOT EXISTS { MATCH (m)-[:TAGGED]->(:Tag) }
        AND coalesce(m.taggingRetries, 0) < $maxRetries
      RETURN m.id AS id, m.text AS text
      ORDER BY m.createdAt ASC
      LIMIT $limit`,
-    {
-      limit: neo4j.int(limit),
-      maxRetries: neo4j.int(maxRetries),
-      ...(agentId ? { agentId } : {}),
-    },
+      {
+        limit: neo4j.int(limit),
+        maxRetries: neo4j.int(maxRetries),
+        ...(agentId ? { agentId } : {}),
+      },
+    ),
   );
   return result.records.map((r) => ({
     id: r.get("id") as string,
@@ -278,6 +306,23 @@ export async function incrementTaggingRetries(session: Session, memoryId: string
     `MATCH (m:Memory {id: $id})
      SET m.taggingRetries = coalesce(m.taggingRetries, 0) + 1`,
     { id: memoryId },
+  );
+}
+
+/**
+ * Batch-increment tagging retry counters for multiple memories.
+ * Reduces N round-trips to 1 when multiple memories fail tagging in a single sleep cycle.
+ */
+export async function incrementTaggingRetriesBatch(
+  session: Session,
+  memoryIds: string[],
+): Promise<void> {
+  if (memoryIds.length === 0) return;
+  await session.run(
+    `UNWIND $ids AS id
+     MATCH (m:Memory {id: id})
+     SET m.taggingRetries = coalesce(m.taggingRetries, 0) + 1`,
+    { ids: memoryIds },
   );
 }
 
@@ -299,7 +344,7 @@ export async function getEntityGraphStats(
        OPTIONAL MATCH ()-[r:MENTIONS]->()
        RETURN entityCount, count(r) AS mentionCount`;
 
-  const result = await session.run(query, agentId ? { agentId } : {});
+  const result = await session.executeRead((tx) => tx.run(query, agentId ? { agentId } : {}));
   const entityCount = (result.records[0]?.get("entityCount") as number) ?? 0;
   const mentionCount = (result.records[0]?.get("mentionCount") as number) ?? 0;
   return {
@@ -349,12 +394,13 @@ export async function findDuplicateEntityPairs(
     : `MATCH (e1:Entity)
        WHERE size(e1.name) > 2`;
 
-  const result = await session.run(
-    `${matchClause}
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `${matchClause}
      WITH e1, reduce(s = e1.name, c IN ['+', '-', '!', '(', ')', '{', '}', '[', ']', '^', '"', '~', '*', '?', ':', '/', '\\\\'] | replace(s, c, ' ')) AS searchName
      WHERE size(trim(searchName)) > 2
-     CALL db.index.fulltext.queryNodes('entity_fulltext_index', searchName) YIELD node AS e2
-     WHERE e2.id <> e1.id
+     CALL db.index.fulltext.queryNodes('entity_fulltext_index', searchName) YIELD node AS e2, score AS ftScore
+     WHERE ftScore >= 0.3 AND e2.id <> e1.id
        AND e1.name < e2.name
        AND e1.type = e2.type
        AND size(e2.name) > 2
@@ -370,7 +416,8 @@ export async function findDuplicateEntityPairs(
      RETURN e1.id AS id1, e1.name AS name1, mc1,
             e2.id AS id2, e2.name AS name2, mc2
      LIMIT $limit`,
-    { limit: neo4j.int(limit), ...(agentId ? { agentId } : {}) },
+      { limit: neo4j.int(limit), ...(agentId ? { agentId } : {}) },
+    ),
   );
 
   return result.records.map((r) => {
@@ -608,8 +655,9 @@ export async function listMemoriesWithManyEntities(
   agentId?: string,
 ): Promise<Array<{ id: string; text: string }>> {
   const agentFilter = agentId ? "AND m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)-[:MENTIONS]->(e:Entity)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)-[:MENTIONS]->(e:Entity)
      WHERE m.extractionStatus = 'complete' ${agentFilter}
        AND m.validUntil IS NULL
      WITH m, count(e) AS entityCount
@@ -617,11 +665,12 @@ export async function listMemoriesWithManyEntities(
      RETURN m.id AS id, m.text AS text
      ORDER BY entityCount DESC
      LIMIT $limit`,
-    {
-      minCount: neo4j.int(minEntityCount),
-      limit: neo4j.int(limit),
-      ...(agentId ? { agentId } : {}),
-    },
+      {
+        minCount: neo4j.int(minEntityCount),
+        limit: neo4j.int(limit),
+        ...(agentId ? { agentId } : {}),
+      },
+    ),
   );
   return result.records.map((r) => ({
     id: r.get("id") as string,

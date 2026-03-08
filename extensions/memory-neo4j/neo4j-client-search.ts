@@ -65,8 +65,9 @@ export async function vectorSearch(
     includeExpired,
     asOf,
   );
-  const result = await session.run(
-    `CALL db.index.vector.queryNodes('memory_embedding_index', $limit, $embedding)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `CALL db.index.vector.queryNodes('memory_embedding_index', $limit, $embedding)
      YIELD node, score
      WHERE score >= $minScore ${agentFilter} ${expiredFilter}
      RETURN node.id AS id, node.text AS text, node.category AS category,
@@ -75,13 +76,14 @@ export async function vectorSearch(
             node.taskId AS taskId,
             score AS similarity
      ORDER BY score DESC`,
-    {
-      embedding,
-      limit: neo4j.int(Math.floor(limit)),
-      minScore,
-      ...(agentId ? { agentId } : {}),
-      ...temporalParams,
-    },
+      {
+        embedding,
+        limit: neo4j.int(Math.floor(agentId ? Math.min(limit * 3, 200) : limit)),
+        minScore,
+        ...(agentId ? { agentId } : {}),
+        ...temporalParams,
+      },
+    ),
   );
 
   return result.records.map((r) => ({
@@ -114,8 +116,9 @@ export async function bm25Search(
     includeExpired,
     asOf,
   );
-  const result = await session.run(
-    `CALL db.index.fulltext.queryNodes('memory_fulltext_index', $query)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `CALL db.index.fulltext.queryNodes('memory_fulltext_index', $query)
      YIELD node, score
      WHERE true ${agentFilter} ${expiredFilter}
      RETURN node.id AS id, node.text AS text, node.category AS category,
@@ -125,12 +128,13 @@ export async function bm25Search(
             score AS bm25Score
      ORDER BY score DESC
      LIMIT $limit`,
-    {
-      query,
-      limit: neo4j.int(Math.floor(limit)),
-      ...(agentId ? { agentId } : {}),
-      ...temporalParams,
-    },
+      {
+        query,
+        limit: neo4j.int(Math.floor(limit)),
+        ...(agentId ? { agentId } : {}),
+        ...temporalParams,
+      },
+    ),
   );
 
   // Normalize BM25 scores to 0-1 range (divide by max)
@@ -175,7 +179,7 @@ export async function graphSearch(
   limit: number,
   firingThreshold: number = 0.3,
   agentId?: string,
-  maxHops: number = 2,
+  maxHops: number = 1,
   includeExpired?: boolean,
   asOf?: string,
   seedCap: number = 5,
@@ -197,9 +201,11 @@ export async function graphSearch(
       ? ""
       : "AND (r.validUntil IS NULL OR r.validUntil >= $now)";
   // Variable-length relationship pattern: 1..maxHops hops through entity relationships
-  const hopRange = `1..${Math.max(1, Math.min(3, maxHops))}`;
-  const result = await session.run(
-    `// Find matching entities via fulltext index (SINGLE lookup)
+  // Cap at 2 hops max — each additional hop squares the search space
+  const hopRange = `1..${Math.max(1, Math.min(2, maxHops))}`;
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `// Find matching entities via fulltext index (SINGLE lookup)
      CALL db.index.fulltext.queryNodes('entity_fulltext_index', $query)
      YIELD node AS entity, score
      WHERE score >= 0.5
@@ -240,15 +246,16 @@ export async function graphSearch(
             row.validFrom AS validFrom,
             row.taskId AS taskId,
             max(row.score) AS graphScore`,
-    {
-      query,
-      firingThreshold,
-      now: new Date().toISOString(),
-      seedCap: neo4j.int(Math.max(1, Math.floor(seedCap))),
-      relTypes: relTypes ?? null,
-      ...(agentId ? { agentId } : {}),
-      ...temporalParamsM,
-    },
+      {
+        query,
+        firingThreshold,
+        now: new Date().toISOString(),
+        seedCap: neo4j.int(Math.max(1, Math.floor(seedCap))),
+        relTypes: relTypes ?? null,
+        ...(agentId ? { agentId } : {}),
+        ...temporalParamsM,
+      },
+    ),
   );
 
   // Deduplicate by id, keeping highest score
@@ -291,22 +298,25 @@ export async function findSimilar(
   limit: number = 1,
   agentId?: string,
 ): Promise<Array<{ id: string; text: string; score: number }>> {
-  // Fetch extra candidates when filtering by agentId since HNSW
-  // doesn't support pre-filtering; post-filter and trim to limit.
-  const fetchLimit = agentId ? limit * 3 : limit;
+  // HNSW indexes don't support pre-filtering; over-fetch and post-filter by agentId.
+  // Use 5x multiplier (up from 3x) to reduce empty results in multi-agent deployments
+  // where one agent may own a small share of total memories.
+  const fetchLimit = agentId ? Math.min(limit * 5, 200) : limit;
   const agentFilter = agentId ? "AND node.agentId = $agentId" : "";
-  const result = await session.run(
-    `CALL db.index.vector.queryNodes('memory_embedding_index', $limit, $embedding)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `CALL db.index.vector.queryNodes('memory_embedding_index', $limit, $embedding)
      YIELD node, score
      WHERE score >= $threshold ${agentFilter}
      RETURN node.id AS id, node.text AS text, score AS similarity
      ORDER BY score DESC`,
-    {
-      embedding,
-      limit: neo4j.int(fetchLimit),
-      threshold,
-      ...(agentId ? { agentId } : {}),
-    },
+      {
+        embedding,
+        limit: neo4j.int(fetchLimit),
+        threshold,
+        ...(agentId ? { agentId } : {}),
+      },
+    ),
   );
 
   const results = result.records.map((r) => ({

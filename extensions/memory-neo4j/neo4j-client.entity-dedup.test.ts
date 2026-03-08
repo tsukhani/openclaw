@@ -13,7 +13,7 @@ import { Neo4jMemoryClient } from "./neo4j-client.js";
 // ============================================================================
 
 function createMockSession() {
-  return {
+  const session = {
     run: vi.fn().mockResolvedValue({ records: [] }),
     close: vi.fn().mockResolvedValue(undefined),
     executeWrite: vi.fn(
@@ -22,7 +22,10 @@ function createMockSession() {
         return work(mockTx);
       },
     ),
+    executeRead: null as unknown as ReturnType<typeof vi.fn>,
   };
+  session.executeRead = vi.fn().mockImplementation((fn) => fn({ run: session.run }));
+  return session;
 }
 
 function createMockDriver() {

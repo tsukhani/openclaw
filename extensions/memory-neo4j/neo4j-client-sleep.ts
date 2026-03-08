@@ -57,10 +57,12 @@ export async function findDuplicateClusters(
       const agentFilter = agentId
         ? "WHERE m.agentId = $agentId AND m.category <> 'core'"
         : "WHERE m.category <> 'core'";
-      const allResult = await session.run(
-        `MATCH (m:Memory) ${agentFilter}
+      const allResult = await session.executeRead((tx) =>
+        tx.run(
+          `MATCH (m:Memory) ${agentFilter}
          RETURN m.id AS id, m.importance AS importance`,
-        agentId ? { agentId } : {},
+          agentId ? { agentId } : {},
+        ),
       );
 
       for (const r of allResult.records) {
@@ -123,13 +125,15 @@ export async function findDuplicateClusters(
         retryFn(async () => {
           const session = driver.session();
           try {
-            return await session.run(
-              `MATCH (src:Memory {id: $id})
+            return await session.executeRead((tx) =>
+              tx.run(
+                `MATCH (src:Memory {id: $id})
                CALL db.index.vector.queryNodes('memory_embedding_index', $k, src.embedding)
                YIELD node, score
                WHERE node.id <> $id AND score >= $threshold AND node.category <> 'core'
                RETURN node.id AS matchId, score`,
-              { id, k: neo4j.int(10), threshold },
+                { id, k: neo4j.int(10), threshold },
+              ),
             );
           } finally {
             await session.close();
@@ -187,11 +191,13 @@ export async function findDuplicateClusters(
   if (clusteredIds.size > 0) {
     const session = driver.session();
     try {
-      const result = await session.run(
-        `UNWIND $ids AS memId
+      const result = await session.executeRead((tx) =>
+        tx.run(
+          `UNWIND $ids AS memId
          MATCH (m:Memory {id: memId})
          RETURN m.id AS id, m.text AS text`,
-        { ids: [...clusteredIds] },
+          { ids: [...clusteredIds] },
+        ),
       );
       for (const r of result.records) {
         textMap.set(r.get("id") as string, r.get("text") as string);
@@ -384,8 +390,9 @@ export async function findDecayedMemories(
   // accessed decay slower. The effective age is anchored to the most recent
   // of createdAt or lastRetrievedAt, so recently recalled memories get a
   // recency boost even if they were created long ago.
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE m.createdAt IS NOT NULL
        AND m.category <> 'core'
        ${agentFilter}
@@ -406,14 +413,15 @@ export async function findDecayedMemories(
      RETURN m.id AS id, m.text AS text, importance, ageDays, decayScore
      ORDER BY decayScore ASC
      LIMIT $limit`,
-    {
-      threshold: retentionThreshold,
-      baseHalfLife: baseHalfLifeDays,
-      importanceMult: importanceMultiplier,
-      curveMap,
-      agentId,
-      limit: neo4j.int(limit),
-    },
+      {
+        threshold: retentionThreshold,
+        baseHalfLife: baseHalfLifeDays,
+        importanceMult: importanceMultiplier,
+        curveMap,
+        agentId,
+        limit: neo4j.int(limit),
+      },
+    ),
   );
 
   return result.records.map((r) => ({
@@ -456,12 +464,14 @@ export async function findOrphanEntities(
 ): Promise<Array<{ id: string; name: string; type: string }>> {
   // Use EXISTS check as the authoritative source — mentionCount can go
   // stale if crashes occur between decrement and delete operations.
-  const result = await session.run(
-    `MATCH (e:Entity)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (e:Entity)
      WHERE NOT EXISTS { MATCH (:Memory)-[:MENTIONS]->(e) }
      RETURN e.id AS id, e.name AS name, e.type AS type
      LIMIT $limit`,
-    { limit: neo4j.int(limit) },
+      { limit: neo4j.int(limit) },
+    ),
   );
 
   return result.records.map((r) => ({
@@ -489,12 +499,14 @@ export async function findOrphanTags(
   session: Session,
   limit: number = 500,
 ): Promise<Array<{ id: string; name: string }>> {
-  const result = await session.run(
-    `MATCH (t:Tag)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (t:Tag)
      WHERE NOT EXISTS { MATCH (:Memory)-[:TAGGED]->(t) }
      RETURN t.id AS id, t.name AS name
      LIMIT $limit`,
-    { limit: neo4j.int(limit) },
+      { limit: neo4j.int(limit) },
+    ),
   );
 
   return result.records.map((r) => ({
@@ -527,8 +539,9 @@ export async function findSingleUseTags(
   limit: number = 500,
 ): Promise<Array<{ id: string; name: string }>> {
   const cutoffDate = new Date(Date.now() - minAgeDays * 24 * 60 * 60 * 1000).toISOString();
-  const result = await session.run(
-    `MATCH (t:Tag)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (t:Tag)
      WHERE t.createdAt < $cutoffDate
      WITH t
      MATCH (t)<-[:TAGGED]-(m:Memory)
@@ -536,7 +549,8 @@ export async function findSingleUseTags(
      WHERE usageCount = 1
      RETURN t.id AS id, t.name AS name
      LIMIT $limit`,
-    { cutoffDate, limit: neo4j.int(limit) },
+      { cutoffDate, limit: neo4j.int(limit) },
+    ),
   );
   return result.records.map((r) => ({
     id: r.get("id") as string,
@@ -564,8 +578,9 @@ export async function findConflictingMemories(
   }>
 > {
   const agentFilter = agentId ? "AND m1.agentId = $agentId AND m2.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m1:Memory)-[:MENTIONS]->(e:Entity)<-[:MENTIONS]-(m2:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m1:Memory)-[:MENTIONS]->(e:Entity)<-[:MENTIONS]-(m2:Memory)
      WHERE m1.id < m2.id ${agentFilter}
      AND m1.validUntil IS NULL AND m2.validUntil IS NULL
      AND m1.category <> 'core' AND m2.category <> 'core'
@@ -574,7 +589,8 @@ export async function findConflictingMemories(
      RETURN DISTINCT m1.id AS m1Id, m1.text AS m1Text, m1.importance AS m1Importance, m1.createdAt AS m1CreatedAt,
             m2.id AS m2Id, m2.text AS m2Text, m2.importance AS m2Importance, m2.createdAt AS m2CreatedAt
      LIMIT $limit`,
-    agentId ? { agentId, limit: neo4j.int(limit) } : { limit: neo4j.int(limit) },
+      agentId ? { agentId, limit: neo4j.int(limit) } : { limit: neo4j.int(limit) },
+    ),
   );
 
   return result.records.map((r) => ({
@@ -851,8 +867,9 @@ export async function fetchMemoriesForRetroactiveConflictScan(
   agentId?: string,
 ): Promise<Array<{ id: string; text: string; embedding: number[] | null; category: string }>> {
   const agentFilter = agentId ? "AND m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE m.validUntil IS NULL
        AND m.category <> 'core'
        AND m.createdAt IS NOT NULL
@@ -861,11 +878,12 @@ export async function fetchMemoriesForRetroactiveConflictScan(
      RETURN m.id AS id, m.text AS text, m.embedding AS embedding, m.category AS category
      ORDER BY m.createdAt ASC
      LIMIT $limit`,
-    {
-      minAgeDays: neo4j.int(minAgeDays),
-      limit: neo4j.int(limit),
-      ...(agentId ? { agentId } : {}),
-    },
+      {
+        minAgeDays: neo4j.int(minAgeDays),
+        limit: neo4j.int(limit),
+        ...(agentId ? { agentId } : {}),
+      },
+    ),
   );
 
   return result.records.map((r) => ({
@@ -916,14 +934,16 @@ export async function fetchPendingConflicts(
   }>
 > {
   const agentFilter = agentId ? "AND a.agentId = $agentId AND b.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (a:Memory)-[r:PENDING_CONFLICT]->(b:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (a:Memory)-[r:PENDING_CONFLICT]->(b:Memory)
      WHERE a.validUntil IS NULL AND b.validUntil IS NULL ${agentFilter}
      RETURN a.id AS aId, a.text AS aText, a.importance AS aImportance, a.createdAt AS aCreatedAt,
             b.id AS bId, b.text AS bText, b.importance AS bImportance, b.createdAt AS bCreatedAt,
             r.retryCount AS retryCount
      LIMIT $limit`,
-    agentId ? { agentId, limit: neo4j.int(limit) } : { limit: neo4j.int(limit) },
+      agentId ? { agentId, limit: neo4j.int(limit) } : { limit: neo4j.int(limit) },
+    ),
   );
 
   return result.records.map((r) => ({
@@ -961,6 +981,23 @@ export async function clearPendingConflict(
 }
 
 /**
+ * Batch-clear multiple PENDING_CONFLICT relationships.
+ * Reduces N round-trips to 1 when resolving multiple conflicts in a single sleep cycle.
+ */
+export async function clearPendingConflictsBatch(
+  session: Session,
+  pairs: Array<{ idA: string; idB: string }>,
+): Promise<void> {
+  if (pairs.length === 0) return;
+  await session.run(
+    `UNWIND $pairs AS pair
+     MATCH (a:Memory {id: pair.idA})-[r:PENDING_CONFLICT]-(b:Memory {id: pair.idB})
+     DELETE r`,
+    { pairs },
+  );
+}
+
+/**
  * Increment the retry counter on a PENDING_CONFLICT relationship.
  * Called after each failed retry attempt so we can enforce MAX_RETRIES.
  */
@@ -986,10 +1023,12 @@ export async function getMemoryField(
   id: string,
   field: string,
 ): Promise<string | undefined> {
-  const result = await session.run(`MATCH (m:Memory {id: $id}) RETURN m[$field] AS value`, {
-    id,
-    field,
-  });
+  const result = await session.executeRead((tx) =>
+    tx.run(`MATCH (m:Memory {id: $id}) RETURN m[$field] AS value`, {
+      id,
+      field,
+    }),
+  );
   const record = result.records[0];
   if (!record) return undefined;
   const value = record.get("value");
@@ -1005,8 +1044,9 @@ export async function getDecayDistribution(
   agentId?: string,
 ): Promise<Array<{ bucket: string; count: number }>> {
   const agentFilter = agentId ? "AND m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE m.createdAt IS NOT NULL AND m.category <> 'core' ${agentFilter}
      WITH m,
           m.importance AS importance,
@@ -1032,7 +1072,8 @@ export async function getDecayDistribution(
        WHEN 'fading' THEN 3
        WHEN 'near-pruning' THEN 4
      END`,
-    agentId ? { agentId } : {},
+      agentId ? { agentId } : {},
+    ),
   );
   return result.records.map((r) => ({
     bucket: r.get("bucket") as string,
@@ -1060,14 +1101,16 @@ export async function fetchMemoriesForCredentialScan(
   limit: number,
   agentId?: string,
 ): Promise<Array<{ id: string; text: string; createdAt: string }>> {
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE ($agentId IS NULL OR m.agentId = $agentId)
        AND (m.createdAt > $cursorTs OR (m.createdAt = $cursorTs AND m.id > $cursorId))
      RETURN m.id AS id, m.text AS text, m.createdAt AS createdAt
      ORDER BY m.createdAt ASC, m.id ASC
      LIMIT $limit`,
-    { agentId: agentId ?? null, cursorTs, cursorId, limit: neo4j.int(limit) },
+      { agentId: agentId ?? null, cursorTs, cursorId, limit: neo4j.int(limit) },
+    ),
   );
   return result.records.map((r) => ({
     id: r.get("id") as string,
@@ -1085,11 +1128,13 @@ export async function fetchAllMemoriesForScan(
   agentId?: string,
 ): Promise<Array<{ id: string; text: string }>> {
   const agentFilter = agentId ? "WHERE m.agentId = $agentId" : "";
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      ${agentFilter}
      RETURN m.id AS id, m.text AS text`,
-    agentId ? { agentId } : {},
+      agentId ? { agentId } : {},
+    ),
   );
   return result.records.map((r) => ({
     id: r.get("id") as string,
@@ -1113,8 +1158,9 @@ export async function fetchMemoriesForTemporalCheck(
   //   - "Feb 13", "Mar 20" (abbreviated month + day without ordinal)
   //   - "February 13", "March 20-25" (full month + day/range)
   //   - Original patterns: HH:MM, AM/PM, tomorrow/today, ordinal+month, ISO dates, etc.
-  const result = await session.run(
-    `MATCH (m:Memory)
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (m:Memory)
      WHERE m.category <> 'core'
        AND m.validUntil IS NULL
        AND COALESCE(m.originalCreatedAt, m.createdAt) IS NOT NULL
@@ -1124,7 +1170,8 @@ export async function fetchMemoriesForTemporalCheck(
      RETURN m.id AS id, m.text AS text
      ORDER BY COALESCE(m.originalCreatedAt, m.createdAt) ASC
      LIMIT 200`,
-    { minAgeDays: neo4j.int(minAgeDays), agentId },
+      { minAgeDays: neo4j.int(minAgeDays), agentId },
+    ),
   );
 
   return result.records.map((r) => ({

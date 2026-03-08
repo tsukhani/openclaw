@@ -93,17 +93,7 @@ export async function ensureIndexes(
     ),
     runSafeOwn(
       driver,
-      "CREATE INDEX memory_retrieved_index IF NOT EXISTS FOR (m:Memory) ON (m.lastRetrievedAt)",
-      logger,
-    ),
-    runSafeOwn(
-      driver,
       "CREATE INDEX entity_type_index IF NOT EXISTS FOR (e:Entity) ON (e.type)",
-      logger,
-    ),
-    runSafeOwn(
-      driver,
-      "CREATE INDEX entity_name_index IF NOT EXISTS FOR (e:Entity) ON (e.name)",
       logger,
     ),
 
@@ -119,6 +109,13 @@ export async function ensureIndexes(
     runSafeOwn(
       driver,
       "CREATE INDEX memory_extraction_status_index IF NOT EXISTS FOR (m:Memory) ON (m.extractionStatus)",
+      logger,
+    ),
+
+    // Single-property index for the IS NULL predicate on validUntil used in every search query
+    runSafeOwn(
+      driver,
+      "CREATE INDEX memory_validUntil_index IF NOT EXISTS FOR (m:Memory) ON (m.validUntil)",
       logger,
     ),
 

@@ -214,11 +214,12 @@ describe("hybridSearch", () => {
     [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
   };
 
-  const mockDb: MockedDb = {
+  const mockDb: MockedDb & { getSession: ReturnType<typeof vi.fn> } = {
     vectorSearch: vi.fn(),
     bm25Search: vi.fn(),
     graphSearch: vi.fn(),
     recordRetrievals: vi.fn(),
+    getSession: vi.fn().mockReturnValue({ close: vi.fn() }),
   };
 
   const mockEmbeddings: MockedEmbeddings = {
@@ -230,6 +231,7 @@ describe("hybridSearch", () => {
     vi.resetAllMocks();
     mockEmbeddings.embed.mockResolvedValue([0.1, 0.2, 0.3]);
     mockDb.recordRetrievals.mockResolvedValue(undefined);
+    mockDb.getSession.mockReturnValue({ close: vi.fn() });
   });
 
   function makeSignalResult(overrides: Partial<SearchSignalResult> = {}): SearchSignalResult {
@@ -446,8 +448,16 @@ describe("hybridSearch", () => {
       "agent-1",
       false,
       undefined,
+      expect.anything(),
     );
-    expect(mockDb.bm25Search).toHaveBeenCalledWith("test query", 40, "agent-1", false, undefined);
+    expect(mockDb.bm25Search).toHaveBeenCalledWith(
+      "test query",
+      40,
+      "agent-1",
+      false,
+      undefined,
+      expect.anything(),
+    );
   });
 
   it("should pass default agentId when not specified", async () => {
@@ -467,6 +477,7 @@ describe("hybridSearch", () => {
       "default",
       false,
       undefined,
+      expect.anything(),
     );
   });
 
@@ -490,6 +501,7 @@ describe("hybridSearch", () => {
       "agent-1",
       false,
       undefined,
+      expect.anything(),
     );
     expect(mockDb.bm25Search).toHaveBeenCalledWith(
       "test query",
@@ -497,6 +509,7 @@ describe("hybridSearch", () => {
       "agent-1",
       false,
       undefined,
+      expect.anything(),
     );
   });
 
@@ -522,6 +535,7 @@ describe("hybridSearch", () => {
       "agent-1",
       true,
       undefined,
+      expect.anything(),
     );
     expect(mockDb.bm25Search).toHaveBeenCalledWith(
       "tell me about Tarun",
@@ -529,6 +543,7 @@ describe("hybridSearch", () => {
       "agent-1",
       true,
       undefined,
+      expect.anything(),
     );
     expect(mockDb.graphSearch).toHaveBeenCalledWith(
       "tell me about Tarun",
@@ -540,6 +555,7 @@ describe("hybridSearch", () => {
       undefined,
       undefined,
       undefined,
+      expect.anything(),
     );
   });
 
@@ -568,6 +584,7 @@ describe("hybridSearch", () => {
       undefined,
       3,
       undefined,
+      expect.anything(),
     );
   });
 
@@ -596,6 +613,7 @@ describe("hybridSearch", () => {
       undefined,
       undefined,
       ["WORKS_AT", "KNOWS"],
+      expect.anything(),
     );
   });
 
@@ -623,6 +641,7 @@ describe("hybridSearch", () => {
       undefined,
       undefined,
       undefined,
+      expect.anything(),
     );
   });
 });
@@ -642,11 +661,12 @@ describe("hybridSearch — asOf parameter (OP-120)", () => {
     [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
   };
 
-  const mockDb: MockedDb = {
+  const mockDb: MockedDb & { getSession: ReturnType<typeof vi.fn> } = {
     vectorSearch: vi.fn(),
     bm25Search: vi.fn(),
     graphSearch: vi.fn(),
     recordRetrievals: vi.fn(),
+    getSession: vi.fn().mockReturnValue({ close: vi.fn() }),
   };
   const mockEmbeddings: MockedEmbeddings = {
     embed: vi.fn(),
@@ -659,6 +679,7 @@ describe("hybridSearch — asOf parameter (OP-120)", () => {
     mockDb.recordRetrievals.mockResolvedValue(undefined);
     mockDb.vectorSearch.mockResolvedValue([]);
     mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.getSession.mockReturnValue({ close: vi.fn() });
   });
 
   it("should pass asOf to vectorSearch and bm25Search", async () => {
@@ -679,6 +700,7 @@ describe("hybridSearch — asOf parameter (OP-120)", () => {
       "agent-1",
       false,
       "2026-01-01",
+      expect.anything(),
     );
     expect(mockDb.bm25Search).toHaveBeenCalledWith(
       "test query",
@@ -686,6 +708,7 @@ describe("hybridSearch — asOf parameter (OP-120)", () => {
       "agent-1",
       false,
       "2026-01-01",
+      expect.anything(),
     );
   });
 
@@ -712,6 +735,7 @@ describe("hybridSearch — asOf parameter (OP-120)", () => {
       "2025-06-15T00:00:00Z",
       undefined,
       undefined,
+      expect.anything(),
     );
   });
 });
@@ -731,11 +755,12 @@ describe("hybridSearch — recency signal (OP-121)", () => {
     [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
   };
 
-  const mockDb: MockedDb = {
+  const mockDb: MockedDb & { getSession: ReturnType<typeof vi.fn> } = {
     vectorSearch: vi.fn(),
     bm25Search: vi.fn(),
     graphSearch: vi.fn(),
     recordRetrievals: vi.fn(),
+    getSession: vi.fn().mockReturnValue({ close: vi.fn() }),
   };
   const mockEmbeddings: MockedEmbeddings = {
     embed: vi.fn(),
@@ -752,6 +777,7 @@ describe("hybridSearch — recency signal (OP-121)", () => {
     mockDb.recordRetrievals.mockResolvedValue(undefined);
     mockDb.bm25Search.mockResolvedValue([]);
     mockDb.graphSearch.mockResolvedValue([]);
+    mockDb.getSession.mockReturnValue({ close: vi.fn() });
   });
 
   it("should rank more recent memory higher than older with equal vector score", async () => {

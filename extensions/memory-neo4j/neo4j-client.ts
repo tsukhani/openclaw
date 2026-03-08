@@ -8,7 +8,7 @@
  * with retry-on-transient and MERGE idempotency.
  */
 
-import neo4j, { type Driver } from "neo4j-driver";
+import neo4j, { type Driver, type Session } from "neo4j-driver";
 import type { ExtractionConfig } from "./config.js";
 import * as Entity from "./neo4j-client-entity.js";
 import * as Indexes from "./neo4j-client-indexes.js";
@@ -31,6 +31,12 @@ export class Neo4jMemoryClient {
   private driver: Driver | null = null;
   private initPromise: Promise<void> | null = null;
   private indexesReady = false;
+
+  // Retrieval tracking debounce: buffer IDs and flush periodically
+  private retrievalBuffer: string[] = [];
+  private retrievalFlushTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly RETRIEVAL_FLUSH_INTERVAL_MS = 30_000; // 30 seconds
+  private static readonly RETRIEVAL_FLUSH_THRESHOLD = 50; // flush after 50 accumulated IDs
 
   constructor(
     private readonly uri: string,
@@ -62,6 +68,9 @@ export class Neo4jMemoryClient {
   private async doInitialize(): Promise<void> {
     this.driver = neo4j.driver(this.uri, neo4j.auth.basic(this.username, this.password), {
       disableLosslessIntegers: true,
+      maxConnectionPoolSize: 50,
+      connectionAcquisitionTimeout: 30000,
+      maxTransactionRetryTime: 15000,
     });
 
     // Verify connection
@@ -97,6 +106,9 @@ export class Neo4jMemoryClient {
   }
 
   async close(): Promise<void> {
+    // Flush any pending retrieval events before closing
+    await this.flushRetrievalBuffer().catch(() => {});
+
     if (this.driver) {
       await this.driver.close();
       this.driver = null;
@@ -104,6 +116,17 @@ export class Neo4jMemoryClient {
       this.initPromise = null;
       this.logger.info("memory-neo4j: connection closed");
     }
+  }
+
+  /**
+   * Create a new session from the driver. Caller is responsible for closing it.
+   * Used by hybridSearch to share a single session across parallel signal queries.
+   */
+  getSession(): Session {
+    if (!this.driver) {
+      throw new Error("memory-neo4j: driver not initialized — call ensureInitialized() first");
+    }
+    return this.driver.session();
   }
 
   /**
@@ -321,11 +344,12 @@ export class Neo4jMemoryClient {
     agentId?: string,
     includeExpired?: boolean,
     asOf?: string,
+    externalSession?: Session,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     try {
       return await this.retryOnTransient(async () => {
-        const session = this.driver!.session();
+        const session = externalSession ?? this.driver!.session();
         try {
           return await Search.vectorSearch(
             session,
@@ -337,7 +361,7 @@ export class Neo4jMemoryClient {
             asOf,
           );
         } finally {
-          await session.close();
+          if (!externalSession) await session.close();
         }
       });
     } catch (err) {
@@ -357,6 +381,7 @@ export class Neo4jMemoryClient {
     agentId?: string,
     includeExpired?: boolean,
     asOf?: string,
+    externalSession?: Session,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     const escaped = escapeLucene(query);
@@ -366,11 +391,11 @@ export class Neo4jMemoryClient {
 
     try {
       return await this.retryOnTransient(async () => {
-        const session = this.driver!.session();
+        const session = externalSession ?? this.driver!.session();
         try {
           return await Search.bm25Search(session, escaped, limit, agentId, includeExpired, asOf);
         } finally {
-          await session.close();
+          if (!externalSession) await session.close();
         }
       });
     } catch (err) {
@@ -399,6 +424,7 @@ export class Neo4jMemoryClient {
     asOf?: string,
     seedCap?: number,
     relTypes?: string[] | null,
+    externalSession?: Session,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     const escaped = escapeLucene(query);
@@ -408,7 +434,7 @@ export class Neo4jMemoryClient {
 
     try {
       return await this.retryOnTransient(async () => {
-        const session = this.driver!.session();
+        const session = externalSession ?? this.driver!.session();
         try {
           return await Search.graphSearch(
             session,
@@ -423,7 +449,7 @@ export class Neo4jMemoryClient {
             relTypes,
           );
         } finally {
-          await session.close();
+          if (!externalSession) await session.close();
         }
       });
     } catch (err) {
@@ -474,11 +500,55 @@ export class Neo4jMemoryClient {
       return;
     }
 
+    // Buffer retrieval IDs instead of writing immediately
+    this.retrievalBuffer.push(...memoryIds);
+
+    // Flush if buffer exceeds threshold
+    if (this.retrievalBuffer.length >= Neo4jMemoryClient.RETRIEVAL_FLUSH_THRESHOLD) {
+      await this.flushRetrievalBuffer();
+      return;
+    }
+
+    // Schedule a timer-based flush if not already scheduled
+    if (!this.retrievalFlushTimer) {
+      this.retrievalFlushTimer = setTimeout(() => {
+        this.flushRetrievalBuffer().catch((err) => {
+          this.logger.debug?.(`memory-neo4j: retrieval flush failed: ${String(err)}`);
+        });
+      }, Neo4jMemoryClient.RETRIEVAL_FLUSH_INTERVAL_MS);
+    }
+  }
+
+  private async flushRetrievalBuffer(): Promise<void> {
+    if (this.retrievalBuffer.length === 0) {
+      return;
+    }
+
+    // Clear timer
+    if (this.retrievalFlushTimer) {
+      clearTimeout(this.retrievalFlushTimer);
+      this.retrievalFlushTimer = null;
+    }
+
+    // Take the current buffer and reset it
+    const ids = this.retrievalBuffer;
+    this.retrievalBuffer = [];
+
+    // Deduplicate and count occurrences
+    const counts = new Map<string, number>();
+    for (const id of ids) {
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+
+    if (!this.driver) {
+      return;
+    }
+
     await this.ensureInitialized();
     return this.retryOnTransient(async () => {
       const session = this.driver!.session();
       try {
-        return await Search.recordRetrievals(session, memoryIds);
+        await Search.recordRetrievals(session, [...counts.keys()]);
       } finally {
         await session.close();
       }
@@ -537,6 +607,25 @@ export class Neo4jMemoryClient {
     const session = this.driver!.session();
     try {
       return await Entity.updateExtractionStatus(session, id, status, options);
+    } finally {
+      await session.close();
+    }
+  }
+
+  /**
+   * Batch-update extraction status for multiple memories.
+   * Used by sleep cycle to mark a batch of memories as failed/skipped in one query.
+   */
+  async updateExtractionStatusBatch(
+    ids: string[],
+    status: ExtractionStatus,
+    options?: { incrementRetries?: boolean },
+  ): Promise<void> {
+    if (ids.length === 0) return;
+    await this.ensureInitialized();
+    const session = this.driver!.session();
+    try {
+      return await Entity.updateExtractionStatusBatch(session, ids, status, options);
     } finally {
       await session.close();
     }
@@ -641,6 +730,21 @@ export class Neo4jMemoryClient {
     const session = this.driver!.session();
     try {
       return await Entity.incrementTaggingRetries(session, memoryId);
+    } finally {
+      await session.close();
+    }
+  }
+
+  /**
+   * Batch-increment tagging retry counters for multiple memories.
+   * Reduces N round-trips to 1 when multiple memories fail tagging in a single sleep cycle.
+   */
+  async incrementTaggingRetriesBatch(memoryIds: string[]): Promise<void> {
+    if (memoryIds.length === 0) return;
+    await this.ensureInitialized();
+    const session = this.driver!.session();
+    try {
+      return await Entity.incrementTaggingRetriesBatch(session, memoryIds);
     } finally {
       await session.close();
     }
@@ -887,6 +991,21 @@ export class Neo4jMemoryClient {
     const session = this.driver!.session();
     try {
       return await Sleep.clearPendingConflict(session, idA, idB);
+    } finally {
+      await session.close();
+    }
+  }
+
+  /**
+   * Batch-clear multiple PENDING_CONFLICT relationships.
+   * Reduces N round-trips to 1 when resolving multiple conflicts in a single sleep cycle.
+   */
+  async clearPendingConflictsBatch(pairs: Array<{ idA: string; idB: string }>): Promise<void> {
+    if (pairs.length === 0) return;
+    await this.ensureInitialized();
+    const session = this.driver!.session();
+    try {
+      return await Sleep.clearPendingConflictsBatch(session, pairs);
     } finally {
       await session.close();
     }

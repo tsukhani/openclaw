@@ -15,18 +15,18 @@ import type { Logger } from "./schema.js";
 
 /**
  * Simple LRU cache for embedding vectors.
- * Keyed by SHA-256 hash of the input text to avoid storing large strings.
+ * Keyed by MD5 hash of the input text to avoid storing large strings.
  */
 class EmbeddingCache {
   private readonly map = new Map<string, number[]>();
   private readonly maxSize: number;
 
-  constructor(maxSize: number = 200) {
+  constructor(maxSize: number = 500) {
     this.maxSize = maxSize;
   }
 
   private static hashText(text: string): string {
-    return createHash("sha256").update(text).digest("hex");
+    return createHash("md5").update(text).digest("hex");
   }
 
   get(text: string): number[] | undefined {
@@ -70,7 +70,7 @@ export class Embeddings {
   private readonly logger: Logger | undefined;
   private readonly contextLength: number;
   private readonly expectedDimensions: number;
-  private readonly cache = new EmbeddingCache(200);
+  private readonly cache: EmbeddingCache;
   private readonly metrics: MetricsCollector;
 
   constructor(
@@ -80,7 +80,9 @@ export class Embeddings {
     baseUrl?: string,
     logger?: Logger,
     metrics: MetricsCollector = NO_OP_METRICS,
+    cacheSize?: number,
   ) {
+    this.cache = new EmbeddingCache(cacheSize ?? 500);
     this.metrics = metrics;
     this.provider = provider;
     this.baseUrl = (baseUrl ?? (provider === "ollama" ? "http://localhost:11434" : "")).replace(
