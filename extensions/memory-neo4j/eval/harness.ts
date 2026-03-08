@@ -281,11 +281,16 @@ function buildSearchOptions(
   // Weight override: when vector/bm25 weights are explicitly set, bypass adaptive weights.
   // freshnessWeight defaults to 0.2 (the non-updates baseline) when not explicitly set.
   let weightOverride: [number, number, number, number] | undefined;
-  if (variant.vectorWeight !== undefined || variant.bm25Weight !== undefined) {
+  if (
+    variant.vectorWeight !== undefined ||
+    variant.bm25Weight !== undefined ||
+    variant.freshnessWeight !== undefined
+  ) {
     const vw = variant.vectorWeight ?? 1.0;
     const bw = variant.bm25Weight ?? 1.0;
     const gw = graphEnabled ? 1.0 : 0.0;
-    weightOverride = [vw, bw, gw, 0.2];
+    const fw = variant.freshnessWeight ?? 0.2;
+    weightOverride = [vw, bw, gw, fw];
   }
 
   // Reranker config: merge plugin config with variant overrides

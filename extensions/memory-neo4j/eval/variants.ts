@@ -26,6 +26,8 @@ export type SearchConfig = {
   temporalRecencyEnabled?: boolean;
   /** Multiply recencyWeight by this factor. Default: 1.0. */
   temporalRecencyBoost?: number;
+  /** Override freshness (validFrom) signal weight (0 = disable OP-129 signal). Default: 0.2. */
+  freshnessWeight?: number;
   /** Reranker config overrides for this variant. Default: from plugin config. */
   reranker?: Partial<RerankerConfig>;
 };
@@ -45,6 +47,17 @@ export const EVAL_VARIANTS: Record<string, Partial<SearchConfig>> = {
   "bm25-only": { graphEnabled: false, vectorWeight: 0 },
   /** Deeper graph traversal with more seed entities. */
   "high-graph": { graphSeedCap: 10, graphDepthLimit: 3 },
+  /** Best-case lancedb: vec + BM25 + recency. No graph, no validFrom freshness. */
+  "lancedb-best": { graphEnabled: false, freshnessWeight: 0 },
+  /** Current lancedb impl: vec + recency only. No BM25, no graph, no validFrom. */
+  "lancedb-current": { graphEnabled: false, bm25Weight: 0, freshnessWeight: 0 },
+  /** memory-core proxy (OpenClaw default floor): vec only, no other signals. */
+  "memory-core-proxy": {
+    graphEnabled: false,
+    bm25Weight: 0,
+    freshnessWeight: 0,
+    temporalRecencyEnabled: false,
+  },
   /** Disable recency boost entirely. */
   "no-temporal": { temporalRecencyEnabled: false },
   /** Double the recency boost weight. */
