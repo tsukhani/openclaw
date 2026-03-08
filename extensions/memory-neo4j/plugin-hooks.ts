@@ -316,7 +316,18 @@ export function registerMemoryHooks(
                 );
               }
             } catch (err) {
-              logger.warn(`memory-neo4j: auto-recall failed: ${String(err)}`);
+              const errStr = String(err);
+              const isConnection =
+                errStr.includes("ECONNREFUSED") ||
+                errStr.includes("ECONNRESET") ||
+                errStr.includes("ETIMEDOUT") ||
+                errStr.includes("ServiceUnavailable") ||
+                errStr.includes("SessionExpired") ||
+                errStr.includes("Pool is closed") ||
+                errStr.includes("connection acquisition timed out");
+              logger.warn(
+                `memory-neo4j: auto-recall failed (${isConnection ? "Neo4j connection error" : "non-connection error"}): ${errStr}`,
+              );
             }
           }
         }

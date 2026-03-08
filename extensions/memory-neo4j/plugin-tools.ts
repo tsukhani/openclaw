@@ -6,6 +6,7 @@
 
 import { randomUUID } from "node:crypto";
 import { Type } from "@sinclair/typebox";
+import neo4j from "neo4j-driver";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { stringEnum } from "openclaw/plugin-sdk";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
@@ -16,6 +17,39 @@ import { NO_OP_METRICS } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger, MemoryCategory, MemorySource } from "./schema.js";
 import { hybridSearch } from "./search.js";
+
+// ============================================================================
+// Error classification for graceful degradation
+// ============================================================================
+
+/**
+ * Returns true when the error indicates a Neo4j connection / availability
+ * problem (service down, connection refused, session expired, pool timeout).
+ * These are transient — the tool should return a friendly message, not throw.
+ */
+function isNeo4jConnectionError(err: unknown): boolean {
+  // Neo4j driver typed errors (ServiceUnavailable, SessionExpired)
+  if (err instanceof neo4j.Neo4jError) {
+    const code = (err as { code?: string }).code ?? "";
+    return (
+      code === "ServiceUnavailable" ||
+      code === "SessionExpired" ||
+      code.startsWith("Neo.TransientError.")
+    );
+  }
+  // Node-level network errors (ECONNREFUSED, ECONNRESET, ETIMEDOUT)
+  const msg = String(err);
+  return (
+    msg.includes("ECONNREFUSED") ||
+    msg.includes("ECONNRESET") ||
+    msg.includes("ETIMEDOUT") ||
+    msg.includes("EPIPE") ||
+    msg.includes("connect EHOSTUNREACH") ||
+    msg.includes("Connection was closed") ||
+    msg.includes("Pool is closed") ||
+    msg.includes("connection acquisition timed out")
+  );
+}
 
 export function registerMemoryTools(
   api: OpenClawPluginApi,
@@ -62,25 +96,48 @@ export function registerMemoryTools(
           };
           const limit = Math.floor(Math.min(50, Math.max(1, rawLimit)));
 
-          const t0Recall = performance.now();
-          const results = await hybridSearch(
-            db,
-            embeddings,
-            query,
-            limit,
-            agentId,
-            extractionConfig.enabled,
-            {
-              graphSearchDepth: cfg.graphSearchDepth,
-              logger,
-              includeExpired,
-              asOf,
-              recencyWeight: cfg.recencyWeight,
-              ...(cfg.reranker?.enabled ? { rerankerConfig: cfg.reranker, extractionConfig } : {}),
-            },
-          );
-          metrics.histogram("auto_recall.latency_ms", performance.now() - t0Recall);
-          metrics.increment("memories.recalled", results.length);
+          let results;
+          try {
+            const t0Recall = performance.now();
+            results = await hybridSearch(
+              db,
+              embeddings,
+              query,
+              limit,
+              agentId,
+              extractionConfig.enabled,
+              {
+                graphSearchDepth: cfg.graphSearchDepth,
+                logger,
+                includeExpired,
+                asOf,
+                recencyWeight: cfg.recencyWeight,
+                ...(cfg.reranker?.enabled
+                  ? { rerankerConfig: cfg.reranker, extractionConfig }
+                  : {}),
+              },
+            );
+            metrics.histogram("auto_recall.latency_ms", performance.now() - t0Recall);
+            metrics.increment("memories.recalled", results.length);
+          } catch (err) {
+            if (isNeo4jConnectionError(err)) {
+              logger.error(`memory-neo4j: recall failed (Neo4j connection error) — ${String(err)}`);
+              metrics.increment("recall.connection_errors");
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Memory service temporarily unavailable (Neo4j connection error). Memories could not be searched.",
+                  },
+                ],
+                details: { count: 0, error: "neo4j_connection", message: String(err) },
+              };
+            }
+            // Non-connection errors (embedding failures, code bugs, etc.) — rethrow
+            // so they surface as tool errors for debugging.
+            logger.error(`memory-neo4j: recall failed (non-connection error) — ${String(err)}`);
+            throw err;
+          }
 
           if (results.length === 0) {
             return {
@@ -159,11 +216,31 @@ export function registerMemoryTools(
             taskId?: string;
           };
 
-          // 1. Generate embedding
+          // 1. Generate embedding (uses OpenAI — not a Neo4j call, so don't catch as connection error)
           const vector = await embeddings.embed(text);
 
           // 2. Check for duplicates (vector similarity > 0.95)
-          const existing = await db.findSimilar(vector, 0.95, 1, agentId);
+          let existing;
+          try {
+            existing = await db.findSimilar(vector, 0.95, 1, agentId);
+          } catch (err) {
+            if (isNeo4jConnectionError(err)) {
+              logger.error(
+                `memory-neo4j: store failed during duplicate check (Neo4j connection error) — ${String(err)}`,
+              );
+              metrics.increment("store.connection_errors");
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Memory service temporarily unavailable (Neo4j connection error). Memory could not be saved.",
+                  },
+                ],
+                details: { action: "error", error: "neo4j_connection", message: String(err) },
+              };
+            }
+            throw err;
+          }
           if (existing.length > 0) {
             return {
               content: [
@@ -184,19 +261,38 @@ export function registerMemoryTools(
           // Core memories get importance locked at 1.0 and are immune from
           // decay and pruning (filtered by category in the sleep cycle).
           const memoryId = randomUUID();
-          await db.storeMemory({
-            id: memoryId,
-            text,
-            embedding: vector,
-            importance: category === "core" ? 1.0 : Math.min(1, Math.max(0, importance)),
-            category,
-            source: "user" as MemorySource,
-            extractionStatus: extractionConfig.enabled ? "pending" : "skipped",
-            agentId,
-            sessionKey,
-            // Layer 3: Pass through taskId if provided by the agent
-            ...(taskId ? { taskId } : {}),
-          });
+          try {
+            await db.storeMemory({
+              id: memoryId,
+              text,
+              embedding: vector,
+              importance: category === "core" ? 1.0 : Math.min(1, Math.max(0, importance)),
+              category,
+              source: "user" as MemorySource,
+              extractionStatus: extractionConfig.enabled ? "pending" : "skipped",
+              agentId,
+              sessionKey,
+              // Layer 3: Pass through taskId if provided by the agent
+              ...(taskId ? { taskId } : {}),
+            });
+          } catch (err) {
+            if (isNeo4jConnectionError(err)) {
+              logger.error(
+                `memory-neo4j: store failed during write (Neo4j connection error) — ${String(err)}`,
+              );
+              metrics.increment("store.connection_errors");
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Memory service temporarily unavailable (Neo4j connection error). Memory could not be saved.",
+                  },
+                ],
+                details: { action: "error", error: "neo4j_connection", message: String(err) },
+              };
+            }
+            throw err;
+          }
 
           // 4. Conflict detection: check if this memory supersedes existing ones
           let supersededCount = 0;
@@ -262,33 +358,71 @@ export function registerMemoryTools(
 
           // Direct delete by ID
           if (memoryId) {
-            const deleted = await db.deleteMemory(memoryId, agentId);
-            if (!deleted) {
+            try {
+              const deleted = await db.deleteMemory(memoryId, agentId);
+              if (!deleted) {
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: `Memory ${memoryId} not found.`,
+                    },
+                  ],
+                  details: { action: "not_found", id: memoryId },
+                };
+              }
               return {
                 content: [
                   {
                     type: "text",
-                    text: `Memory ${memoryId} not found.`,
+                    text: `Memory ${memoryId} forgotten.`,
                   },
                 ],
-                details: { action: "not_found", id: memoryId },
+                details: { action: "deleted", id: memoryId },
               };
+            } catch (err) {
+              if (isNeo4jConnectionError(err)) {
+                logger.error(
+                  `memory-neo4j: forget failed (Neo4j connection error) — ${String(err)}`,
+                );
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: "Memory service temporarily unavailable (Neo4j connection error). Memory could not be deleted.",
+                    },
+                  ],
+                  details: { action: "error", error: "neo4j_connection", message: String(err) },
+                };
+              }
+              throw err;
             }
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Memory ${memoryId} forgotten.`,
-                },
-              ],
-              details: { action: "deleted", id: memoryId },
-            };
           }
 
           // Search-based delete
           if (query) {
-            const vector = await embeddings.embed(query);
-            const results = await db.vectorSearch(vector, 5, 0.7, agentId);
+            let vector;
+            let results;
+            try {
+              vector = await embeddings.embed(query);
+              results = await db.vectorSearch(vector, 5, 0.7, agentId);
+            } catch (err) {
+              if (isNeo4jConnectionError(err)) {
+                logger.error(
+                  `memory-neo4j: forget search failed (Neo4j connection error) — ${String(err)}`,
+                );
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: "Memory service temporarily unavailable (Neo4j connection error). Memory search for deletion failed.",
+                    },
+                  ],
+                  details: { action: "error", error: "neo4j_connection", message: String(err) },
+                };
+              }
+              throw err;
+            }
 
             if (results.length === 0) {
               return {
@@ -300,7 +434,25 @@ export function registerMemoryTools(
             // Auto-delete if single high-confidence match (0.95 threshold
             // reduces false positives — 0.9 cosine similarity is not exact match)
             if (results.length === 1 && results[0].score > 0.95) {
-              await db.deleteMemory(results[0].id, agentId);
+              try {
+                await db.deleteMemory(results[0].id, agentId);
+              } catch (err) {
+                if (isNeo4jConnectionError(err)) {
+                  logger.error(
+                    `memory-neo4j: forget delete failed (Neo4j connection error) — ${String(err)}`,
+                  );
+                  return {
+                    content: [
+                      {
+                        type: "text",
+                        text: "Memory service temporarily unavailable (Neo4j connection error). Memory could not be deleted.",
+                      },
+                    ],
+                    details: { action: "error", error: "neo4j_connection", message: String(err) },
+                  };
+                }
+                throw err;
+              }
               return {
                 content: [
                   {
