@@ -1,0 +1,296 @@
+{
+  "dataset": "validfrom",
+  "description": "10 test cases exercising the validFrom temporal freshness signal (OP-129). Each case has an old and new version of the same fact; the new version has validFrom much later than createdAt, triggering the freshness boost.",
+  "test_cases": [
+    {
+      "id": "validfrom-001",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-001-m0",
+          "text": "Tarun's preferred LLM provider is OpenAI GPT-4",
+          "category": "preference",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-001-m1",
+          "text": "Tarun's preferred LLM provider is Anthropic Claude for all production workloads",
+          "category": "preference",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "What is Tarun's current preferred LLM provider?",
+      "golden_answer": "Anthropic Claude — Tarun uses it for all production workloads",
+      "gold_memory_ids": ["validfrom-001-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    },
+    {
+      "id": "validfrom-002",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-002-m0",
+          "text": "Abundent Academy office address is Lot 12, Jalan Ampang, KL",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-002-m1",
+          "text": "Abundent Academy relocated to Level 8, Menara TM, Bangsar South in March 2025",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "Where is the Abundent Academy office now?",
+      "golden_answer": "Level 8, Menara TM, Bangsar South — relocated in March 2025",
+      "gold_memory_ids": ["validfrom-002-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    },
+    {
+      "id": "validfrom-003",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-003-m0",
+          "text": "Monthly subscription price for Abundent Pro plan is RM 199",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-003-m1",
+          "text": "Monthly subscription price for Abundent Pro plan increased to RM 249 effective March 2025",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "What is the current Abundent Pro plan price?",
+      "golden_answer": "RM 249 per month, effective March 2025",
+      "gold_memory_ids": ["validfrom-003-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    },
+    {
+      "id": "validfrom-004",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-004-m0",
+          "text": "Tarun's personal assistant is scheduled via Google Calendar with 30-minute slots",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-004-m1",
+          "text": "Tarun switched to 15-minute default calendar slots to increase daily meeting capacity",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "What is Tarun's current default calendar slot duration?",
+      "golden_answer": "15 minutes — switched from 30-minute slots to increase daily meeting capacity",
+      "gold_memory_ids": ["validfrom-004-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    },
+    {
+      "id": "validfrom-005",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-005-m0",
+          "text": "The Abundent API rate limit is 100 requests per minute per API key",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-005-m1",
+          "text": "The Abundent API rate limit was raised to 300 requests per minute per API key after infrastructure upgrade",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "What is the latest Abundent API rate limit?",
+      "golden_answer": "300 requests per minute per API key, after infrastructure upgrade",
+      "gold_memory_ids": ["validfrom-005-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    },
+    {
+      "id": "validfrom-006",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-006-m0",
+          "text": "Ada's default response language is English for all channels",
+          "category": "preference",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-006-m1",
+          "text": "Ada's default response language was changed to auto-detect based on user message language",
+          "category": "preference",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "What language does Ada currently respond in by default?",
+      "golden_answer": "Auto-detect — Ada matches the language of the user's message",
+      "gold_memory_ids": ["validfrom-006-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    },
+    {
+      "id": "validfrom-007",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-007-m0",
+          "text": "Abundent Academy uses Zoom for all online classes and webinars",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-007-m1",
+          "text": "Abundent Academy migrated all online classes and webinars from Zoom to Google Meet",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "What platform does Abundent Academy use for online classes now?",
+      "golden_answer": "Google Meet — migrated from Zoom",
+      "gold_memory_ids": ["validfrom-007-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    },
+    {
+      "id": "validfrom-008",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-008-m0",
+          "text": "Tarun's daily standup with the dev team is at 9:00 AM MYT",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-008-m1",
+          "text": "Tarun moved the daily dev standup to 10:30 AM MYT to accommodate the new remote team members in India",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "What time is Tarun's current daily standup?",
+      "golden_answer": "10:30 AM MYT — moved from 9:00 AM to accommodate remote team in India",
+      "gold_memory_ids": ["validfrom-008-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    },
+    {
+      "id": "validfrom-009",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-009-m0",
+          "text": "Abundent Academy student portal runs on Next.js 13 with App Router",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-009-m1",
+          "text": "Abundent Academy student portal was upgraded to Next.js 15 with full RSC support",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "What version of Next.js does the Abundent student portal currently use?",
+      "golden_answer": "Next.js 15 with full RSC support",
+      "gold_memory_ids": ["validfrom-009-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    },
+    {
+      "id": "validfrom-010",
+      "ability": "validfrom",
+      "memories": [
+        {
+          "id": "validfrom-010-m0",
+          "text": "Abundent Academy accepts payment only via bank transfer and credit card",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "validfrom-010-m1",
+          "text": "Abundent Academy now accepts DuitNow QR, FPX, bank transfer, and credit card payments after integrating with Billplz",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z",
+          "validFrom": "2025-03-01T08:00:00Z"
+        }
+      ],
+      "question": "What payment methods does Abundent Academy currently accept?",
+      "golden_answer": "DuitNow QR, FPX, bank transfer, and credit card — integrated with Billplz",
+      "gold_memory_ids": ["validfrom-010-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "validFrom gap triggers OP-129 freshness boost on m1"
+      }
+    }
+  ]
+}

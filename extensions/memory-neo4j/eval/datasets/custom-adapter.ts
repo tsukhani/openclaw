@@ -18,6 +18,8 @@ const FIXTURE_FILES: Record<MemoryAbility, string> = {
   updates: "updates.json",
   "multi-session": "multi-session.json",
   abstention: "abstention.json",
+  graph: "graph.json",
+  validfrom: "validfrom.json",
 };
 
 export type CustomDatasetOptions = {

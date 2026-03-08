@@ -1,0 +1,276 @@
+{
+  "dataset": "graph",
+  "description": "10 test cases where graph traversal (entity hop) is the key retrieval signal. The correct answer memory does NOT contain query keywords — it is only reachable via entity node traversal.",
+  "test_cases": [
+    {
+      "id": "graph-001",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-001-m0",
+          "text": "Ahmad Riza is the CTO of TechPact Solutions and oversees all engineering decisions",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-10T08:00:00Z"
+        },
+        {
+          "id": "graph-001-m1",
+          "text": "TechPact Solutions allocated RM 50,000 for the annual AI training programme budget",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-12T08:00:00Z"
+        }
+      ],
+      "question": "What is Ahmad Riza's company AI training budget?",
+      "golden_answer": "RM 50,000 — TechPact Solutions allocated RM 50,000 for the annual AI training programme",
+      "gold_memory_ids": ["graph-001-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Ahmad Riza → TechPact Solutions → budget memory"
+      }
+    },
+    {
+      "id": "graph-002",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-002-m0",
+          "text": "Siti Nurhaliza leads the data analytics team at Petronas Digital",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-01T08:00:00Z"
+        },
+        {
+          "id": "graph-002-m1",
+          "text": "Petronas Digital signed a 3-year partnership with Abundent Academy for upskilling programmes",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2025-02-05T08:00:00Z"
+        }
+      ],
+      "question": "Does Siti Nurhaliza's employer have a partnership with Abundent Academy?",
+      "golden_answer": "Yes — Petronas Digital signed a 3-year partnership with Abundent Academy for upskilling programmes",
+      "gold_memory_ids": ["graph-002-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Siti Nurhaliza → Petronas Digital → partnership memory"
+      }
+    },
+    {
+      "id": "graph-003",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-003-m0",
+          "text": "Hafiz bin Ismail is the project manager for Project Meranti at Sapura Energy",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-20T08:00:00Z"
+        },
+        {
+          "id": "graph-003-m1",
+          "text": "Project Meranti delivery deadline is June 30, 2025 with a total contract value of RM 2.4 million",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2025-01-22T08:00:00Z"
+        }
+      ],
+      "question": "When is Hafiz's project deadline?",
+      "golden_answer": "June 30, 2025 — Project Meranti has a delivery deadline of June 30, 2025",
+      "gold_memory_ids": ["graph-003-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Hafiz → Project Meranti → deadline memory"
+      }
+    },
+    {
+      "id": "graph-004",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-004-m0",
+          "text": "Lim Wei Jie works as a senior developer at Grab Malaysia in the payments division",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-05T08:00:00Z"
+        },
+        {
+          "id": "graph-004-m1",
+          "text": "Grab Malaysia payments division office is located at Quill 7, KL Sentral",
+          "category": "fact",
+          "importance": 0.6,
+          "createdAt": "2025-01-06T08:00:00Z"
+        }
+      ],
+      "question": "Where does Lim Wei Jie's office located?",
+      "golden_answer": "Quill 7, KL Sentral — Grab Malaysia payments division office",
+      "gold_memory_ids": ["graph-004-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Lim Wei Jie → Grab Malaysia payments → office location memory"
+      }
+    },
+    {
+      "id": "graph-005",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-005-m0",
+          "text": "Priya Devi is the founder and CEO of NexaByte Consulting based in Cyberjaya",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-10T08:00:00Z"
+        },
+        {
+          "id": "graph-005-m1",
+          "text": "NexaByte Consulting primary tech stack is Python, FastAPI, and PostgreSQL for all client projects",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-12T08:00:00Z"
+        }
+      ],
+      "question": "What tech stack does Priya Devi's company use?",
+      "golden_answer": "Python, FastAPI, and PostgreSQL — NexaByte Consulting uses this stack for all client projects",
+      "gold_memory_ids": ["graph-005-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Priya Devi → NexaByte Consulting → tech stack memory"
+      }
+    },
+    {
+      "id": "graph-006",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-006-m0",
+          "text": "Tan Mei Ling is an Abundent Academy instructor specializing in prompt engineering",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "graph-006-m1",
+          "text": "Abundent Academy prompt engineering course has 45 enrolled students for the March 2025 cohort",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-28T08:00:00Z"
+        }
+      ],
+      "question": "How many students are in Tan Mei Ling's course?",
+      "golden_answer": "45 enrolled students in the March 2025 cohort of the Abundent Academy prompt engineering course",
+      "gold_memory_ids": ["graph-006-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Tan Mei Ling → Abundent Academy prompt engineering → enrollment memory"
+      }
+    },
+    {
+      "id": "graph-007",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-007-m0",
+          "text": "Raj Kumar manages vendor relationships for CloudServe Asia and reports to the procurement head",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-08T08:00:00Z"
+        },
+        {
+          "id": "graph-007-m1",
+          "text": "CloudServe Asia uses AWS ap-southeast-1 region as their primary cloud infrastructure with monthly spend around RM 18,000",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-10T08:00:00Z"
+        }
+      ],
+      "question": "What is Raj Kumar's company monthly cloud spend?",
+      "golden_answer": "Around RM 18,000 per month — CloudServe Asia's AWS ap-southeast-1 infrastructure",
+      "gold_memory_ids": ["graph-007-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Raj Kumar → CloudServe Asia → cloud spend memory"
+      }
+    },
+    {
+      "id": "graph-008",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-008-m0",
+          "text": "Dr. Farah Zainal is the lead researcher at Universiti Malaya AI Lab",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-15T08:00:00Z"
+        },
+        {
+          "id": "graph-008-m1",
+          "text": "Universiti Malaya AI Lab received a RM 1.2 million MOSTI grant for natural language processing research in Bahasa Melayu",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2025-02-18T08:00:00Z"
+        }
+      ],
+      "question": "What grant did Dr. Farah's lab receive?",
+      "golden_answer": "RM 1.2 million MOSTI grant for natural language processing research in Bahasa Melayu",
+      "gold_memory_ids": ["graph-008-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Dr. Farah Zainal → Universiti Malaya AI Lab → grant memory"
+      }
+    },
+    {
+      "id": "graph-009",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-009-m0",
+          "text": "Amir Hamzah is the co-founder of FreshKart, a grocery delivery startup in Penang",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-25T08:00:00Z"
+        },
+        {
+          "id": "graph-009-m1",
+          "text": "FreshKart completed Series A funding of RM 8 million led by Cradle Fund in January 2025",
+          "category": "fact",
+          "importance": 0.9,
+          "createdAt": "2025-01-28T08:00:00Z"
+        }
+      ],
+      "question": "How much funding did Amir Hamzah's startup raise?",
+      "golden_answer": "RM 8 million Series A funding led by Cradle Fund in January 2025",
+      "gold_memory_ids": ["graph-009-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Amir Hamzah → FreshKart → funding memory"
+      }
+    },
+    {
+      "id": "graph-010",
+      "ability": "graph",
+      "memories": [
+        {
+          "id": "graph-010-m0",
+          "text": "Nurul Aisyah is the HR director at Silverlake Axis and handles all hiring for the KL office",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-01T08:00:00Z"
+        },
+        {
+          "id": "graph-010-m1",
+          "text": "Silverlake Axis KL office has 12 open engineering positions posted on their careers page for Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-03T08:00:00Z"
+        }
+      ],
+      "question": "How many positions is Nurul Aisyah currently hiring for?",
+      "golden_answer": "12 open engineering positions at Silverlake Axis KL office for Q1 2025",
+      "gold_memory_ids": ["graph-010-m1"],
+      "metadata": {
+        "difficulty": "medium",
+        "notes": "Traverse: Nurul Aisyah → Silverlake Axis KL → open positions memory"
+      }
+    }
+  ]
+}

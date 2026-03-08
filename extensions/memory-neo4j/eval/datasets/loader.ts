@@ -38,6 +38,8 @@ export async function loadDataset(
     "updates",
     "multi-session",
     "abstention",
+    "graph",
+    "validfrom",
   ];
 
   if ((abilityNames as string[]).includes(name)) {

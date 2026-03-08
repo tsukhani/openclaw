@@ -12,8 +12,15 @@
 // Ability Types
 // ============================================================================
 
-/** Five core memory abilities from LongMemEval taxonomy. */
-export type MemoryAbility = "extraction" | "temporal" | "updates" | "multi-session" | "abstention";
+/** Core memory abilities from LongMemEval taxonomy + graph/validfrom signals. */
+export type MemoryAbility =
+  | "extraction"
+  | "temporal"
+  | "updates"
+  | "multi-session"
+  | "abstention"
+  | "graph"
+  | "validfrom";
 
 // ============================================================================
 // Dataset / Fixture Types
@@ -30,6 +37,8 @@ export type TestMemory = {
   sessionKey?: string;
   /** ISO-8601 timestamp (defaults to now at ingest time if not provided). */
   createdAt?: string;
+  /** ISO-8601 timestamp indicating when the fact became valid (OP-129 freshness signal). */
+  validFrom?: string;
 };
 
 /** A single evaluation test case. */
