@@ -6,50 +6,17 @@
 
 import { randomUUID } from "node:crypto";
 import { Type } from "@sinclair/typebox";
-import neo4j from "neo4j-driver";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { stringEnum } from "openclaw/plugin-sdk";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import { MEMORY_CATEGORIES } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import { isNeo4jConnectionError } from "./errors.js";
 import type { MetricsCollector } from "./metrics.js";
 import { NO_OP_METRICS } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger, MemoryCategory, MemorySource } from "./schema.js";
 import { hybridSearch } from "./search.js";
-
-// ============================================================================
-// Error classification for graceful degradation
-// ============================================================================
-
-/**
- * Returns true when the error indicates a Neo4j connection / availability
- * problem (service down, connection refused, session expired, pool timeout).
- * These are transient — the tool should return a friendly message, not throw.
- */
-function isNeo4jConnectionError(err: unknown): boolean {
-  // Neo4j driver typed errors (ServiceUnavailable, SessionExpired)
-  if (err instanceof neo4j.Neo4jError) {
-    const code = (err as { code?: string }).code ?? "";
-    return (
-      code === "ServiceUnavailable" ||
-      code === "SessionExpired" ||
-      code.startsWith("Neo.TransientError.")
-    );
-  }
-  // Node-level network errors (ECONNREFUSED, ECONNRESET, ETIMEDOUT)
-  const msg = String(err);
-  return (
-    msg.includes("ECONNREFUSED") ||
-    msg.includes("ECONNRESET") ||
-    msg.includes("ETIMEDOUT") ||
-    msg.includes("EPIPE") ||
-    msg.includes("connect EHOSTUNREACH") ||
-    msg.includes("Connection was closed") ||
-    msg.includes("Pool is closed") ||
-    msg.includes("connection acquisition timed out")
-  );
-}
 
 export function registerMemoryTools(
   api: OpenClawPluginApi,

@@ -10,6 +10,7 @@
 
 import neo4j, { type Driver } from "neo4j-driver";
 import type { ExtractionConfig } from "./config.js";
+import { isNeo4jConnectionError } from "./errors.js";
 import * as Entity from "./neo4j-client-entity.js";
 import * as Indexes from "./neo4j-client-indexes.js";
 import * as Memory from "./neo4j-client-memory.js";
@@ -353,8 +354,15 @@ export class Neo4jMemoryClient {
         }
       });
     } catch (err) {
-      // Graceful degradation: return empty if vector index isn't ready or all retries exhausted
-      this.logger.warn(`memory-neo4j: vector search failed: ${String(err)}`);
+      if (isNeo4jConnectionError(err)) {
+        // Re-throw connection errors — let the caller (hybridSearch → plugin-tools) surface them
+        this.logger.warn(
+          `memory-neo4j: vector search failed — Neo4j connection error: ${String(err)}`,
+        );
+        throw err;
+      }
+      // Non-connection error (e.g. index not ready): graceful degradation
+      this.logger.warn(`memory-neo4j: vector search failed (non-connection): ${String(err)}`);
       return [];
     }
   }
@@ -386,8 +394,14 @@ export class Neo4jMemoryClient {
         }
       });
     } catch (err) {
-      // Graceful degradation: return empty if all retries exhausted
-      this.logger.warn(`memory-neo4j: BM25 search failed: ${String(err)}`);
+      if (isNeo4jConnectionError(err)) {
+        this.logger.warn(
+          `memory-neo4j: BM25 search failed — Neo4j connection error: ${String(err)}`,
+        );
+        throw err;
+      }
+      // Non-connection error: graceful degradation
+      this.logger.warn(`memory-neo4j: BM25 search failed (non-connection): ${String(err)}`);
       return [];
     }
   }
@@ -439,8 +453,14 @@ export class Neo4jMemoryClient {
         }
       });
     } catch (err) {
-      // Graceful degradation: return empty if all retries exhausted
-      this.logger.warn(`memory-neo4j: graph search failed: ${String(err)}`);
+      if (isNeo4jConnectionError(err)) {
+        this.logger.warn(
+          `memory-neo4j: graph search failed — Neo4j connection error: ${String(err)}`,
+        );
+        throw err;
+      }
+      // Non-connection error: graceful degradation
+      this.logger.warn(`memory-neo4j: graph search failed (non-connection): ${String(err)}`);
       return [];
     }
   }

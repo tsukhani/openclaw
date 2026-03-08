@@ -8,6 +8,7 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { runAutoCapture } from "./auto-capture.js";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import { isNeo4jConnectionError } from "./errors.js";
 import { shouldCapture } from "./extractor.js";
 import type { MetricsCollector } from "./metrics.js";
 import { NO_OP_METRICS } from "./metrics.js";
@@ -316,17 +317,9 @@ export function registerMemoryHooks(
                 );
               }
             } catch (err) {
-              const errStr = String(err);
-              const isConnection =
-                errStr.includes("ECONNREFUSED") ||
-                errStr.includes("ECONNRESET") ||
-                errStr.includes("ETIMEDOUT") ||
-                errStr.includes("ServiceUnavailable") ||
-                errStr.includes("SessionExpired") ||
-                errStr.includes("Pool is closed") ||
-                errStr.includes("connection acquisition timed out");
+              const isConnection = isNeo4jConnectionError(err);
               logger.warn(
-                `memory-neo4j: auto-recall failed (${isConnection ? "Neo4j connection error" : "non-connection error"}): ${errStr}`,
+                `memory-neo4j: auto-recall failed (${isConnection ? "Neo4j connection error" : "non-connection error"}): ${String(err)}`,
               );
             }
           }
