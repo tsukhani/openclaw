@@ -8,7 +8,7 @@
  * with retry-on-transient and MERGE idempotency.
  */
 
-import neo4j, { type Driver, type Session } from "neo4j-driver";
+import neo4j, { type Driver } from "neo4j-driver";
 import type { ExtractionConfig } from "./config.js";
 import * as Entity from "./neo4j-client-entity.js";
 import * as Indexes from "./neo4j-client-indexes.js";
@@ -116,17 +116,6 @@ export class Neo4jMemoryClient {
       this.initPromise = null;
       this.logger.info("memory-neo4j: connection closed");
     }
-  }
-
-  /**
-   * Create a new session from the driver. Caller is responsible for closing it.
-   * Used by hybridSearch to share a single session across parallel signal queries.
-   */
-  getSession(): Session {
-    if (!this.driver) {
-      throw new Error("memory-neo4j: driver not initialized — call ensureInitialized() first");
-    }
-    return this.driver.session();
   }
 
   /**
@@ -344,12 +333,11 @@ export class Neo4jMemoryClient {
     agentId?: string,
     includeExpired?: boolean,
     asOf?: string,
-    externalSession?: Session,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     try {
       return await this.retryOnTransient(async () => {
-        const session = externalSession ?? this.driver!.session();
+        const session = this.driver!.session();
         try {
           return await Search.vectorSearch(
             session,
@@ -361,7 +349,7 @@ export class Neo4jMemoryClient {
             asOf,
           );
         } finally {
-          if (!externalSession) await session.close();
+          await session.close();
         }
       });
     } catch (err) {
@@ -381,7 +369,6 @@ export class Neo4jMemoryClient {
     agentId?: string,
     includeExpired?: boolean,
     asOf?: string,
-    externalSession?: Session,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     const escaped = escapeLucene(query);
@@ -391,11 +378,11 @@ export class Neo4jMemoryClient {
 
     try {
       return await this.retryOnTransient(async () => {
-        const session = externalSession ?? this.driver!.session();
+        const session = this.driver!.session();
         try {
           return await Search.bm25Search(session, escaped, limit, agentId, includeExpired, asOf);
         } finally {
-          if (!externalSession) await session.close();
+          await session.close();
         }
       });
     } catch (err) {
@@ -424,7 +411,6 @@ export class Neo4jMemoryClient {
     asOf?: string,
     seedCap?: number,
     relTypes?: string[] | null,
-    externalSession?: Session,
   ): Promise<SearchSignalResult[]> {
     await this.ensureInitialized();
     const escaped = escapeLucene(query);
@@ -434,7 +420,7 @@ export class Neo4jMemoryClient {
 
     try {
       return await this.retryOnTransient(async () => {
-        const session = externalSession ?? this.driver!.session();
+        const session = this.driver!.session();
         try {
           return await Search.graphSearch(
             session,
@@ -449,7 +435,7 @@ export class Neo4jMemoryClient {
             relTypes,
           );
         } finally {
-          if (!externalSession) await session.close();
+          await session.close();
         }
       });
     } catch (err) {
