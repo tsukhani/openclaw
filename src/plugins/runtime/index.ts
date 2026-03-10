@@ -4,7 +4,6 @@ import {
   resolveApiKeyForProvider as resolveApiKeyForProviderRaw,
 } from "../../agents/model-auth.js";
 import type { OpenClawConfig } from "../../config/config.js";
-import type { OpenClawConfig } from "../../config/config.js";
 import { resolveStateDir } from "../../config/paths.js";
 import { transcribeAudioFile } from "../../media-understanding/transcribe-audio.js";
 import { textToSpeechTelephony } from "../../tts/tts.js";
