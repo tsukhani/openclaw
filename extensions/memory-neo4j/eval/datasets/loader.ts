@@ -8,6 +8,8 @@
 
 import type { MemoryAbility, TestCase } from "../types.js";
 import { loadCustomDataset } from "./custom-adapter.js";
+import { loadHybridDataset } from "./hybrid-adapter.js";
+import { loadLoCoMoDataset } from "./locomo-adapter.js";
 import { loadLongMemEvalDataset } from "./longmemeval-adapter.js";
 
 export type DatasetLoadOptions = {
@@ -48,12 +50,16 @@ export async function loadDataset(
     cases = await loadCustomDataset({ ability: opts.ability });
   } else if (name === "longmemeval_s" || name === "longmemeval") {
     cases = await loadLongMemEvalDataset({ ability: opts.ability });
+  } else if (name === "locomo") {
+    cases = await loadLoCoMoDataset({ ability: opts.ability });
+  } else if (name === "hybrid") {
+    cases = await loadHybridDataset();
   } else if (name === "production") {
     // Production fixture: grounded in real production memories, used with --production flag
     cases = await loadCustomDataset({ ability: opts.ability, fixtureFile: "production" });
   } else {
     throw new Error(
-      `Unknown dataset: "${name}". Valid options: "custom", "production", "longmemeval_s", ` +
+      `Unknown dataset: "${name}". Valid options: "custom", "production", "longmemeval_s", "locomo", "hybrid", ` +
         abilityNames.map((a) => `"${a}"`).join(", "),
     );
   }

@@ -915,7 +915,7 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
         .description("Run retrieval evaluation against custom fixtures or LongMemEval benchmark")
         .option(
           "--dataset <name>",
-          'Dataset to evaluate: "custom", "longmemeval_s", or a single ability name (extraction|temporal|updates|multi-session|abstention)',
+          'Dataset to evaluate: "custom", "longmemeval_s", "locomo", "hybrid", or a single ability name (extraction|temporal|updates|multi-session|abstention)',
           "custom",
         )
         .option(
