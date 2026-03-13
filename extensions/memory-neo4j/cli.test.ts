@@ -101,6 +101,7 @@ describe("CLI sleep command — OP-95 gap: AbortController wired to runSleepCycl
       baseUrl: "http://localhost",
       temperature: 0,
       maxRetries: 0,
+      autoCaptureTasks: false,
     };
 
     registerCli(api as never, {

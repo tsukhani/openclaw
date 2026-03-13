@@ -39,6 +39,7 @@ describe("memoryNeo4jConfigSchema.parse", () => {
       expect(config.embedding.model).toBe("mxbai-embed-large");
       expect(config.embedding.apiKey).toBeUndefined();
       expect(config.autoCapture).toBe(true);
+      expect(config.autoCaptureTasks).toBe(false);
       expect(config.autoRecall).toBe(true);
       expect(config.coreMemory.enabled).toBe(true);
     });
@@ -56,6 +57,7 @@ describe("memoryNeo4jConfigSchema.parse", () => {
           model: "text-embedding-3-large",
         },
         autoCapture: false,
+        autoCaptureTasks: true,
         autoRecall: false,
         coreMemory: {
           enabled: false,
@@ -70,6 +72,7 @@ describe("memoryNeo4jConfigSchema.parse", () => {
       expect(config.embedding.apiKey).toBe("sk-test-key");
       expect(config.embedding.model).toBe("text-embedding-3-large");
       expect(config.autoCapture).toBe(false);
+      expect(config.autoCaptureTasks).toBe(true);
       expect(config.autoRecall).toBe(false);
       expect(config.coreMemory.enabled).toBe(false);
       expect(config.coreMemory.refreshAtContextPercent).toBe(75);
@@ -235,6 +238,14 @@ describe("memoryNeo4jConfigSchema.parse", () => {
         embedding: { provider: "ollama" },
       });
       expect(config.autoRecall).toBe(true);
+    });
+
+    it("should default autoCaptureTasks to false", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.autoCaptureTasks).toBe(false);
     });
 
     it("should default coreMemory.enabled to true", () => {
@@ -641,6 +652,7 @@ describe("resolveExtractionConfig", () => {
     const config = resolveExtractionConfig();
     expect(config.enabled).toBe(false);
     expect(config.apiKey).toBe("");
+    expect(config.autoCaptureTasks).toBe(false);
   });
 
   it("should enable when OPENROUTER_API_KEY env var is set", () => {
@@ -649,6 +661,7 @@ describe("resolveExtractionConfig", () => {
     const config = resolveExtractionConfig();
     expect(config.enabled).toBe(true);
     expect(config.apiKey).toBe("or-env-key");
+    expect(config.autoCaptureTasks).toBe(false);
   });
 
   it("should enable when plugin config provides apiKey", () => {
@@ -662,6 +675,7 @@ describe("resolveExtractionConfig", () => {
     expect(config.apiKey).toBe("or-plugin-key");
     expect(config.model).toBe("custom-model");
     expect(config.baseUrl).toBe("https://custom.ai/api");
+    expect(config.autoCaptureTasks).toBe(false);
   });
 
   it("should enable when baseUrl is explicitly set (local Ollama, no API key)", () => {
@@ -673,6 +687,7 @@ describe("resolveExtractionConfig", () => {
     expect(config.enabled).toBe(true);
     expect(config.apiKey).toBe("");
     expect(config.baseUrl).toBe("http://localhost:11434/v1");
+    expect(config.autoCaptureTasks).toBe(false);
   });
 
   it("should use defaults for model and baseUrl", () => {
@@ -739,6 +754,11 @@ describe("resolveExtractionConfig", () => {
     const config = resolveExtractionConfig();
     expect(config.temperature).toBe(0.0);
     expect(config.maxRetries).toBe(2);
+  });
+
+  it("should propagate autoCaptureTasks into extraction config", () => {
+    const config = resolveExtractionConfig(undefined, true);
+    expect(config.autoCaptureTasks).toBe(true);
   });
 });
 

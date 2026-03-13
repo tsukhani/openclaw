@@ -435,6 +435,7 @@ describe("extractEntities", () => {
     baseUrl: "https://test.ai/api/v1",
     temperature: 0.0,
     maxRetries: 0, // No retries in tests
+    autoCaptureTasks: false,
   };
 
   const disabledConfig: ExtractionConfig = {
@@ -847,6 +848,7 @@ describe("runBackgroundExtraction", () => {
     baseUrl: "https://test.ai/api/v1",
     temperature: 0.0,
     maxRetries: 0,
+    autoCaptureTasks: false,
   };
 
   const disabledConfig: ExtractionConfig = {
@@ -1483,6 +1485,7 @@ describe("rateImportance", () => {
     baseUrl: "https://test.ai/api/v1",
     temperature: 0.0,
     maxRetries: 0,
+    autoCaptureTasks: false,
   };
 
   const disabledConfig: ExtractionConfig = {
@@ -1667,6 +1670,7 @@ describe("resolveConflict retry behaviour", () => {
     baseUrl: "https://test.ai/api/v1",
     temperature: 0.0,
     maxRetries: 0, // disable llm-client internal retries so withRetry controls them
+    autoCaptureTasks: false,
   };
 
   it("should return transient after all 3 retries fail with 503", async () => {
@@ -1726,6 +1730,7 @@ describe("resolveConflict", () => {
     baseUrl: "https://test.ai/api/v1",
     temperature: 0.0,
     maxRetries: 0,
+    autoCaptureTasks: false,
   };
 
   const disabledConfig: ExtractionConfig = {
@@ -1883,6 +1888,7 @@ describe("runSleepCycle", () => {
       baseUrl: "https://test.ai/api/v1",
       temperature: 0.0,
       maxRetries: 0,
+      autoCaptureTasks: false,
     };
 
     // Mock database with all required methods
@@ -2601,6 +2607,7 @@ describe("isSemanticDuplicate", () => {
     baseUrl: "https://test.ai/api/v1",
     temperature: 0.0,
     maxRetries: 0,
+    autoCaptureTasks: false,
   };
 
   const disabledConfig: ExtractionConfig = {

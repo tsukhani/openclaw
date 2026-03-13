@@ -259,42 +259,74 @@ export function serializeTask(task: ParsedTask): string[] {
     ? `## ~~${task.id}: ${task.title}~~`
     : `## ${task.id}: ${task.title}`;
 
+  const appendKnownFields = (lines: string[], seen: Set<string>) => {
+    if (!seen.has("status")) {
+      lines.push(`- **Status:** ${task.status}`);
+    }
+    if (!seen.has("started") && task.started) {
+      lines.push(`- **Started:** ${task.started}`);
+    }
+    if (!seen.has("updated") && task.updated) {
+      lines.push(`- **Updated:** ${task.updated}`);
+    }
+    if (!seen.has("details") && task.details) {
+      lines.push(`- **Details:** ${task.details}`);
+    }
+    if (!seen.has("current step") && task.currentStep) {
+      lines.push(`- **Current Step:** ${task.currentStep}`);
+    }
+    if (!seen.has("blocked on") && task.blockedOn) {
+      lines.push(`- **Blocked On:** ${task.blockedOn}`);
+    }
+  };
+
   // If we have rawLines and the task was only modified (status/updated changed
   // by archival), rebuild from rawLines with updated field values.
   if (task.rawLines.length > 0) {
     const lines: string[] = [titlePrefix];
+    const seen = new Set<string>();
     for (const line of task.rawLines.slice(1)) {
       const trimmed = line.trim();
-      // Replace Status field with current value
-      if (/^-\s+\*\*Status:\*\*/.test(trimmed)) {
+      const fieldMatch = trimmed.match(/^-\s+\*\*(.+?):\*\*\s*(.*)$/);
+      if (!fieldMatch) {
+        lines.push(line);
+        continue;
+      }
+
+      const fieldName = fieldMatch[1].toLowerCase();
+      seen.add(fieldName === "last updated" ? "updated" : fieldName);
+
+      if (fieldName === "status") {
         lines.push(`- **Status:** ${task.status}`);
-      } else if (/^-\s+\*\*(?:Updated|Last Updated):\*\*/.test(trimmed)) {
+      } else if (fieldName === "started") {
+        if (task.started) {
+          lines.push(`- **Started:** ${task.started}`);
+        }
+      } else if (fieldName === "updated" || fieldName === "last updated") {
         lines.push(`- **Updated:** ${task.updated ?? ""}`);
+      } else if (fieldName === "details") {
+        if (task.details) {
+          lines.push(`- **Details:** ${task.details}`);
+        }
+      } else if (fieldName === "current step") {
+        if (task.currentStep) {
+          lines.push(`- **Current Step:** ${task.currentStep}`);
+        }
+      } else if (fieldName === "blocked on") {
+        if (task.blockedOn) {
+          lines.push(`- **Blocked On:** ${task.blockedOn}`);
+        }
       } else {
         lines.push(line);
       }
     }
+    appendKnownFields(lines, seen);
     return lines;
   }
 
   // Fallback: generate from parsed fields (for newly created tasks)
   const lines: string[] = [titlePrefix];
-  lines.push(`- **Status:** ${task.status}`);
-  if (task.started) {
-    lines.push(`- **Started:** ${task.started}`);
-  }
-  if (task.updated) {
-    lines.push(`- **Updated:** ${task.updated}`);
-  }
-  if (task.details) {
-    lines.push(`- **Details:** ${task.details}`);
-  }
-  if (task.currentStep) {
-    lines.push(`- **Current Step:** ${task.currentStep}`);
-  }
-  if (task.blockedOn) {
-    lines.push(`- **Blocked On:** ${task.blockedOn}`);
-  }
+  appendKnownFields(lines, new Set());
   return lines;
 }
 
@@ -335,6 +367,141 @@ export function serializeTaskLedger(ledger: TaskLedger): string {
   }
 
   return lines.join("\n").trimEnd() + "\n";
+}
+
+// ============================================================================
+// Task Ledger Write Operations
+// ============================================================================
+
+function formatTaskTimestamp(now: Date): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
+async function loadTaskLedger(workspaceDir: string): Promise<TaskLedger> {
+  const tasksPath = path.join(workspaceDir, "TASKS.md");
+
+  try {
+    const content = await fs.readFile(tasksPath, "utf-8");
+    if (!content.trim()) {
+      return {
+        activeTasks: [],
+        completedTasks: [],
+        preamble: [],
+        sectionSeparator: [],
+      };
+    }
+    return parseTaskLedger(content);
+  } catch {
+    return {
+      activeTasks: [],
+      completedTasks: [],
+      preamble: [],
+      sectionSeparator: [],
+    };
+  }
+}
+
+async function writeTaskLedger(workspaceDir: string, ledger: TaskLedger): Promise<void> {
+  const tasksPath = path.join(workspaceDir, "TASKS.md");
+  const updated = serializeTaskLedger(ledger);
+  const tmp = `${tasksPath}.tmp`;
+  await fs.writeFile(tmp, updated, "utf-8");
+  await fs.rename(tmp, tasksPath);
+}
+
+/**
+ * Get the next available task ID by scanning both active and completed tasks.
+ */
+export function getNextTaskId(ledger: TaskLedger): string {
+  const maxId = [...ledger.activeTasks, ...ledger.completedTasks].reduce((max, task) => {
+    const match = task.id.match(/^TASK-(\d+)$/);
+    if (!match) {
+      return max;
+    }
+    return Math.max(max, Number.parseInt(match[1], 10));
+  }, 0);
+
+  return `TASK-${String(maxId + 1).padStart(3, "0")}`;
+}
+
+/**
+ * Add a new task to TASKS.md and return its assigned task ID.
+ */
+export async function addTaskToLedger(
+  workspaceDir: string,
+  task: Omit<ParsedTask, "id" | "rawLines" | "isCompleted">,
+  now: Date = new Date(),
+): Promise<string> {
+  const ledger = await loadTaskLedger(workspaceDir);
+  const nowStr = formatTaskTimestamp(now);
+  const id = getNextTaskId(ledger);
+
+  ledger.activeTasks.push({
+    ...task,
+    id,
+    status: task.status || "in_progress",
+    started: task.started ?? nowStr,
+    updated: task.updated ?? nowStr,
+    rawLines: [],
+    isCompleted: false,
+  });
+
+  await writeTaskLedger(workspaceDir, ledger);
+  return id;
+}
+
+/**
+ * Update an existing active task in TASKS.md.
+ */
+export async function updateTaskInLedger(
+  workspaceDir: string,
+  taskId: string,
+  patch: Partial<Pick<ParsedTask, "status" | "currentStep" | "details" | "updated">>,
+  now: Date = new Date(),
+): Promise<void> {
+  const ledger = await loadTaskLedger(workspaceDir);
+  const task = ledger.activeTasks.find((entry) => entry.id === taskId);
+  if (!task) {
+    return;
+  }
+
+  if (patch.status !== undefined) {
+    task.status = patch.status;
+  }
+  if (patch.currentStep !== undefined) {
+    task.currentStep = patch.currentStep;
+  }
+  if (patch.details !== undefined) {
+    task.details = patch.details;
+  }
+  task.updated = patch.updated ?? formatTaskTimestamp(now);
+
+  await writeTaskLedger(workspaceDir, ledger);
+}
+
+/**
+ * Mark a task as completed and move it to the completed section.
+ */
+export async function completeTaskInLedger(
+  workspaceDir: string,
+  taskId: string,
+  now: Date = new Date(),
+): Promise<void> {
+  const ledger = await loadTaskLedger(workspaceDir);
+  const index = ledger.activeTasks.findIndex((entry) => entry.id === taskId);
+  if (index === -1) {
+    return;
+  }
+
+  const task = ledger.activeTasks[index];
+  task.status = "done";
+  task.updated = formatTaskTimestamp(now);
+  task.isCompleted = true;
+
+  ledger.activeTasks.splice(index, 1);
+  ledger.completedTasks.push(task);
+
+  await writeTaskLedger(workspaceDir, ledger);
 }
 
 // ============================================================================

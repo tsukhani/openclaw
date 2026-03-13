@@ -144,6 +144,7 @@ describe("detectConflicts", () => {
     baseUrl: "https://openrouter.ai/api/v1",
     temperature: 0,
     maxRetries: 2,
+    autoCaptureTasks: false,
   };
 
   const disabledConfig = { ...enabledConfig, enabled: false };

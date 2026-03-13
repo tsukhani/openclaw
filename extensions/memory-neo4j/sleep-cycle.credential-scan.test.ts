@@ -225,6 +225,7 @@ const mockConfig: ExtractionConfig = {
   baseUrl: "https://test.ai/api/v1",
   temperature: 0.0,
   maxRetries: 0,
+  autoCaptureTasks: false,
 };
 
 describe("Phase 5b: credential scan — paginated batch loop", () => {
