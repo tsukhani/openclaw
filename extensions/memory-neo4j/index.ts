@@ -199,7 +199,12 @@ const memoryNeo4jPlugin = {
 // ============================================================================
 
 export { _taskLedgerCache, _getActiveTaskIdForCapture } from "./auto-capture.js";
-export { _captureMessage, _runAutoCapture } from "./auto-capture.js";
+export {
+  _captureMessage,
+  _runAutoCapture,
+  _runTaskAutoCapture,
+  _findMatchingActiveTaskId,
+} from "./auto-capture.js";
 
 // ============================================================================
 // Public API — MetricsCollector for external consumers (e.g. Prometheus adapters)

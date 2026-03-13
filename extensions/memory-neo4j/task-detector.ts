@@ -47,6 +47,7 @@ const SYSTEM_MARKUP_PATTERN = /^(HEARTBEAT_OK|NO_REPLY)$/im;
 
 function shouldSkipTaskDetection(text: string): boolean {
   const trimmed = text.trim();
+  // Skip short texts — task signals require enough context for meaningful detection
   if (!trimmed || trimmed.length < 100) {
     return true;
   }

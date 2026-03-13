@@ -554,6 +554,29 @@ describe("reviewAndArchiveStaleTasks", () => {
     expect(result!.archivedCount).toBe(0);
   });
 
+  it("uses YYYY-MM-DD HH:MM timestamp format for archived tasks", async () => {
+    const content = [
+      "# Active Tasks",
+      "",
+      "## TASK-001: Old Task",
+      "- **Status:** in_progress",
+      "- **Started:** 2026-02-13 08:00",
+      "- **Updated:** 2026-02-13 09:00",
+      "",
+      "# Completed",
+    ].join("\n");
+
+    await fs.writeFile(path.join(tmpDir, "TASKS.md"), content, "utf-8");
+
+    const now = new Date("2026-03-05T14:07:00");
+    await reviewAndArchiveStaleTasks(tmpDir, undefined, now);
+
+    const ledger = parseTaskLedger(await fs.readFile(path.join(tmpDir, "TASKS.md"), "utf-8"));
+    expect(ledger.completedTasks).toHaveLength(1);
+    // Verify consistent YYYY-MM-DD HH:MM format (same as formatTaskTimestamp)
+    expect(ledger.completedTasks[0].updated).toBe("2026-03-05 14:07");
+  });
+
   it("supports custom maxAgeMs", async () => {
     const content = [
       "# Active Tasks",

@@ -9,11 +9,27 @@
  * - Batch embedding in runAutoCapture
  */
 
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
-import { _captureMessage as captureMessage, _runAutoCapture as runAutoCapture } from "./index.js";
+import {
+  _captureMessage as captureMessage,
+  _runAutoCapture as runAutoCapture,
+  _runTaskAutoCapture as runTaskAutoCapture,
+  _findMatchingActiveTaskId as findMatchingActiveTaskId,
+} from "./index.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
+import { parseTaskLedger, addTaskToLedger } from "./task-ledger.js";
+
+vi.mock("./task-detector.js", () => ({
+  detectTaskSignals: vi.fn().mockResolvedValue({ signals: [], skipped: true }),
+}));
+
+// Lazily import the mock so we can control it per-test
+const { detectTaskSignals: detectTaskSignalsMock } = await import("./task-detector.js");
 
 // ============================================================================
 // Mocks
@@ -898,5 +914,212 @@ describe("runAutoCapture", () => {
     expect(findSimilarMock).toHaveBeenCalledTimes(2);
     // Only the second fact stored (first was an exact duplicate)
     expect(storeMemoryMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ============================================================================
+// runTaskAutoCapture integration tests
+// ============================================================================
+
+describe("runTaskAutoCapture", () => {
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "task-auto-capture-test-"));
+    vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  });
+
+  const taskConfig: ExtractionConfig = {
+    enabled: true,
+    apiKey: "test-key",
+    model: "test-model",
+    baseUrl: "https://test.ai/api/v1",
+    temperature: 0.0,
+    maxRetries: 0,
+    autoCaptureTasks: true,
+  };
+
+  it("handles full new_task → task_update → task_complete lifecycle", async () => {
+    // Step 1: new_task
+    (detectTaskSignalsMock as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      signals: [
+        {
+          kind: "new_task",
+          title: "Implement auth flow",
+          details: "OAuth2 setup",
+          currentStep: "Create endpoints",
+        },
+      ],
+      skipped: false,
+    });
+
+    await runTaskAutoCapture(
+      ["I'll implement the auth flow using OAuth2. Let me start by creating the endpoints."],
+      taskConfig,
+      tmpDir,
+      mockLogger,
+    );
+
+    let content = await fs.readFile(path.join(tmpDir, "TASKS.md"), "utf-8");
+    let ledger = parseTaskLedger(content);
+    expect(ledger.activeTasks).toHaveLength(1);
+    expect(ledger.activeTasks[0].title).toBe("Implement auth flow");
+    expect(ledger.activeTasks[0].status).toBe("in_progress");
+    const taskId = ledger.activeTasks[0].id;
+
+    // Step 2: task_update
+    (detectTaskSignalsMock as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      signals: [
+        { kind: "task_update", title: "Implement auth flow", currentStep: "Adding token refresh" },
+      ],
+      skipped: false,
+    });
+
+    await runTaskAutoCapture(
+      ["I've finished the endpoints. Now adding token refresh logic."],
+      taskConfig,
+      tmpDir,
+      mockLogger,
+    );
+
+    content = await fs.readFile(path.join(tmpDir, "TASKS.md"), "utf-8");
+    ledger = parseTaskLedger(content);
+    expect(ledger.activeTasks).toHaveLength(1);
+    expect(ledger.activeTasks[0].currentStep).toBe("Adding token refresh");
+
+    // Step 3: task_complete
+    (detectTaskSignalsMock as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      signals: [{ kind: "task_complete", title: "Implement auth flow", completedTaskId: taskId }],
+      skipped: false,
+    });
+
+    await runTaskAutoCapture(
+      ["Auth flow is fully implemented and tested. All endpoints working."],
+      taskConfig,
+      tmpDir,
+      mockLogger,
+    );
+
+    content = await fs.readFile(path.join(tmpDir, "TASKS.md"), "utf-8");
+    ledger = parseTaskLedger(content);
+    expect(ledger.activeTasks).toHaveLength(0);
+    expect(ledger.completedTasks).toHaveLength(1);
+    expect(ledger.completedTasks[0].status).toBe("done");
+  });
+
+  it("handles LLM returning null/malformed JSON gracefully", async () => {
+    // detectTaskSignals already handles parse errors internally and returns empty signals,
+    // but runTaskAutoCapture should also not throw on unexpected shapes
+    (detectTaskSignalsMock as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      signals: [],
+      skipped: false,
+    });
+
+    // Should not throw
+    await runTaskAutoCapture(["some assistant text"], taskConfig, tmpDir, mockLogger);
+
+    // No TASKS.md should be created
+    await expect(fs.readFile(path.join(tmpDir, "TASKS.md"), "utf-8")).rejects.toThrow();
+  });
+
+  it("skips task detection when autoCaptureTasks is false", async () => {
+    const disabledTaskConfig: ExtractionConfig = {
+      ...taskConfig,
+      autoCaptureTasks: false,
+    };
+
+    // Even though detectTaskSignals would return signals, runAutoCapture
+    // should never call runTaskAutoCapture when autoCaptureTasks is false.
+    // We verify by checking detectTaskSignals is not called.
+    (detectTaskSignalsMock as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      signals: [{ kind: "new_task", title: "Should not appear" }],
+      skipped: false,
+    });
+
+    const db = createMockDb();
+    const embeddings = createMockEmbeddings();
+
+    // Use runAutoCapture (the outer pipeline) to test the gating
+    await runAutoCapture(
+      [
+        {
+          role: "assistant",
+          content: "I'll implement a new feature for the authentication system right away.",
+        },
+      ],
+      "test-agent",
+      "session-1",
+      db,
+      embeddings,
+      disabledTaskConfig,
+      mockLogger,
+      tmpDir,
+      true, // captureAssistant
+    );
+
+    // detectTaskSignals should not be called when autoCaptureTasks is false
+    expect(detectTaskSignalsMock).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================================
+// findMatchingActiveTaskId
+// ============================================================================
+
+describe("findMatchingActiveTaskId", () => {
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "task-match-test-"));
+  });
+
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it("matches by partial title (fuzzy substring match)", async () => {
+    await addTaskToLedger(tmpDir, {
+      title: "Implement OAuth2 authentication flow",
+      status: "in_progress",
+      details: "Full auth setup",
+      started: undefined,
+      updated: undefined,
+      currentStep: undefined,
+      blockedOn: undefined,
+    });
+
+    // Partial title should match via substring containment
+    const taskId = await findMatchingActiveTaskId(tmpDir, "OAuth2 authentication");
+    expect(taskId).toBe("TASK-001");
+  });
+
+  it("returns undefined when no tasks exist", async () => {
+    const taskId = await findMatchingActiveTaskId(tmpDir, "Some task");
+    expect(taskId).toBeUndefined();
+  });
+
+  it("returns undefined when TASKS.md does not exist", async () => {
+    const taskId = await findMatchingActiveTaskId(path.join(tmpDir, "nonexistent"), "Some task");
+    expect(taskId).toBeUndefined();
+  });
+
+  it("falls back to single active task when title does not match", async () => {
+    await addTaskToLedger(tmpDir, {
+      title: "Completely different task name",
+      status: "in_progress",
+      details: undefined,
+      started: undefined,
+      updated: undefined,
+      currentStep: undefined,
+      blockedOn: undefined,
+    });
+
+    // No title match, but only one active task → returns it
+    const taskId = await findMatchingActiveTaskId(tmpDir, "Unrelated search term");
+    expect(taskId).toBe("TASK-001");
   });
 });

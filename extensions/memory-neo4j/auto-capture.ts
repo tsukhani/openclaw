@@ -435,5 +435,9 @@ async function runAutoCapture(
 
 // Export auto-capture internals for testing
 export { captureMessage as _captureMessage, runAutoCapture as _runAutoCapture };
+export {
+  runTaskAutoCapture as _runTaskAutoCapture,
+  findMatchingActiveTaskId as _findMatchingActiveTaskId,
+};
 // Also export the non-underscored names for use within plugin-hooks.ts
 export { captureMessage, runAutoCapture };
