@@ -17,6 +17,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2024-12-28T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d1",
+          "text": "Tarun visited Tioman Island in August 2024 for a diving trip with friends",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-22T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d2",
+          "text": "Tarun visited Langkawi in March 2025 for a business networking retreat",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-05T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d3",
+          "text": "Tarun booked Tioman Island flights for June 2024 but cancelled due to weather",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d4",
+          "text": "Tarun planned a Langkawi trip for April 2024 that was postponed",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-10T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d5",
+          "text": "Tarun explored Tioman Island resorts online in October 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-15T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d6",
+          "text": "Tarun visited Langkawi for a solo trip in January 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-20T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d7",
+          "text": "Tarun's Tioman Island trip was rescheduled from November 2024 to February 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-05T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d8",
+          "text": "Tarun spent the Langkawi trip budget on flights in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-18T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d9",
+          "text": "Amir visited Tioman Island in February 2025 for a corporate team-building event",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-14T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d10",
+          "text": "Priya booked a Langkawi resort for December 2024 for her family reunion",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-20T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d11",
+          "text": "Wei Liang went to Tioman Island in January 2025 for a photography workshop",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-10T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d12",
+          "text": "Siti visited Langkawi in November 2024 for a wellness retreat",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-25T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d13",
+          "text": "Kumar planned a Tioman trip for December 2024 with his wife",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-05T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d14",
+          "text": "Farah took her kids to Langkawi in February 2025 during the school break",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-17T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d15",
+          "text": "Tarun renewed his car insurance in February 2025 before the Tioman trip",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-10T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d16",
+          "text": "Tarun submitted the Abundent Academy quarterly report in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-22T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d17",
+          "text": "Tarun bought new luggage in February 2025 for upcoming travels",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-05T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d18",
+          "text": "Tarun had a dental appointment in December 2024 right after a trip",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-30T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d19",
+          "text": "The February 2025 travel season was described as peak period by Malaysian tourism board",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-01T08:00:00Z"
+        },
+        {
+          "id": "temp-001-d20",
+          "text": "December 2024 saw record tourist arrivals at Langkawi according to local news",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-31T08:00:00Z"
         }
       ],
       "question": "Which trip happened more recently: Tioman Island or Langkawi?",
@@ -48,6 +188,146 @@
           "category": "fact",
           "importance": 0.9,
           "createdAt": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d1",
+          "text": "Tarun launched Abundent Academy v1 beta in January 2024 for early testers",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-20T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d2",
+          "text": "Tarun released Abundent Academy v2 patch update in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-10T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d3",
+          "text": "Tarun started planning Abundent Academy v3 in October 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-05T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d4",
+          "text": "Tarun discussed Abundent Academy v4 roadmap for May 2025",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2025-03-01T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d5",
+          "text": "Tarun soft-launched Abundent Academy v1 preview in February 2024 to a small group",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-10T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d6",
+          "text": "Tarun recorded new Abundent Academy video modules in June 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-15T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d7",
+          "text": "Tarun rolled back an Abundent Academy v2 feature in December 2024 due to bugs",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-05T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d8",
+          "text": "Tarun considered launching Abundent Academy v3 in March 2025 instead of January",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-25T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d9",
+          "text": "Amir launched his own coding bootcamp platform in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-10T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d10",
+          "text": "Priya released version 3 of her marketing course in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-05T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d11",
+          "text": "Wei Liang updated his photography masterclass to v2 in March 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-20T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d12",
+          "text": "Siti launched her finance academy v3 in February 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-01T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d13",
+          "text": "Kumar released a new version of his e-commerce course in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-18T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d14",
+          "text": "Farah updated her design course to the latest version in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-10T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d15",
+          "text": "Tarun migrated the Abundent Academy payment system in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-12T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d16",
+          "text": "Tarun hired a new course designer for Abundent Academy in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-03T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d17",
+          "text": "Tarun renewed the Abundent Academy domain in March 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-10T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d18",
+          "text": "Tarun fixed the Abundent Academy checkout flow in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-08T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d19",
+          "text": "The January 2025 launch date was chosen to align with the new year enrollment surge",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-20T08:00:00Z"
+        },
+        {
+          "id": "temp-002-d20",
+          "text": "March 2024 was reported as the best quarter for online course launches in Malaysia",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-01T08:00:00Z"
         }
       ],
       "question": "What is the latest version of Abundent Academy that was launched?",
@@ -79,6 +359,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2024-12-01T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d1",
+          "text": "Tarun explored OpenClaw documentation in August 2024 before committing",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-15T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d2",
+          "text": "Tarun tested OpenClaw WhatsApp features in December 2024 after a reset",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-10T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d3",
+          "text": "Tarun reinstalled OpenClaw in February 2025 after a server migration",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-05T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d4",
+          "text": "Tarun considered switching from OpenClaw to another platform in June 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-20T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d5",
+          "text": "Tarun heard about OpenClaw from a friend in July 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-10T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d6",
+          "text": "Tarun upgraded OpenClaw to the latest version in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d7",
+          "text": "Tarun set up OpenClaw Telegram integration in March 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-01T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d8",
+          "text": "Tarun's OpenClaw gateway crashed in November 2024 requiring a reconfiguration",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-20T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d9",
+          "text": "Amir started using OpenClaw for WhatsApp in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-25T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d10",
+          "text": "Priya set up OpenClaw for her business Discord in October 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-10T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d11",
+          "text": "Wei Liang installed OpenClaw for WhatsApp automation in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-05T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d12",
+          "text": "Siti adopted OpenClaw for her Telegram channel in October 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-20T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d13",
+          "text": "Kumar started using OpenClaw with memory-neo4j in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-08T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d14",
+          "text": "Farah connected OpenClaw to her Discord community in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-15T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d15",
+          "text": "Tarun purchased a new VPS for hosting in October 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-02T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d16",
+          "text": "Tarun configured Cloudflare DNS in October 2024 for his services",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-08T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d17",
+          "text": "Tarun set up Docker on his server in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-01T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d18",
+          "text": "Tarun installed Neo4j database in December 2024 for graph queries",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-02T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d19",
+          "text": "The October 2024 release of OpenClaw was noted as a major update",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-01T08:00:00Z"
+        },
+        {
+          "id": "temp-003-d20",
+          "text": "November 2024 marked the start of OpenClaw's community growth phase",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-08T08:00:00Z"
         }
       ],
       "question": "When did Tarun first start using OpenClaw?",
@@ -103,6 +523,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2024-08-20T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d1",
+          "text": "Tarun interviewed Raj for the VA role in April 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-10T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d2",
+          "text": "Tarun hired Raj for a second project in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-05T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d3",
+          "text": "Tarun gave Mei Lin a performance review in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-10T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d4",
+          "text": "Tarun considered hiring a VA in March 2024 but decided to wait",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-03-15T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d5",
+          "text": "Tarun hired a freelance designer in June 2024 for branding work",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-20T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d6",
+          "text": "Tarun posted a VA job listing in May 2024 on Malaysian job boards",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-20T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d7",
+          "text": "Tarun let go of a freelancer in August 2024 due to poor performance",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-05T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d8",
+          "text": "Tarun planned to hire a third VA in February 2025 for video editing",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2025-02-01T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d9",
+          "text": "Amir hired his first VA in June 2024 for customer support",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-18T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d10",
+          "text": "Priya hired a content writer VA named Raj in July 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-15T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d11",
+          "text": "Wei Liang onboarded a VA for social media in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-22T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d12",
+          "text": "Siti hired Mei Lin's sister as her VA in June 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-10T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d13",
+          "text": "Kumar brought on his first VA in May 2024 for bookkeeping",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-25T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d14",
+          "text": "Farah hired two VAs simultaneously in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-15T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d15",
+          "text": "Tarun set up a project management tool in June 2024 for team coordination",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-12T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d16",
+          "text": "Tarun created onboarding docs in August 2024 for new hires",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-18T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d17",
+          "text": "Tarun attended a hiring workshop in June 2024 in KL",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-08T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d18",
+          "text": "Tarun reviewed VA agency options in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-10T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d19",
+          "text": "June 2024 was when Tarun decided to scale his team for Abundent Academy",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "temp-004-d20",
+          "text": "The August 2024 hiring round was part of Tarun's Q3 expansion plan",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-01T08:00:00Z"
         }
       ],
       "question": "Who was the first VA that Tarun hired?",
@@ -134,6 +694,146 @@
           "category": "fact",
           "importance": 0.7,
           "createdAt": "2024-09-15T09:00:00Z"
+        },
+        {
+          "id": "temp-005-d1",
+          "text": "Tarun deployed a staging build on March 28, 2024 for QA testing",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-28T10:00:00Z"
+        },
+        {
+          "id": "temp-005-d2",
+          "text": "Tarun deployed a test build to production on February 15, 2024 that was rolled back",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-15T10:00:00Z"
+        },
+        {
+          "id": "temp-005-d3",
+          "text": "Tarun deployed to production on November 20, 2024 for a minor CSS fix",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-20T09:00:00Z"
+        },
+        {
+          "id": "temp-005-d4",
+          "text": "Tarun scheduled a deployment for January 2025 but postponed it",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-05T08:00:00Z"
+        },
+        {
+          "id": "temp-005-d5",
+          "text": "Tarun deployed a database migration on April 4, 2024 between the first deploy and the hotfix",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-04T11:00:00Z"
+        },
+        {
+          "id": "temp-005-d6",
+          "text": "Tarun's production deployment on June 10, 2024 added the student dashboard feature",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-10T09:00:00Z"
+        },
+        {
+          "id": "temp-005-d7",
+          "text": "Tarun rolled back a deployment on September 16, 2024 due to a regression",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-16T10:00:00Z"
+        },
+        {
+          "id": "temp-005-d8",
+          "text": "Tarun deployed to the staging environment on September 10, 2024 for v2 testing",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-10T09:00:00Z"
+        },
+        {
+          "id": "temp-005-d9",
+          "text": "Amir deployed his SaaS product to production on April 3, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-03T12:00:00Z"
+        },
+        {
+          "id": "temp-005-d10",
+          "text": "Priya released her website update to production on September 15, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-15T11:00:00Z"
+        },
+        {
+          "id": "temp-005-d11",
+          "text": "Wei Liang deployed a hotfix on April 5, 2024 for his photography portfolio",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-05T15:00:00Z"
+        },
+        {
+          "id": "temp-005-d12",
+          "text": "Siti pushed a production deployment on September 15, 2024 for her e-commerce site",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-15T10:00:00Z"
+        },
+        {
+          "id": "temp-005-d13",
+          "text": "Kumar did a v2 release deployment on April 3, 2024 for his booking platform",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-03T14:00:00Z"
+        },
+        {
+          "id": "temp-005-d14",
+          "text": "Farah deployed her course platform hotfix on April 5, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-05T16:00:00Z"
+        },
+        {
+          "id": "temp-005-d15",
+          "text": "Tarun updated the CI/CD pipeline on September 15, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-15T08:00:00Z"
+        },
+        {
+          "id": "temp-005-d16",
+          "text": "Tarun reviewed server costs on April 5, 2024 after the hotfix",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-05T17:00:00Z"
+        },
+        {
+          "id": "temp-005-d17",
+          "text": "Tarun set up monitoring alerts on April 3, 2024 right after the first deploy",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-03T15:00:00Z"
+        },
+        {
+          "id": "temp-005-d18",
+          "text": "Tarun migrated the DNS records on September 15, 2024 alongside the v2 release",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-15T12:00:00Z"
+        },
+        {
+          "id": "temp-005-d19",
+          "text": "April 2024 was the target month for the Abundent Academy initial go-live",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-20T08:00:00Z"
+        },
+        {
+          "id": "temp-005-d20",
+          "text": "September 2024 was earmarked as the v2 release window since Q2 planning",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-01T08:00:00Z"
         }
       ],
       "question": "When was the last time Tarun deployed to production?",
@@ -165,6 +865,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2024-08-25T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d1",
+          "text": "Tarun was invited to speak at the AI Malaysia Summit in January 2024 but declined",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-10T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d2",
+          "text": "Tarun attended the AI Malaysia Summit afterparty in March 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-02T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d3",
+          "text": "Tarun registered for the SEA SaaS Conference in March 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-20T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d4",
+          "text": "Tarun attended the KL Tech Founders Meetup as an attendee in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-15T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d5",
+          "text": "Tarun submitted a talk proposal for the AI Malaysia Summit 2025 in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-05T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d6",
+          "text": "Tarun attended a Penang Startup Weekend in October 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-18T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d7",
+          "text": "Tarun skipped the SEA SaaS Conference networking dinner in May 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-13T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d8",
+          "text": "Tarun presented at a webinar on AI tools in January 2024 (online only)",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-25T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d9",
+          "text": "Amir spoke at the AI Malaysia Summit in February 2024 on a different panel",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-20T10:00:00Z"
+        },
+        {
+          "id": "temp-006-d10",
+          "text": "Priya attended the Southeast Asia SaaS Conference in May 2024 as a panelist",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-12T10:00:00Z"
+        },
+        {
+          "id": "temp-006-d11",
+          "text": "Wei Liang attended the KL Tech Founders Meetup in August 2024 alongside Tarun",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-25T10:00:00Z"
+        },
+        {
+          "id": "temp-006-d12",
+          "text": "Siti spoke at a Malaysia fintech conference in February 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-18T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d13",
+          "text": "Kumar attended the SEA SaaS Conference in May 2024 for networking",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-11T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d14",
+          "text": "Farah presented at an education tech summit in August 2024 in KL",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-20T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d15",
+          "text": "Tarun booked flights to the AI Malaysia Summit in February 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-10T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d16",
+          "text": "Tarun prepared his slide deck in May 2024 for the SEA SaaS Conference",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-05T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d17",
+          "text": "Tarun bought new business cards in August 2024 before the meetup",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-20T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d18",
+          "text": "Tarun renewed his conference membership in February 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-05T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d19",
+          "text": "The February 2024 AI Summit was the largest tech event that quarter in Malaysia",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-22T08:00:00Z"
+        },
+        {
+          "id": "temp-006-d20",
+          "text": "May 2024 conference season was described as unusually busy for KL tech events",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-20T08:00:00Z"
         }
       ],
       "question": "What was the first conference Tarun attended or spoke at in 2024?",
@@ -189,6 +1029,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2024-12-03T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d1",
+          "text": "Tarun researched VPS providers in October 2024 before deciding on the migration",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-15T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d2",
+          "text": "Tarun started the VPS migration process on November 25, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-25T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d3",
+          "text": "Tarun tested the VPS gateway connection on December 1, 2024 before finalizing",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-01T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d4",
+          "text": "Tarun considered migrating to VPS in September 2024 but decided to wait",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-09-10T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d5",
+          "text": "Tarun upgraded the VPS to a larger instance in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-20T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d6",
+          "text": "Tarun experienced gateway downtime on the home PC in October 2024 prompting the migration idea",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-28T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d7",
+          "text": "Tarun migrated the database to the VPS on November 28, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-28T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d8",
+          "text": "Tarun completed DNS migration for the VPS on December 5, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-05T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d9",
+          "text": "Amir completed his VPS migration in November 2024 for his own project",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-22T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d10",
+          "text": "Priya moved her gateway to a cloud VPS in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-10T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d11",
+          "text": "Wei Liang migrated his home server to a VPS in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-18T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d12",
+          "text": "Siti completed a similar gateway migration on December 3, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-03T10:00:00Z"
+        },
+        {
+          "id": "temp-007-d13",
+          "text": "Kumar decided to migrate his services to VPS in November 2024",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-11-15T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d14",
+          "text": "Farah shut down her home PC gateway in December 2024 after VPS setup",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-08T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d15",
+          "text": "Tarun configured SSL certificates on the VPS on December 3, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-03T10:00:00Z"
+        },
+        {
+          "id": "temp-007-d16",
+          "text": "Tarun set up automated backups on the VPS in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-26T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d17",
+          "text": "Tarun benchmarked the VPS performance in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-04T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d18",
+          "text": "Tarun updated his firewall rules on the VPS in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-27T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d19",
+          "text": "November 2024 was when several Malaysian tech founders migrated to cloud hosting",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-30T08:00:00Z"
+        },
+        {
+          "id": "temp-007-d20",
+          "text": "The December 2024 VPS migration wave was driven by year-end hosting deals",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-15T08:00:00Z"
         }
       ],
       "question": "When did Tarun actually complete the gateway migration to VPS?",
@@ -213,6 +1193,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2024-08-01T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d1",
+          "text": "Tarun toured Kinabalu International School in November 2023 before enrolling Arya",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-05T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d2",
+          "text": "Arya attended a summer enrichment program at Kinabalu International in June 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-15T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d3",
+          "text": "Rohan attended a trial day at Little Explorers in July 2024 before enrolling",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-20T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d4",
+          "text": "Arya started Year 2 at Kinabalu International School in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-08T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d5",
+          "text": "Rohan moved from the toddler to preschool class at Little Explorers in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d6",
+          "text": "Tarun considered enrolling Arya in a different school in August 2024",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-08-10T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d7",
+          "text": "Tarun paid the school fees for Arya's second term in April 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-01T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d8",
+          "text": "Tarun looked at preschool options for Rohan starting January 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-15T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d9",
+          "text": "Amir's daughter started at Kinabalu International School in January 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-10T10:00:00Z"
+        },
+        {
+          "id": "temp-008-d10",
+          "text": "Priya enrolled her son in Little Explorers preschool in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-02T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d11",
+          "text": "Wei Liang's son started preschool in January 2024 at a Montessori centre",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-12T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d12",
+          "text": "Siti enrolled her daughter in Year 1 at an international school in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-05T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d13",
+          "text": "Kumar's children both started school in January 2024 at the same campus",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-08T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d14",
+          "text": "Farah's son began preschool at Little Explorers in August 2024 same class as Rohan",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-01T10:00:00Z"
+        },
+        {
+          "id": "temp-008-d15",
+          "text": "Tarun bought school uniforms for Arya in January 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-05T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d16",
+          "text": "Tarun purchased school supplies for Rohan in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-28T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d17",
+          "text": "Tarun attended a parent orientation at Kinabalu International in January 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-08T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d18",
+          "text": "Tarun set up the school carpool schedule in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-03T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d19",
+          "text": "January 2024 was when most international schools in KL started the new academic year",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-02T08:00:00Z"
+        },
+        {
+          "id": "temp-008-d20",
+          "text": "August 2024 marked the second intake period for Malaysian preschools",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-01T12:00:00Z"
         }
       ],
       "question": "Which of Tarun's children started school first?",
@@ -237,6 +1357,146 @@
           "category": "fact",
           "importance": 0.6,
           "createdAt": "2025-03-01T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d1",
+          "text": "Tarun tried intermittent fasting briefly in October 2024 but stopped after a week",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-10T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d2",
+          "text": "Tarun considered starting cold showers in January 2025 but delayed",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-10T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d3",
+          "text": "Tarun switched from 16:8 to 18:6 intermittent fasting in March 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-05T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d4",
+          "text": "Tarun read about cold exposure benefits in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-20T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d5",
+          "text": "Tarun experimented with cold showers in February 2025 on weekends only",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-15T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d6",
+          "text": "Tarun started tracking his fasting schedule using an app in February 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-01T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d7",
+          "text": "Tarun researched the Huberman Lab podcast on cold exposure in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-15T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d8",
+          "text": "Tarun added a morning run habit in April 2025 to complement fasting",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-01T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d9",
+          "text": "Amir started intermittent fasting in January 2025 inspired by Tarun",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-08T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d10",
+          "text": "Priya began daily cold showers in March 2025 alongside Tarun",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-02T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d11",
+          "text": "Wei Liang adopted intermittent fasting in January 2025 for weight management",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-12T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d12",
+          "text": "Siti started cold showers in January 2025 after a wellness retreat",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-20T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d13",
+          "text": "Kumar began 16:8 fasting in March 2025 on his doctor's advice",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-10T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d14",
+          "text": "Farah tried cold showers in March 2025 but quit after two days",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-03T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d15",
+          "text": "Tarun bought a new water bottle for his fasting routine in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-03T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d16",
+          "text": "Tarun installed a cold water timer in his bathroom in March 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-28T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d17",
+          "text": "Tarun joined a health accountability group in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-06T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d18",
+          "text": "Tarun shared his cold shower results on social media in March 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-15T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d19",
+          "text": "January 2025 saw a spike in intermittent fasting interest in Malaysia according to Google Trends",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "temp-009-d20",
+          "text": "The March 2025 cold shower challenge went viral on Malaysian social media",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-08T08:00:00Z"
         }
       ],
       "question": "Which health habit did Tarun adopt first, intermittent fasting or cold showers?",
@@ -261,6 +1521,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2024-03-01T09:00:00Z"
+        },
+        {
+          "id": "temp-010-d1",
+          "text": "Tarun signed a co-working space agreement in Bangsar South in January 2024 (month-to-month)",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-15T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d2",
+          "text": "Tarun renewed the Bangsar South parking lease in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-01T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d3",
+          "text": "Tarun considered moving the office to Mont Kiara in June 2024 when the lease expires",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-06-15T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d4",
+          "text": "Tarun's Bangsar South office lease was originally drafted for 24 months ending March 2026",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-20T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d5",
+          "text": "Tarun negotiated the Bangsar South lease terms in February 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-15T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d6",
+          "text": "Tarun signed a storage unit lease on March 1, 2024 expiring December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-01T10:00:00Z"
+        },
+        {
+          "id": "temp-010-d7",
+          "text": "Tarun discussed lease renewal options in January 2025 with the landlord",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-10T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d8",
+          "text": "Tarun's Bangsar South office lease deposit will be refunded in September 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-02T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d9",
+          "text": "Amir signed his Bangsar South office lease on March 1, 2024 for 12 months",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-01T11:00:00Z"
+        },
+        {
+          "id": "temp-010-d10",
+          "text": "Priya's office lease in Bangsar South expires in June 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d11",
+          "text": "Wei Liang signed a co-working lease in Bangsar South in March 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-05T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d12",
+          "text": "Siti's office lease in the same Bangsar South building expires August 31, 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-01T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d13",
+          "text": "Kumar signed his office lease on March 1, 2024 in Petaling Jaya",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-01T12:00:00Z"
+        },
+        {
+          "id": "temp-010-d14",
+          "text": "Farah's Bangsar South lease was signed for 18 months ending September 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-15T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d15",
+          "text": "Tarun installed new office furniture in the Bangsar South office in March 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-10T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d16",
+          "text": "Tarun set up the office internet connection at Bangsar South on March 1, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-01T14:00:00Z"
+        },
+        {
+          "id": "temp-010-d17",
+          "text": "Tarun reviewed the Bangsar South lease agreement with his lawyer in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-20T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d18",
+          "text": "Tarun budgeted for the office move-out in August 2025",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2025-02-01T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d19",
+          "text": "March 2024 was when Bangsar South office rents increased by 10% across the building",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-03T08:00:00Z"
+        },
+        {
+          "id": "temp-010-d20",
+          "text": "The August 2025 lease cycle end affects multiple tenants in the Bangsar South complex",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-01T08:00:00Z"
         }
       ],
       "question": "When does Tarun's office lease expire?",

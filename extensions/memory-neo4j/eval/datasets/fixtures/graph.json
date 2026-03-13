@@ -19,6 +19,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2025-01-12T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d1",
+          "text": "Ahmad Riza completed the Google Cloud Professional certification in March 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-15T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d2",
+          "text": "Ahmad Riza presented at the KL Tech Summit on MLOps best practices",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-20T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d3",
+          "text": "Ahmad Riza approved a RM 120,000 budget for server hardware upgrades in Q3 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-07-10T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d4",
+          "text": "Ahmad Riza mentioned the company spends roughly RM 35,000 annually on developer tooling licenses",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-01T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d5",
+          "text": "Ahmad Riza is considering a RM 80,000 cybersecurity training initiative for the engineering team",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-05T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d6",
+          "text": "Ahmad Riza allocated RM 25,000 for the team offsite in Langkawi last December",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-18T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d7",
+          "text": "Ahmad Riza previously worked at Petronas ICT before joining TechPact Solutions",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-14T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d8",
+          "text": "Ahmad Riza manages a team of 28 engineers across three squads at TechPact Solutions",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-03T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d9",
+          "text": "Khairul Anuar is the CTO of DataSync Corp and set aside RM 55,000 for AI upskilling programmes",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-22T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d10",
+          "text": "Farah Nadia, VP Engineering at CloudNet Sdn Bhd, approved RM 48,000 for machine learning training",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-15T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d11",
+          "text": "Zulkifli Hassan oversees AI strategy at DigiMatrix with a training budget of RM 60,000",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-08-20T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d12",
+          "text": "Siti Rozita leads engineering at InnovateMY and secured RM 45,000 for AI certification courses",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-12T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d13",
+          "text": "Hafiz Rahman is CTO of CyberEdge Sdn Bhd with an annual AI training allocation of RM 52,000",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-05T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d14",
+          "text": "Norliza Ismail manages the tech division at ByteWave Technologies and budgets RM 40,000 for AI training",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-10T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d15",
+          "text": "TechPact Solutions signed a RM 200,000 cloud services contract with AWS for 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-01-28T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d16",
+          "text": "TechPact Solutions spent RM 75,000 on recruitment fees in the first half of 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-30T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d17",
+          "text": "TechPact Solutions annual marketing budget is RM 150,000 for digital campaigns",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-05T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d18",
+          "text": "TechPact Solutions allocated RM 30,000 for the annual developer conference sponsorship",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-05-14T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d19",
+          "text": "NexGen Systems CTO Rashdan Omar approved RM 50,000 for their annual AI training and development fund",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-06-08T08:00:00Z"
+        },
+        {
+          "id": "graph-001-d20",
+          "text": "InfoBridge Sdn Bhd set aside RM 47,000 for company-wide machine learning training programmes in 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-22T08:00:00Z"
         }
       ],
       "question": "What is Ahmad Riza's company AI training budget?",
@@ -46,6 +186,146 @@
           "category": "fact",
           "importance": 0.9,
           "createdAt": "2025-02-05T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d1",
+          "text": "Siti Nurhaliza completed the Databricks Lakehouse certification in February 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-20T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d2",
+          "text": "Siti Nurhaliza presented a paper on predictive maintenance analytics at the APAC Data Conference",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-10T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d3",
+          "text": "Siti Nurhaliza manages a team of 15 data scientists and engineers at Petronas Digital",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d4",
+          "text": "Siti Nurhaliza partnered with the University of Malaya for a joint research project on ESG analytics",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-08-15T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d5",
+          "text": "Siti Nurhaliza negotiated a 2-year contract with Microsoft for Power BI Enterprise licences",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-22T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d6",
+          "text": "Siti Nurhaliza attended the Petronas Digital hackathon as a mentor in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-18T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d7",
+          "text": "Siti Nurhaliza's team delivered a real-time dashboard for upstream operations tracking",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-05T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d8",
+          "text": "Siti Nurhaliza was promoted to lead data analytics at Petronas Digital in January 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d9",
+          "text": "Norliza Ismail heads analytics at Tenaga Nasional and has a 3-year partnership with Coursera for Business",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-12T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d10",
+          "text": "Rashdan Omar at CIMB Digital signed a 2-year upskilling agreement with Abundent Academy",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-18T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d11",
+          "text": "Farah Nadia leads data engineering at Axiata Digital and has a training partnership with DataCamp",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-25T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d12",
+          "text": "Lim Wei Jie at Grab Analytics signed a 3-year partnership with General Assembly for data upskilling",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-08T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d13",
+          "text": "Amirul Hakim manages the analytics division at Maybank and has a partnership with Abundent Academy for fintech training",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-05T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d14",
+          "text": "Priya Devi at Shell Malaysia signed a 4-year data analytics partnership with Abundent Academy",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-20T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d15",
+          "text": "Petronas Digital launched an internal AI Centre of Excellence in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-25T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d16",
+          "text": "Petronas Digital partnered with Google Cloud for a 5-year data infrastructure modernisation project",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-06-30T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d17",
+          "text": "Petronas Digital runs an annual graduate programme in collaboration with local universities",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-20T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d18",
+          "text": "Petronas Digital signed an MOU with Huawei for edge computing research",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-15T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d19",
+          "text": "DigiMatrix partnered with Abundent Academy for a 3-year AI upskilling programme starting 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-05-01T08:00:00Z"
+        },
+        {
+          "id": "graph-002-d20",
+          "text": "ByteWave Technologies has a 2-year partnership with Abundent Academy for cloud engineering certification",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-06-10T08:00:00Z"
         }
       ],
       "question": "Does Siti Nurhaliza's employer have a partnership with Abundent Academy?",
@@ -73,6 +353,146 @@
           "category": "fact",
           "importance": 0.9,
           "createdAt": "2025-01-22T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d1",
+          "text": "Hafiz bin Ismail obtained his PMP certification from PMI in 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-10T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d2",
+          "text": "Hafiz bin Ismail previously managed a RM 1.8 million pipeline inspection project at Sapura Energy",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-05T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d3",
+          "text": "Hafiz bin Ismail has a project team of 12 engineers and 3 site supervisors for Sapura Energy",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-18T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d4",
+          "text": "Hafiz bin Ismail submitted a budget revision for RM 3.1 million for an offshore maintenance project",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-07-22T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d5",
+          "text": "Hafiz bin Ismail completed Project Jelutong at Sapura Energy with a deadline of March 15, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-01T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d6",
+          "text": "Hafiz bin Ismail attended the Sapura Energy leadership retreat in Kota Kinabalu in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-28T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d7",
+          "text": "Hafiz bin Ismail was recognised as Sapura Energy's Project Manager of the Year for 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-12-15T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d8",
+          "text": "Hafiz bin Ismail coordinated the vendor selection for Project Meranti subcontractors in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-20T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d9",
+          "text": "Rashdan Omar manages Project Kayu at Petronas Carigali with a deadline of August 15, 2025 and budget of RM 2.6 million",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-14T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d10",
+          "text": "Khairul Anuar leads Project Nibong at Dialog Group with a target completion of July 2025 and RM 2.2 million contract",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-10T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d11",
+          "text": "Nurul Ain is the project lead at Yinson Holdings for a RM 2.5 million FPSO project due September 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-09-05T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d12",
+          "text": "Amirul Hakim at Bumi Armada manages a subsea installation project with an April 30, 2025 deadline",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-20T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d13",
+          "text": "Zulkifli Hassan runs Project Tembusu at Velesto Energy with a June 2025 target and RM 2.8 million budget",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-10T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d14",
+          "text": "Siti Rozita at Hibiscus Petroleum manages a decommissioning project deadline of May 31, 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-18T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d15",
+          "text": "Project Meranti received additional safety compliance requirements from DOSH in February 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-25T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d16",
+          "text": "Project Meranti originally had a budget of RM 2.0 million before the scope change in Q4 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-10T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d17",
+          "text": "Project Meranti subcontractor payments totalled RM 800,000 in Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-02T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d18",
+          "text": "Sapura Energy awarded Project Meranti site preparation to a local Terengganu contractor",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-05-10T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d19",
+          "text": "DataSync Corp project manager Tan Mei Ling has a delivery deadline of June 28, 2025 for their ERP migration",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-15T08:00:00Z"
+        },
+        {
+          "id": "graph-003-d20",
+          "text": "NexGen Systems has a RM 2.3 million project with a July 1, 2025 deadline managed by Lim Wei Jie",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-06-01T08:00:00Z"
         }
       ],
       "question": "When is Hafiz's project deadline?",
@@ -100,6 +520,146 @@
           "category": "fact",
           "importance": 0.6,
           "createdAt": "2025-01-06T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d1",
+          "text": "Lim Wei Jie graduated from Universiti Teknologi Malaysia with a degree in Computer Science",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-15T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d2",
+          "text": "Lim Wei Jie previously worked at Shopee Malaysia in the logistics team at Bangsar South",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-08T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d3",
+          "text": "Lim Wei Jie joined the Grab Malaysia payments team in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-15T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d4",
+          "text": "Lim Wei Jie works remotely from a co-working space in Subang Jaya on Fridays",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-20T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d5",
+          "text": "Lim Wei Jie mentioned he commutes to the office via KTM from Petaling Jaya",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-12T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d6",
+          "text": "Lim Wei Jie is working on the GrabPay e-wallet fraud detection module",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-20T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d7",
+          "text": "Lim Wei Jie attended the Grab internal tech conference at their Cyberjaya campus",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-18T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d8",
+          "text": "Lim Wei Jie said the Grab Malaysia payments team is expanding to 40 engineers by mid 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-08T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d9",
+          "text": "Farah Nadia works as a senior developer at Touch 'n Go Digital with an office in Bangsar South",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-22T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d10",
+          "text": "Khairul Anuar is a payments engineer at Boost Malaysia and works from Menara Celcom, PJ",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-30T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d11",
+          "text": "Amirul Hakim works in the fintech division of CIMB and is based at Menara CIMB, KL Sentral",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-25T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d12",
+          "text": "Raj Kumar is a backend developer at BigPay Malaysia with an office at The Vertical, Bangsar South",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-14T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d13",
+          "text": "Nurul Ain is a payments platform lead at Maybank and works from Menara Maybank, Bangsar",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-10-10T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d14",
+          "text": "Siti Rozita works as a senior developer at Fave Malaysia in the payments team at Wisma UOA, Bangsar",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-05T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d15",
+          "text": "Grab Malaysia engineering headquarters is located at MyTOWN Shopping Centre, Cheras",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-30T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d16",
+          "text": "Grab Malaysia logistics division operates from a warehouse facility in Shah Alam",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-05T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d17",
+          "text": "Grab Malaysia food delivery operations team is based at Wisma Genting, KL",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-28T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d18",
+          "text": "Grab Malaysia is planning to consolidate offices at a new campus in Cyberjaya by 2026",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-20T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d19",
+          "text": "DataSync Corp payments team office is located at Quill 5, KL Sentral, managed by Rashdan Omar",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-05-15T08:00:00Z"
+        },
+        {
+          "id": "graph-004-d20",
+          "text": "Pixel8 Studios has their development office at Quill 9, KL Sentral where the fintech team works",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-06-02T08:00:00Z"
         }
       ],
       "question": "Where does Lim Wei Jie's office located?",
@@ -127,6 +687,146 @@
           "category": "fact",
           "importance": 0.7,
           "createdAt": "2025-02-12T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d1",
+          "text": "Priya Devi has over 10 years of experience in software consulting across Southeast Asia",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-20T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d2",
+          "text": "Priya Devi previously worked as a senior architect at Accenture Malaysia before founding NexaByte",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-15T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d3",
+          "text": "Priya Devi is evaluating a migration to Go and gRPC for high-throughput microservices at NexaByte",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-05-22T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d4",
+          "text": "Priya Devi mentioned her team uses React and Next.js for all frontend client work",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-10T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d5",
+          "text": "Priya Devi hired two Rust developers for NexaByte's new embedded systems practice",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-05T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d6",
+          "text": "Priya Devi's team at NexaByte uses Docker and Kubernetes for all production deployments",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-18T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d7",
+          "text": "Priya Devi presented on the benefits of event-driven architecture at Cyberjaya Tech Meetup",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-08T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d8",
+          "text": "Priya Devi said NexaByte Consulting is considering adopting TypeScript for a banking client",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-20T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d9",
+          "text": "Khairul Anuar founded TechPact Solutions in Cyberjaya using Python, Django, and MySQL as the primary stack",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-28T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d10",
+          "text": "Farah Nadia runs CloudNet Sdn Bhd which uses Python, Flask, and MongoDB for all client projects",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-14T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d11",
+          "text": "Rashdan Omar at DataSync Corp uses Java, Spring Boot, and PostgreSQL for enterprise consulting",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-30T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d12",
+          "text": "Siti Rozita manages CyberEdge Sdn Bhd which builds with Node.js, Express, and PostgreSQL",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-22T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d13",
+          "text": "Amir Hamzah founded InnovateMY in Cyberjaya with a tech stack of Python, FastAPI, and MongoDB",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-10-15T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d14",
+          "text": "Nurul Ain leads ByteWave Technologies which uses Python, FastAPI, and Redis for real-time data pipelines",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-10T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d15",
+          "text": "NexaByte Consulting was awarded the MSC Malaysia status for its digital consulting services",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-05T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d16",
+          "text": "NexaByte Consulting uses AWS Lambda for serverless workloads in some client projects",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-02T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d17",
+          "text": "NexaByte Consulting previously used Ruby on Rails before standardising on their current stack",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-10T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d18",
+          "text": "NexaByte Consulting employs 22 engineers and 5 project managers as of early 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-05-05T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d19",
+          "text": "DigiMatrix uses Python, FastAPI, and PostgreSQL for their consulting engagements in Cyberjaya",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-25T08:00:00Z"
+        },
+        {
+          "id": "graph-005-d20",
+          "text": "InfoBridge Sdn Bhd in Cyberjaya builds software consulting projects with Python, FastAPI, and TimescaleDB",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-06-12T08:00:00Z"
         }
       ],
       "question": "What tech stack does Priya Devi's company use?",
@@ -154,6 +854,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2025-02-28T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d1",
+          "text": "Tan Mei Ling completed her Master's in AI from Universiti Malaya in 2022",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-08T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d2",
+          "text": "Tan Mei Ling published an article on LLM fine-tuning techniques in The Star Tech section",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-22T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d3",
+          "text": "Tan Mei Ling also teaches an advanced RAG systems workshop at Abundent Academy with 20 students",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-05-10T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d4",
+          "text": "Tan Mei Ling's prompt engineering course had 38 students in the January 2025 cohort",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-05T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d5",
+          "text": "Tan Mei Ling mentioned her November 2024 prompt engineering cohort had 42 students enrolled",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-02T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d6",
+          "text": "Tan Mei Ling runs a weekend AI bootcamp at Abundent Academy with a typical batch of 30 participants",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-15T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d7",
+          "text": "Tan Mei Ling is planning a new course on AI agents at Abundent Academy for Q2 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-10T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d8",
+          "text": "Tan Mei Ling received the Best Instructor award at Abundent Academy's annual ceremony in 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-20T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d9",
+          "text": "Norliza Ismail teaches prompt engineering at DataCamp Malaysia with 50 students per cohort",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-18T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d10",
+          "text": "Hafiz Rahman is a prompt engineering instructor at General Assembly KL with 40 students enrolled",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-25T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d11",
+          "text": "Siti Rozita teaches an AI applications course at MDEC Academy with 48 students in the current intake",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-12T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d12",
+          "text": "Raj Kumar runs a generative AI workshop at Sunway iLabs with 35 participants per session",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-30T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d13",
+          "text": "Farah Nadia is a machine learning instructor at Abundent Academy with 52 students in her March cohort",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-03-15T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d14",
+          "text": "Zulkifli Hassan teaches data science at Abundent Academy with 44 enrolled students for the April 2025 batch",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-08T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d15",
+          "text": "Abundent Academy total enrollment across all courses reached 320 students in Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-01T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d16",
+          "text": "Abundent Academy data engineering course had 55 students enrolled for the March 2025 cohort",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-18T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d17",
+          "text": "Abundent Academy opened a new campus in Penang to serve northern region students",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-25T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d18",
+          "text": "Abundent Academy prompt engineering course received 4.8 out of 5 satisfaction rating in 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-20T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d19",
+          "text": "CloudNet Sdn Bhd prompt engineering training programme enrolled 46 employees for their March intake",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-05-20T08:00:00Z"
+        },
+        {
+          "id": "graph-006-d20",
+          "text": "Pixel8 Studios runs an internal prompt engineering course with 43 team members enrolled for Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-06-05T08:00:00Z"
         }
       ],
       "question": "How many students are in Tan Mei Ling's course?",
@@ -181,6 +1021,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2025-01-10T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d1",
+          "text": "Raj Kumar negotiated a 15% discount on CloudServe Asia's annual Azure reserved instances",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-25T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d2",
+          "text": "Raj Kumar attended AWS re:Invent 2024 as a CloudServe Asia representative",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-10T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d3",
+          "text": "Raj Kumar manages contracts with 8 different technology vendors at CloudServe Asia",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-05T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d4",
+          "text": "Raj Kumar said CloudServe Asia spent RM 45,000 on software licensing in Q2 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-20T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d5",
+          "text": "Raj Kumar is evaluating a switch from AWS to Google Cloud for CloudServe Asia's secondary workloads",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-09-12T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d6",
+          "text": "Raj Kumar reported that CloudServe Asia's data transfer costs were RM 3,200 last month",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-08T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d7",
+          "text": "Raj Kumar completed the AWS Solutions Architect certification in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-22T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d8",
+          "text": "Raj Kumar's team at CloudServe Asia handles procurement for all ASEAN regional offices",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-15T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d9",
+          "text": "Amirul Hakim manages cloud vendor contracts at DigiMatrix with a monthly AWS spend of RM 22,000",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-14T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d10",
+          "text": "Siti Rozita handles vendor relationships at ByteWave Technologies with monthly cloud costs of RM 15,000",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-28T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d11",
+          "text": "Khairul Anuar at DataSync Corp manages cloud infrastructure on Azure with a monthly spend of RM 20,000",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-15T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d12",
+          "text": "Norliza Ismail at InnovateMY reported their monthly Google Cloud spend at RM 16,500",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-08T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d13",
+          "text": "Zulkifli Hassan manages vendor procurement at NexGen Systems with monthly AWS costs of RM 19,000",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-10-20T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d14",
+          "text": "Lim Wei Jie at TechPact Solutions handles cloud vendor contracts with a monthly bill of RM 17,500",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-08T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d15",
+          "text": "CloudServe Asia also maintains a secondary GCP project for disaster recovery purposes",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-12T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d16",
+          "text": "CloudServe Asia's total IT operational budget is RM 85,000 per month including staffing",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-25T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d17",
+          "text": "CloudServe Asia signed a 2-year enterprise support agreement with AWS in mid 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-01T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d18",
+          "text": "CloudServe Asia data centre colocation costs are RM 12,000 per month at AIMS Cyberjaya",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-30T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d19",
+          "text": "CyberEdge Sdn Bhd uses AWS ap-southeast-1 with a monthly cloud spend of approximately RM 17,800",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-18T08:00:00Z"
+        },
+        {
+          "id": "graph-007-d20",
+          "text": "InfoBridge Sdn Bhd cloud procurement manager reported a monthly AWS bill of RM 18,200 for their ap-southeast-1 infrastructure",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-05-28T08:00:00Z"
         }
       ],
       "question": "What is Raj Kumar's company monthly cloud spend?",
@@ -208,6 +1188,146 @@
           "category": "fact",
           "importance": 0.9,
           "createdAt": "2025-02-18T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d1",
+          "text": "Dr. Farah Zainal completed her PhD in computational linguistics at University of Edinburgh",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-12T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d2",
+          "text": "Dr. Farah Zainal published a paper on transformer models for low-resource languages at ACL 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-03-20T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d3",
+          "text": "Dr. Farah Zainal's lab secured a RM 500,000 industry grant from Petronas for predictive analytics research",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-15T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d4",
+          "text": "Dr. Farah Zainal received a RM 300,000 FRGS grant for speech recognition research in 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-28T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d5",
+          "text": "Dr. Farah Zainal supervises 8 PhD students and 12 master's students at Universiti Malaya",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-10T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d6",
+          "text": "Dr. Farah Zainal applied for a RM 2 million grant from MOHE for a multilingual AI project",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-05T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d7",
+          "text": "Dr. Farah Zainal was appointed as a visiting researcher at NUS Singapore for Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-18T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d8",
+          "text": "Dr. Farah Zainal collaborated with MIMOS on a RM 800,000 computer vision project in 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-05T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d9",
+          "text": "Dr. Ahmad Riza at UTM AI Centre received a RM 1.5 million MOSTI grant for robotics research",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-22T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d10",
+          "text": "Dr. Rashdan Omar leads the UKM NLP Lab and secured a RM 1.1 million MOSTI grant for Bahasa Melayu text analytics",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-06-18T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d11",
+          "text": "Dr. Nurul Ain at USM received a RM 900,000 MOSTI grant for AI in healthcare diagnostics",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-14T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d12",
+          "text": "Dr. Khairul Anuar at UPM Computer Science Lab obtained a RM 1.3 million grant for agricultural AI",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-08T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d13",
+          "text": "Dr. Siti Rozita at UNITEN received a RM 1.0 million MOSTI grant for NLP research in Bahasa Melayu",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-22T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d14",
+          "text": "Dr. Hafiz Rahman at IIUM leads an AI lab that secured RM 1.4 million for machine translation research",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-28T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d15",
+          "text": "Universiti Malaya AI Lab has 35 active researchers including postdoctoral fellows",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-30T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d16",
+          "text": "Universiti Malaya AI Lab total annual research funding is approximately RM 4 million across all grants",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-05T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d17",
+          "text": "Universiti Malaya AI Lab received a RM 600,000 grant from Khazanah for fintech AI research",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-25T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d18",
+          "text": "Universiti Malaya AI Lab collaborated with Google Research on a language model project for Southeast Asian languages",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-05-12T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d19",
+          "text": "The UiTM AI Research Group received a RM 1.2 million MOSTI grant for computer vision in smart manufacturing",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-05T08:00:00Z"
+        },
+        {
+          "id": "graph-008-d20",
+          "text": "Multimedia University AI Lab secured a RM 1.15 million grant for NLP research in Bahasa Melayu and Mandarin",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-06-08T08:00:00Z"
         }
       ],
       "question": "What grant did Dr. Farah's lab receive?",
@@ -235,6 +1355,146 @@
           "category": "fact",
           "importance": 0.9,
           "createdAt": "2025-01-28T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d1",
+          "text": "Amir Hamzah graduated from Universiti Sains Malaysia with a degree in Business Administration",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-18T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d2",
+          "text": "Amir Hamzah previously raised RM 500,000 in seed funding from angel investors in 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-25T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d3",
+          "text": "Amir Hamzah said FreshKart is targeting RM 15 million in Series B funding by end of 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-05-30T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d4",
+          "text": "Amir Hamzah presented FreshKart at the MDEC GAIN programme demo day in Kuala Lumpur",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-15T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d5",
+          "text": "Amir Hamzah secured a RM 200,000 government grant from TEKUN for FreshKart operations",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-20T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d6",
+          "text": "Amir Hamzah built the FreshKart team to 45 employees across Penang and KL",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-12T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d7",
+          "text": "Amir Hamzah was featured in Digital News Asia as one of Penang's rising tech entrepreneurs",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-05T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d8",
+          "text": "Amir Hamzah mentioned FreshKart revenue reached RM 3 million in 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-20T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d9",
+          "text": "Rashdan Omar co-founded QuickMart, a grocery delivery startup in Johor that raised RM 6 million Series A from MAVCAP",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-10T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d10",
+          "text": "Nurul Ain launched DailyBasket, a grocery delivery app in KL that completed RM 10 million Series A from 500 Startups",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-18T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d11",
+          "text": "Zulkifli Hassan co-founded GrocerNow in Ipoh and raised RM 7.5 million Series A from Cradle Fund",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-06-22T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d12",
+          "text": "Farah Nadia runs MakanFresh, a food delivery startup in Melaka that raised RM 9 million in Series A funding",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-28T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d13",
+          "text": "Siti Rozita founded PasarGo delivery service in Penang and secured RM 5.5 million from Cradle Fund",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-15T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d14",
+          "text": "Khairul Anuar started KedaiKita grocery delivery in Selangor with RM 8.5 million Series A from Gobi Partners",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-12T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d15",
+          "text": "FreshKart expanded its delivery zone to cover all of Penang Island in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-28T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d16",
+          "text": "FreshKart partnered with 120 local grocery stores and wet markets in Penang",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-08T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d17",
+          "text": "FreshKart received a RM 1 million convertible note from a Penang-based angel investor group",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-05T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d18",
+          "text": "FreshKart is building a cold chain logistics hub in Bayan Lepas, Penang",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-25T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d19",
+          "text": "DigiMatrix backed a grocery delivery startup in Penang with RM 8 million in Series A funding in late 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-05-10T08:00:00Z"
+        },
+        {
+          "id": "graph-009-d20",
+          "text": "Pixel8 Studios co-founder launched a food delivery startup that raised RM 7.8 million Series A from Cradle Fund",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-06-15T08:00:00Z"
         }
       ],
       "question": "How much funding did Amir Hamzah's startup raise?",
@@ -262,6 +1522,146 @@
           "category": "fact",
           "importance": 0.7,
           "createdAt": "2025-02-03T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d1",
+          "text": "Nurul Aisyah has 14 years of experience in human resources across the Malaysian tech industry",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-22T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d2",
+          "text": "Nurul Aisyah previously held the HR manager role at Maxis before joining Silverlake Axis",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-18T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d3",
+          "text": "Nurul Aisyah said Silverlake Axis had 8 open engineering positions in Q4 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-05T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d4",
+          "text": "Nurul Aisyah hired 22 new employees for Silverlake Axis across all departments in 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-30T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d5",
+          "text": "Nurul Aisyah is planning to open 5 product manager positions at Silverlake Axis in Q2 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-18T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d6",
+          "text": "Nurul Aisyah implemented a new applicant tracking system at Silverlake Axis in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-15T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d7",
+          "text": "Nurul Aisyah reported that Silverlake Axis KL office employee retention rate is 88% for 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-10T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d8",
+          "text": "Nurul Aisyah attended the MIHRM conference in Kuala Lumpur as a speaker on tech recruitment",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-25T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d9",
+          "text": "Norliza Ismail is HR director at TechPact Solutions KL and is hiring for 15 engineering positions in Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-08T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d10",
+          "text": "Siti Rozita handles hiring at DataSync Corp with 10 open engineering roles for Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-14T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d11",
+          "text": "Farah Nadia is the HR lead at DigiMatrix KL and posted 14 engineering positions for Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-20T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d12",
+          "text": "Rashdan Omar manages recruitment at CloudNet Sdn Bhd with 11 open engineering positions this quarter",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-18T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d13",
+          "text": "Priya Devi at ByteWave Technologies is hiring for 13 engineering roles in their KL office for Q1 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-09-30T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d14",
+          "text": "Lim Wei Jie handles HR at CyberEdge Sdn Bhd and listed 12 open developer positions for early 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-03-22T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d15",
+          "text": "Silverlake Axis KL office has a total headcount of 280 employees across all departments",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-05T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d16",
+          "text": "Silverlake Axis KL posted 6 open data science positions on LinkedIn for Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-02T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d17",
+          "text": "Silverlake Axis plans to open a new development centre in Penang by mid 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-04-15T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d18",
+          "text": "Silverlake Axis KL office had 9 open engineering roles at the start of Q4 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-08T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d19",
+          "text": "NexGen Systems KL has 12 open software engineering positions and is actively recruiting for Q1 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-05-08T08:00:00Z"
+        },
+        {
+          "id": "graph-010-d20",
+          "text": "InnovateMY posted 11 open engineering positions at their KL headquarters for the current hiring cycle",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-06-18T08:00:00Z"
         }
       ],
       "question": "How many positions is Nurul Aisyah currently hiring for?",

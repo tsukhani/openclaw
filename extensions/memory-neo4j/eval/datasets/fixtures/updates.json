@@ -17,6 +17,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2025-02-20T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d1",
+          "text": "Tarun generated a new OpenRouter API key on March 10, 2024 when first signing up for the service",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-10T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d2",
+          "text": "Tarun rotated his OpenRouter API key in June 2024 as part of his quarterly security hygiene",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-15T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d3",
+          "text": "Tarun's OpenRouter API key was rotated on August 28, 2024 after noticing unusual usage spikes",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-28T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d4",
+          "text": "Tarun regenerated his OpenRouter credentials in September 2024 during a cleanup of API keys",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-20T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d5",
+          "text": "Tarun replaced his OpenRouter API key on October 15, 2024 as part of a scheduled rotation cycle",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-15T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d6",
+          "text": "Tarun issued a fresh OpenRouter API key in November 2024 after sharing the old one accidentally in a call",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-11-05T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d7",
+          "text": "Tarun rotated his OpenRouter API key on December 1, 2024 before the year-end infrastructure freeze",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-01T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d8",
+          "text": "Tarun created his first OpenRouter API key in January 2024 to evaluate model routing options",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-08T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d9",
+          "text": "Amir rotated his OpenRouter API key on February 10, 2025 following the same security review as Tarun",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-10T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d10",
+          "text": "Raj's OpenRouter API key for Abundent Academy content pipeline was rotated in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-20T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d11",
+          "text": "Farid rotated the shared OpenRouter API key for the KL developer community bot on December 15, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-15T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d12",
+          "text": "Siti updated the Abundent Academy OpenRouter API key in November 2024 as part of the team onboarding cleanup",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-20T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d13",
+          "text": "Hafiz rotated his OpenRouter API key in September 2024 after his laptop was stolen in Bangsar",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-09-12T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d14",
+          "text": "Aisyah renewed the OpenRouter API key for her freelance AI consultancy in October 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-05T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d15",
+          "text": "Tarun's most recent OpenRouter key rotation happened on the 20th of February 2025 following a thorough security audit",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-20T10:00:00Z"
+        },
+        {
+          "id": "upd-001-d16",
+          "text": "The latest OpenRouter API key change for Tarun was completed in late February 2025 as a post-review action",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-21T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d17",
+          "text": "As of mid-February 2025, Tarun had freshly rotated his OpenRouter credentials after identifying security gaps",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-20T12:00:00Z"
+        },
+        {
+          "id": "upd-001-d18",
+          "text": "Tarun confirmed on February 20, 2025 that his OpenRouter API key rotation was complete and verified working",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-20T14:00:00Z"
+        },
+        {
+          "id": "upd-001-d19",
+          "text": "Tarun's OpenRouter monthly spend hit RM 450 in January 2025 due to heavy extraction workloads",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-31T08:00:00Z"
+        },
+        {
+          "id": "upd-001-d20",
+          "text": "Tarun configured API key auto-rotation in his 1Password vault for all LLM provider keys in early 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-05T08:00:00Z"
         }
       ],
       "question": "When was Tarun's OpenRouter API key last rotated?",
@@ -41,6 +181,146 @@
           "category": "fact",
           "importance": 0.9,
           "createdAt": "2024-07-01T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d1",
+          "text": "Tarun set the initial Abundent Academy monthly revenue target at RM 10,000 when launching in June 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-06-15T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d2",
+          "text": "Tarun raised his Abundent Academy monthly revenue target to RM 15,000 in September 2023 after first cohort graduated",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-09-01T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d3",
+          "text": "Tarun's Abundent Academy revenue target was adjusted to RM 20,000/month in October 2023 following Deepavali promo results",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-10-20T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d4",
+          "text": "The Abundent Academy monthly revenue target stood at RM 22,000 in November 2023 after adding group coaching tier",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-11-10T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d5",
+          "text": "Tarun briefly set a RM 25,000 monthly revenue target for Abundent Academy in December 2023 for year-end planning",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-12-05T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d6",
+          "text": "Tarun had a RM 28,000 monthly revenue goal for Abundent Academy through the end of 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-12-20T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d7",
+          "text": "The Abundent Academy revenue target was RM 8,000/month during the soft launch period in July 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-07-10T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d8",
+          "text": "Tarun's very first revenue goal for Abundent Academy was RM 5,000/month set during the beta phase in June 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d9",
+          "text": "Amir's SaaS product PaduAI set a monthly revenue target of RM 40,000 in July 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-15T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d10",
+          "text": "Siti's online bakery course platform targets RM 25,000 monthly revenue as of Q2 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-01T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d11",
+          "text": "Farid's coding bootcamp in Cyberjaya set a RM 60,000 monthly revenue target for 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-15T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d12",
+          "text": "Hafiz's digital marketing agency in PJ aims for RM 45,000 monthly revenue in Q3 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-05T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d13",
+          "text": "Aisyah's freelance AI consultancy has a RM 20,000/month revenue target set in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-01T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d14",
+          "text": "Kumar's Penang-based e-commerce training academy targets RM 35,000 monthly revenue for 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-15T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d15",
+          "text": "Tarun's Abundent Academy monthly revenue goal stands at RM 50,000 following the mid-2024 revision",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-07-05T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d16",
+          "text": "The current Abundent Academy revenue target is fifty thousand ringgit per month, set after strong Q2 2024 performance",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-10T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d17",
+          "text": "Since July 2024, Tarun has been aiming for RM 50k monthly at Abundent Academy following rapid subscriber growth",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-01T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d18",
+          "text": "Tarun confirmed the RM 50,000/month Abundent Academy target remains in place as of late 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-15T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d19",
+          "text": "Abundent Academy's monthly expenses are approximately RM 12,000 including VA salaries and hosting costs",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-002-d20",
+          "text": "Tarun tracks Abundent Academy revenue using a custom n8n dashboard connected to Stripe Malaysia",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-15T08:00:00Z"
         }
       ],
       "question": "What is Tarun's current monthly revenue target for Abundent Academy?",
@@ -65,6 +345,146 @@
           "category": "preference",
           "importance": 0.7,
           "createdAt": "2024-10-15T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d1",
+          "text": "Tarun used to wake up at 8:30 AM during his corporate job days in 2023",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2023-06-10T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d2",
+          "text": "Tarun shifted his wake-up time to 8:00 AM in August 2023 when he started freelancing",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2023-08-15T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d3",
+          "text": "Tarun began waking at 7:30 AM in November 2023 after reading Atomic Habits",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2023-11-01T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d4",
+          "text": "Tarun tried waking at 7:15 AM in January 2024 as a New Year resolution",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-01-05T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d5",
+          "text": "Tarun's wake-up time was 7:00 AM from March 2024 onward after settling into the routine",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-03-01T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d6",
+          "text": "Tarun experimented with 6:30 AM wake-ups in August 2024 but reverted to 7:00 AM after two weeks",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-08-10T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d7",
+          "text": "Tarun tried a 6:00 AM wake-up during Ramadan 2024 for sahur preparation",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-03-15T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d8",
+          "text": "Tarun woke at 9:00 AM during university years before entering the workforce",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2023-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d9",
+          "text": "Amir wakes up at 5:00 AM daily for Subuh prayers and morning runs in Taman Tun",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-07-01T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d10",
+          "text": "Siti's morning routine starts at 6:00 AM with journaling before her kids wake up",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-05-15T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d11",
+          "text": "Farid shifted to a 4:30 AM wake-up schedule in 2024 for his Cyberjaya commute",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-02-01T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d12",
+          "text": "Raj the VA starts his work day at 9:00 AM IST which is 11:30 AM MYT",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-25T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d13",
+          "text": "Hafiz wakes at 6:45 AM for his morning gym session in Bangsar before work",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-09-01T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d14",
+          "text": "Aisyah maintains a 7:00 AM wake-up time similar to what Tarun used to follow",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-08-20T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d15",
+          "text": "Tarun now rises at 5:30 AM each day, a habit adopted in October 2024 for pre-dawn productivity",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-10-20T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d16",
+          "text": "Since mid-October 2024, Tarun's alarm goes off at 5:30 AM so he can have 90 minutes of focused work",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-11-01T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d17",
+          "text": "Tarun's 5:30 AM routine includes deep work followed by family breakfast before 7:30 AM",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-11-10T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d18",
+          "text": "Tarun confirmed he is still waking at half past five every morning as of December 2024",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-12-05T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d19",
+          "text": "Tarun's morning routine includes a cold shower immediately after waking at 5:30 AM",
+          "category": "preference",
+          "importance": 0.7,
+          "createdAt": "2024-10-20T08:00:00Z"
+        },
+        {
+          "id": "upd-003-d20",
+          "text": "Tarun uses the Sleep Cycle app to track his wake-up consistency and sleep quality",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-01T08:00:00Z"
         }
       ],
       "question": "What time does Tarun wake up?",
@@ -89,6 +509,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2024-12-10T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d1",
+          "text": "Tarun first tested the OpenClaw gateway on his MacBook Pro in January 2024 during initial setup",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-10T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d2",
+          "text": "Tarun ran the OpenClaw gateway on an old Dell laptop in February 2024 before getting the Pi",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-05T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d3",
+          "text": "Tarun briefly ran the OpenClaw gateway on an Oracle Cloud free-tier VM in March 2024 but hit bandwidth limits",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-15T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d4",
+          "text": "Tarun considered hosting the OpenClaw gateway on a DigitalOcean droplet in April 2024 but chose the Raspberry Pi for cost savings",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-10T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d5",
+          "text": "Tarun tested running the OpenClaw gateway on a Docker container on his NAS in July 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-07-20T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d6",
+          "text": "Tarun experimented with the OpenClaw gateway on a Raspberry Pi 3 in August 2023 but found it too slow",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-08-10T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d7",
+          "text": "Tarun evaluated a Contabo VPS for the OpenClaw gateway in September 2024 but chose to stay on Pi at the time",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-15T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d8",
+          "text": "Tarun initially explored self-hosting the OpenClaw gateway on his home Wi-Fi router's USB port in June 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-06-05T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d9",
+          "text": "Amir runs his OpenClaw gateway on a Hetzner VPS (CX11) in the Nuremberg data center",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-01T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d10",
+          "text": "Farid hosts his OpenClaw gateway on an AWS Lightsail instance in the Singapore region",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-15T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d11",
+          "text": "Siti's OpenClaw gateway runs on a Raspberry Pi 5 at her home in Shah Alam",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-01T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d12",
+          "text": "Hafiz set up his OpenClaw gateway on a DigitalOcean droplet in the Singapore data center",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-20T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d13",
+          "text": "Kumar runs his OpenClaw gateway on a repurposed office PC in Penang with Tailscale for remote access",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-05T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d14",
+          "text": "Aisyah hosts her OpenClaw gateway on a Vultr cloud instance in the Tokyo region for lower latency",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-10T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d15",
+          "text": "Tarun's OpenClaw gateway is now hosted on a Hetzner CX21 VPS since the December 2024 migration from his home Raspberry Pi",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-12-15T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d16",
+          "text": "As of late December 2024, Tarun's gateway runs on Hetzner cloud infrastructure (CX21 plan) instead of the old Pi setup",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-20T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d17",
+          "text": "Tarun moved his OpenClaw gateway to a cloud VPS at Hetzner in December 2024 for better uptime and reliability",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-02T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d18",
+          "text": "Since the December 2024 migration, Tarun's gateway has been running on Hetzner CX21 with 99.9% uptime",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d19",
+          "text": "Tarun's Raspberry Pi 4 is now repurposed as a Home Assistant hub after the gateway migration",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-20T08:00:00Z"
+        },
+        {
+          "id": "upd-004-d20",
+          "text": "Tarun pays approximately EUR 5.83/month for the Hetzner CX21 VPS hosting his OpenClaw gateway",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-01T08:00:00Z"
         }
       ],
       "question": "Where does Tarun's OpenClaw gateway run?",
@@ -113,6 +673,146 @@
           "category": "fact",
           "importance": 0.9,
           "createdAt": "2024-10-25T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d1",
+          "text": "Tarun considered charging RM 99/month for Abundent Academy during the beta phase in October 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-10-10T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d2",
+          "text": "Abundent Academy beta pricing was set at RM 129/month for early adopters in November 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-11-01T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d3",
+          "text": "Tarun tested a RM 149/month price point for Abundent Academy in December 2023 during a soft launch",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-12-01T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d4",
+          "text": "Abundent Academy membership was briefly priced at RM 169/month in January 2024 before the official launch",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-10T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d5",
+          "text": "Tarun explored a RM 179/month price point for Abundent Academy in February 2024 during pre-launch surveys",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-05T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d6",
+          "text": "The initial concept for Abundent Academy pricing was RM 79/month in August 2023 based on competitor analysis",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-08-20T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d7",
+          "text": "Tarun discussed raising Abundent Academy to RM 249/month in September 2024 but settled on RM 299 instead",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-10T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d8",
+          "text": "Abundent Academy had a founding member price of RM 59/month in July 2023 during initial concept testing",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-07-15T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d9",
+          "text": "Amir charges RM 399/month for his PaduAI premium membership launched in 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-01T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d10",
+          "text": "Siti's online baking masterclass costs RM 149/month as of mid-2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-15T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d11",
+          "text": "Farid's Cyberjaya coding bootcamp membership is priced at RM 499/month for full access",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-20T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d12",
+          "text": "Hafiz's digital marketing community charges RM 199/month, the same as Abundent Academy's original price",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-01T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d13",
+          "text": "Kumar's Penang e-commerce training platform offers membership at RM 249/month since Q2 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-15T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d14",
+          "text": "Aisyah's AI consultancy retainer packages start at RM 2,000/month for small businesses",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-10T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d15",
+          "text": "Abundent Academy membership now costs RM 299 per month for new members as of November 2024, with legacy members staying at RM 199",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-11-01T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d16",
+          "text": "The new Abundent Academy pricing of two hundred ninety-nine ringgit monthly took effect in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-05T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d17",
+          "text": "As of late 2024, Abundent Academy charges RM 299/month with existing subscribers grandfathered at the old RM 199 rate",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-01T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d18",
+          "text": "Tarun confirmed the RM 299/month pricing for Abundent Academy remains in place heading into 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-05T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d19",
+          "text": "Abundent Academy offers a 10% discount for annual subscriptions paid upfront in ringgit",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-15T08:00:00Z"
+        },
+        {
+          "id": "upd-005-d20",
+          "text": "Tarun uses Stripe Malaysia to process Abundent Academy membership payments in MYR",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-10T08:00:00Z"
         }
       ],
       "question": "How much does Abundent Academy membership currently cost?",
@@ -137,6 +837,146 @@
           "category": "decision",
           "importance": 0.8,
           "createdAt": "2025-01-10T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d1",
+          "text": "Tarun used GPT-3.5-turbo as his first AI extraction model starting in June 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-06-10T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d2",
+          "text": "Tarun upgraded from GPT-3.5-turbo to GPT-4 for extraction tasks in September 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-09-15T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d3",
+          "text": "Tarun briefly tested Claude 2 for extraction in November 2023 but found the output formatting inconsistent",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-11-20T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d4",
+          "text": "Tarun moved from GPT-4 to GPT-4-turbo in January 2024 for faster extraction times",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-15T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d5",
+          "text": "Tarun tried Mistral Large for extraction in April 2024 but returned to GPT-4-turbo due to reliability issues",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-10T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d6",
+          "text": "Tarun tested Claude 3 Haiku for extraction in March 2024 but found it too lightweight for complex documents",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-05T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d7",
+          "text": "Tarun switched from GPT-4-turbo to GPT-4o in June 2024 when it became available",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d8",
+          "text": "Tarun evaluated Gemini 1.5 Pro for extraction in July 2024 but stayed with GPT-4o",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-20T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d9",
+          "text": "Amir uses Claude claude-sonnet-4-6 for his PaduAI product's extraction pipeline since December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-15T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d10",
+          "text": "Farid's coding bootcamp uses GPT-4o for automated code review extraction tasks",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-01T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d11",
+          "text": "Siti uses Claude 3 Haiku for her bakery content extraction to keep costs low",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-05T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d12",
+          "text": "Hafiz switched to Gemini 1.5 Flash for his marketing agency's content extraction in late 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-20T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d13",
+          "text": "Kumar relies on GPT-4o-mini for extraction in his Penang e-commerce training platform",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-15T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d14",
+          "text": "Aisyah uses a mix of Claude and GPT models for different extraction tasks in her AI consultancy",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-10T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d15",
+          "text": "Tarun now relies on Claude claude-sonnet-4-6 through the Anthropic API for all extraction work as of January 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-01-12T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d16",
+          "text": "Since early January 2025, Tarun has been using Anthropic's Claude claude-sonnet-4-6 model for extraction due to superior instruction adherence",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2025-01-15T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d17",
+          "text": "Tarun's extraction pipeline currently runs on Claude claude-sonnet-4-6, chosen over GPT-4o in early 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-20T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d18",
+          "text": "Tarun confirmed Claude claude-sonnet-4-6 remains his primary extraction model heading into February 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-01T08:00:00Z"
+        },
+        {
+          "id": "upd-006-d19",
+          "text": "Tarun's Anthropic API bill for Claude claude-sonnet-4-6 extraction was approximately USD 85 in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-01T10:00:00Z"
+        },
+        {
+          "id": "upd-006-d20",
+          "text": "Tarun routes AI model requests through OpenRouter for load balancing across different providers",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-01T08:00:00Z"
         }
       ],
       "question": "Which AI model does Tarun currently use for extraction tasks?",
@@ -161,6 +1001,146 @@
           "category": "decision",
           "importance": 0.7,
           "createdAt": "2024-09-05T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d1",
+          "text": "Tarun started posting on LinkedIn once a week in July 2023 when he first built his personal brand",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-07-05T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d2",
+          "text": "Tarun increased LinkedIn posting to twice per week in September 2023 after seeing engagement growth",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-09-10T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d3",
+          "text": "Tarun moved to three LinkedIn posts per week in November 2023 as part of his content strategy",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-11-15T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d4",
+          "text": "Tarun experimented with daily LinkedIn posts in January 2024 but found it unsustainable",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-20T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d5",
+          "text": "Tarun tried posting five times per week on LinkedIn in February 2024 before reverting to three times",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-10T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d6",
+          "text": "Tarun's LinkedIn posting schedule was Mon/Wed/Fri at 8:30 AM MYT from March to August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-05T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d7",
+          "text": "Tarun considered reducing LinkedIn to once per week in August 2024 but decided twice was the sweet spot",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-08-20T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d8",
+          "text": "Tarun posted on LinkedIn sporadically (once every two weeks) during his first months exploring content creation in June 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-06-15T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d9",
+          "text": "Amir posts on LinkedIn daily at 7 AM MYT as part of his founder-brand strategy for PaduAI",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d10",
+          "text": "Siti publishes LinkedIn content three times per week focused on food entrepreneurship",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-15T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d11",
+          "text": "Farid posts on LinkedIn once per week with long-form coding tutorials",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-10T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d12",
+          "text": "Hafiz maintains a LinkedIn posting schedule of four times per week for his digital marketing agency",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-01T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d13",
+          "text": "Kumar posts twice weekly on LinkedIn about e-commerce trends in Southeast Asia",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-20T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d14",
+          "text": "Aisyah shares LinkedIn posts on Mondays and Thursdays about AI automation case studies from her consultancy",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-05T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d15",
+          "text": "Tarun now publishes LinkedIn posts on Tuesday and Thursday mornings at 9 AM MYT since September 2024",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-09-10T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d16",
+          "text": "Since September 2024, Tarun's LinkedIn schedule is twice weekly (Tue/Thu) prioritizing depth over frequency",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-09-15T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d17",
+          "text": "Tarun's current LinkedIn cadence is two posts per week on Tuesdays and Thursdays at 9 AM Malaysian time",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-01T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d18",
+          "text": "Tarun confirmed his twice-per-week LinkedIn schedule remains in place as of late 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-10T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d19",
+          "text": "Tarun uses Buffer to schedule his LinkedIn posts and track engagement metrics",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-01T08:00:00Z"
+        },
+        {
+          "id": "upd-007-d20",
+          "text": "Tarun's LinkedIn following grew from 2,000 to 8,500 between July 2023 and December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-15T08:00:00Z"
         }
       ],
       "question": "What is Tarun's current LinkedIn posting schedule?",
@@ -185,6 +1165,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2024-05-20T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d1",
+          "text": "Tarun used tarun.sukhani@yahoo.com as his primary email during university in 2018",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d2",
+          "text": "Tarun switched from Yahoo Mail to tarun@gmail.com in 2019 for his freelancing work",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-06-05T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d3",
+          "text": "Tarun briefly used tarun@protonmail.com for encrypted communications in late 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-10-15T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d4",
+          "text": "Tarun set up tarun@tarunsukhani.com as a professional email in November 2023 but rarely used it",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-11-20T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d5",
+          "text": "Tarun tried using tarun@hey.com in December 2023 but found the workflow too different from Gmail",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-12-10T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d6",
+          "text": "Tarun registered the abundentacademy.com domain for email in February 2024 in preparation for the business launch",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-15T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d7",
+          "text": "Tarun used tarun@gmail.com as the primary contact for all business inquiries through April 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-01T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d8",
+          "text": "Tarun created a tarun.work@outlook.com address in August 2023 for Microsoft Teams integrations",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-08-10T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d9",
+          "text": "Amir uses amir@paduai.com as his primary business email since launching PaduAI in 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-01T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d10",
+          "text": "Siti switched from Gmail to siti@cakelab.my as her bakery business email in mid-2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-10T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d11",
+          "text": "Farid uses farid@cyberdev.my for his Cyberjaya coding bootcamp communications",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-01-20T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d12",
+          "text": "Hafiz migrated to hafiz@marketpro.my from his Gmail account for his digital marketing agency",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-15T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d13",
+          "text": "Kumar still uses a personal Gmail for his Penang e-commerce training business",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-01T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d14",
+          "text": "Raj the VA uses raj@freelancer.in for all client communications including Tarun's tasks",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-25T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d15",
+          "text": "Tarun's primary business email is tarun@abundentacademy.com, set up in May 2024 while Gmail remains for personal use",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2024-05-25T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d16",
+          "text": "Since May 2024, Tarun directs all Abundent Academy business correspondence to tarun@abundentacademy.com",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d17",
+          "text": "Tarun's business email at the abundentacademy.com domain has been his primary professional address since mid-2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-01T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d18",
+          "text": "As of late 2024, Tarun uses tarun@abundentacademy.com for business and tarun@gmail.com for personal matters",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-15T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d19",
+          "text": "Tarun uses Google Workspace for his abundentacademy.com email hosting",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-22T08:00:00Z"
+        },
+        {
+          "id": "upd-008-d20",
+          "text": "Tarun set up email forwarding from his old contact forms to tarun@abundentacademy.com after the migration",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-25T10:00:00Z"
         }
       ],
       "question": "What is Tarun's primary business email address?",
@@ -209,6 +1329,146 @@
           "category": "fact",
           "importance": 0.7,
           "createdAt": "2024-10-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d1",
+          "text": "Tarun first hired Raj as a VA for 5 hours per week in August 2023 for basic research tasks",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-08-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d2",
+          "text": "Tarun increased Raj's hours to 8 hours per week in October 2023 after being impressed with his work",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-10-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d3",
+          "text": "Raj's hours were bumped to 12 per week in December 2023 to handle year-end content production",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-12-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d4",
+          "text": "Tarun set Raj's weekly hours at 15 in February 2024 as Abundent Academy content needs grew",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d5",
+          "text": "Raj moved to 18 hours per week in April 2024 when Tarun added social media management to his duties",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-04-10T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d6",
+          "text": "Tarun briefly reduced Raj to 10 hours per week in March 2024 during a cost review",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-03-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d7",
+          "text": "Raj worked 3 hours per week during the initial trial period in July 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-07-15T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d8",
+          "text": "Tarun considered increasing Raj to 25 hours per week in August 2024 but waited until October",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-15T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d9",
+          "text": "Amir's VA works 40 hours per week full-time on PaduAI customer support and documentation",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d10",
+          "text": "Siti hired a part-time VA for 10 hours per week to manage her bakery course social media",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-08-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d11",
+          "text": "Farid's VA at the coding bootcamp works 25 hours per week on student enrollment and scheduling",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-05-15T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d12",
+          "text": "Hafiz has two VAs working 15 hours per week each for his digital marketing agency",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-10T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d13",
+          "text": "Kumar's VA in Penang works 20 hours per week, the same as Raj's old schedule",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d14",
+          "text": "Aisyah handles her own admin work without a VA to keep consultancy overhead low",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-20T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d15",
+          "text": "Raj now works 30 hours weekly for Tarun since October 2024, covering content writing and additional Abundent Academy tasks",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-05T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d16",
+          "text": "Since the October 2024 increase, Raj puts in thirty hours per week on Tarun's Abundent Academy content and operations",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-10T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d17",
+          "text": "Raj's current weekly commitment is 30 hours, up from 20, driven by Abundent Academy subscriber growth in late 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d18",
+          "text": "As of late 2024, VA Raj works six hours per day, five days a week for Tarun's business",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-12-01T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d19",
+          "text": "Tarun pays Raj approximately RM 3,500/month at the current 30-hour weekly rate",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-10-15T08:00:00Z"
+        },
+        {
+          "id": "upd-009-d20",
+          "text": "Raj is based in Hyderabad, India and works remotely for Tarun across the IST-MYT time zone overlap",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-20T10:00:00Z"
         }
       ],
       "question": "How many hours per week does Raj (Tarun's VA) currently work?",
@@ -240,6 +1500,146 @@
           "category": "fact",
           "importance": 0.8,
           "createdAt": "2025-02-05T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d1",
+          "text": "Tarun first mentioned wanting to start a YouTube channel in June 2023 during a brainstorming session",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2023-06-20T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d2",
+          "text": "Tarun explored YouTube as a content platform in August 2023 but decided to focus on LinkedIn first",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2023-08-10T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d3",
+          "text": "Tarun set a tentative YouTube launch date of Q1 2024 during his October 2023 planning session",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2023-10-05T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d4",
+          "text": "Tarun pushed the YouTube launch from Q1 2024 to Q2 2024 in January 2024 due to Abundent Academy launch prep",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-01-15T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d5",
+          "text": "Tarun delayed the YouTube channel again from Q2 2024 to Q3 2024 in March 2024 citing bandwidth constraints",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-03-10T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d6",
+          "text": "Tarun considered a YouTube launch in December 2023 but deprioritized it for the holiday season",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2023-12-01T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d7",
+          "text": "Tarun discussed YouTube content strategy with Raj in September 2023 but took no action",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2023-09-15T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d8",
+          "text": "Tarun purchased a Sony ZV-E10 camera for YouTube in November 2023 but it sat unused for months",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2023-11-25T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d9",
+          "text": "Amir launched his PaduAI YouTube channel in September 2024 with tutorials on AI-powered business tools",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-09-01T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d10",
+          "text": "Siti started her YouTube baking channel in July 2024 and reached 5,000 subscribers by December",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-07-15T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d11",
+          "text": "Farid's coding bootcamp YouTube channel has been active since early 2024 with weekly uploads",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-02-01T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d12",
+          "text": "Hafiz runs a YouTube channel for digital marketing tips with over 15,000 subscribers",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-06-01T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d13",
+          "text": "Kumar considered starting a YouTube channel for his Penang e-commerce training but decided against it",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2024-08-20T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d14",
+          "text": "Aisyah launched a YouTube channel about AI for Malaysian businesses in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2024-11-05T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d15",
+          "text": "Tarun's YouTube channel 'Abundent with AI' went live on February 5, 2025 with n8n automation as the inaugural topic",
+          "category": "fact",
+          "importance": 0.8,
+          "createdAt": "2025-02-05T10:00:00Z"
+        },
+        {
+          "id": "upd-010-d16",
+          "text": "The Abundent with AI YouTube channel launched in early February 2025 after multiple postponements from 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-06T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d17",
+          "text": "Tarun finally started his YouTube presence on February 5, 2025 under the Abundent with AI brand",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-07T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d18",
+          "text": "As of February 2025, Tarun's YouTube channel is live with content focused on AI automation tutorials",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-02-10T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d19",
+          "text": "Tarun uses OBS Studio and DaVinci Resolve for YouTube video production on his MacBook Pro",
+          "category": "fact",
+          "importance": 0.7,
+          "createdAt": "2025-01-25T08:00:00Z"
+        },
+        {
+          "id": "upd-010-d20",
+          "text": "Tarun aims to upload one YouTube video per week covering different AI tools and automations",
+          "category": "decision",
+          "importance": 0.7,
+          "createdAt": "2025-02-05T12:00:00Z"
         }
       ],
       "question": "Has Tarun launched his YouTube channel yet?",

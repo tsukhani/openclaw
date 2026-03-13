@@ -15,6 +15,126 @@
           "text": "Tarun's go-to casual dining spot is a mamak stall near his office",
           "category": "preference",
           "importance": 0.6
+        },
+        {
+          "id": "abs-001-d1",
+          "text": "Tarun usually orders nasi lemak with extra sambal for breakfast",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d2",
+          "text": "Tarun avoids shellfish due to mild allergies",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d3",
+          "text": "Tarun hosted a team lunch at a Thai restaurant in Bangsar last month",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d4",
+          "text": "Tarun prefers his coffee black with no sugar from a local kopitiam",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d5",
+          "text": "Tarun's wife Priya is vegetarian so they often eat at mixed-menu restaurants",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d6",
+          "text": "Tarun keeps a food journal to track his macros for gym training",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d7",
+          "text": "Tarun's favourite cuisine for weekend meals is Japanese ramen",
+          "category": "preference",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-001-d8",
+          "text": "Tarun spends about RM 600 per month on dining out with clients",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d9",
+          "text": "Tarun tried a new Sichuan restaurant in Mont Kiara and found it too spicy",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d10",
+          "text": "Tarun brings home-cooked meal prep to the office three days a week",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d11",
+          "text": "Tarun's favourite snack during work is muruku from a local Indian shop",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d12",
+          "text": "Tarun recommended a seafood place in Klang to a business partner",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d13",
+          "text": "Tarun orders food delivery from GrabFood at least twice a week",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d14",
+          "text": "Tarun prefers spicy food and always asks for extra chilli",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d15",
+          "text": "Tarun's go-to drink at restaurants is teh tarik ais",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d16",
+          "text": "Tarun attended a food festival in Penang during Chinese New Year",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d17",
+          "text": "Priya's favourite dessert is mango sticky rice from a Thai place in TTDI",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-001-d18",
+          "text": "Tarun's colleague Ravi always orders cendol after lunch but Tarun skips dessert",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-001-d19",
+          "text": "Tarun enjoys cooking butter chicken at home on weekends",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-001-d20",
+          "text": "Tarun switched from eating rice to cauliflower rice as part of a low-carb plan",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What is Tarun's favourite dessert?",
@@ -40,6 +160,126 @@
           "text": "Tarun started running 5km twice a week in September 2024",
           "category": "fact",
           "importance": 0.6
+        },
+        {
+          "id": "abs-002-d1",
+          "text": "Tarun had a health screening at Pantai Hospital in January 2025",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d2",
+          "text": "Tarun takes vitamin D and fish oil supplements daily",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d3",
+          "text": "Tarun's resting heart rate is around 62 bpm according to his Apple Watch",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d4",
+          "text": "Tarun weighs approximately 74kg and is 175cm tall",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d5",
+          "text": "Tarun's doctor recommended he reduce salt intake after a routine checkup",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d6",
+          "text": "Tarun uses the Strava app to track his running distance and pace",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d7",
+          "text": "Tarun sleeps an average of 6.5 hours per night during the workweek",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d8",
+          "text": "Tarun's gym trainer recommended increasing protein intake to 120g per day",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d9",
+          "text": "Tarun had minor knee pain after the KL marathon and saw a physiotherapist",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d10",
+          "text": "Tarun practices intermittent fasting with a 16:8 window on weekdays",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d11",
+          "text": "Tarun donated blood at a community drive organised by his mosque in 2023",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-002-d12",
+          "text": "Tarun's cholesterol levels were within normal range at his last screening",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d13",
+          "text": "Tarun wears a compression sleeve on his right calf when running long distances",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d14",
+          "text": "Tarun's health insurance is with AIA and covers outpatient visits",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d15",
+          "text": "Tarun completed a Spartan Race in Putrajaya in November 2024",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d16",
+          "text": "Tarun's blood pressure was 118/76 at his last medical checkup",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-002-d17",
+          "text": "Priya's blood type is O positive and she mentioned it during a clinic visit",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-002-d18",
+          "text": "Tarun's sister Kavitha is a registered bone marrow donor in Singapore",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-002-d19",
+          "text": "Tarun uses a foam roller for recovery after heavy leg day sessions",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-002-d20",
+          "text": "Tarun's gym membership at Anytime Fitness costs RM 180 per month",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What is Tarun's blood type?",
@@ -65,6 +305,126 @@
           "text": "Tarun's wife Priya drives a Perodua Myvi for her daily commute",
           "category": "fact",
           "importance": 0.6
+        },
+        {
+          "id": "abs-003-d1",
+          "text": "Tarun services his Toyota Camry at the authorised centre in Petaling Jaya every 10,000km",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d2",
+          "text": "Tarun pays RM 1,200 per month for his car loan installment",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d3",
+          "text": "Tarun's car insurance is with Allianz and renews every July",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d4",
+          "text": "Tarun installed a dashcam in his Camry after a near-miss on the LDP highway",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d5",
+          "text": "Tarun's Camry is metallic grey and has tinted windows",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d6",
+          "text": "Tarun uses Touch 'n Go RFID for toll payments on his daily commute",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d7",
+          "text": "Tarun's previous car was a Honda City that he sold in 2021",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d8",
+          "text": "Tarun parks at the basement level of his office building in Damansara",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d9",
+          "text": "Tarun spends about RM 400 per month on petrol for his Camry",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d10",
+          "text": "Tarun is considering upgrading to a Tesla Model 3 in 2026",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d11",
+          "text": "Tarun renewed his driving license at JPJ Wangsa Maju last March",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d12",
+          "text": "Priya's Myvi license plate was recently renewed at the post office",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-003-d13",
+          "text": "Tarun received a speeding summons on the PLUS highway and paid RM 150",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d14",
+          "text": "Tarun's car registration is under his personal name, not his company",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-003-d15",
+          "text": "Tarun uses Waze for navigation and prefers it over Google Maps",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d16",
+          "text": "Tarun's father in Penang drives a Proton Saga and refuses to upgrade",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d17",
+          "text": "Tarun had his car tyre replaced at a workshop in SS2 after a puncture",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d18",
+          "text": "Tarun's Camry has a personalised number plate with letters but the specific number was never mentioned",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-003-d19",
+          "text": "Tarun carpools with his colleague Ravi on Mondays and Fridays",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-003-d20",
+          "text": "Tarun keeps an emergency kit and jumper cables in his car boot",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What is the license plate number of Tarun's car?",
@@ -89,6 +449,126 @@
           "id": "abs-004-m1",
           "text": "Tarun uses Linear for bug tracking and sprint planning",
           "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d1",
+          "text": "Tarun manages his Abundent Academy tasks with weekly sprint reviews every Monday",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d2",
+          "text": "Tarun evaluated several project management tools before settling on his current stack",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d3",
+          "text": "Tarun uses Slack for team communication and integrates it with his PM tools",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d4",
+          "text": "Tarun assigns tasks to his VA using shared Notion boards with due dates",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d5",
+          "text": "Tarun tracks project milestones and deadlines in a shared calendar with his team",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d6",
+          "text": "Tarun prefers kanban-style boards over Gantt charts for project visibility",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d7",
+          "text": "Tarun's team tried Trello briefly but found it too limited for their workflow",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-004-d8",
+          "text": "Tarun uses GitHub Issues for open-source project contributions",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d9",
+          "text": "Tarun runs weekly standups with his freelancers using a structured agenda in Notion",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d10",
+          "text": "Tarun's project management workflow includes a review stage before deployment",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d11",
+          "text": "Tarun considered switching to ClickUp but decided the migration cost was too high",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-004-d12",
+          "text": "Tarun uses Figma for design collaboration and links designs to Linear tickets",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d13",
+          "text": "Tarun tracks his personal to-dos in Notion with a GTD-style inbox system",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d14",
+          "text": "Tarun's client projects use separate Notion workspaces to keep data isolated",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d15",
+          "text": "Tarun automates task creation from emails using Zapier connected to his PM tools",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d16",
+          "text": "Tarun's colleague in Singapore uses Jira but they collaborate via shared Slack channels instead",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-004-d17",
+          "text": "Tarun sets up OKRs every quarter and reviews them in his project management system",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d18",
+          "text": "Tarun prefers lightweight tools that do not require heavy configuration",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d19",
+          "text": "Tarun manages client deliverables with a custom Notion template he built himself",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-004-d20",
+          "text": "Tarun's Abundent Academy operations board tracks content creation and member onboarding tasks",
+          "category": "fact",
           "importance": 0.7
         }
       ],
@@ -115,6 +595,126 @@
           "text": "Tarun installed solar panels on his roof in 2023 to reduce electricity costs",
           "category": "fact",
           "importance": 0.6
+        },
+        {
+          "id": "abs-005-d1",
+          "text": "Tarun uses UniFi as his home internet provider with a 500 Mbps plan",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d2",
+          "text": "Tarun set up a mesh WiFi system with three TP-Link Deco nodes at home",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-005-d3",
+          "text": "Tarun's home network has separate SSIDs for the 2.4GHz and 5GHz bands",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-005-d4",
+          "text": "Tarun pays RM 149 per month for his UniFi internet subscription",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d5",
+          "text": "Tarun's home office is on the second floor and gets the best WiFi signal",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d6",
+          "text": "Tarun configured port forwarding on his router for remote access to his NAS",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d7",
+          "text": "Tarun uses a Pi-hole on his home network to block ads and trackers",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d8",
+          "text": "Tarun's home alarm system is connected to the WiFi and sends alerts to his phone",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d9",
+          "text": "Tarun's monthly water bill averages RM 45 for his terrace house in Damansara",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d10",
+          "text": "Tarun upgraded his home router firmware after reading about a security vulnerability",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d11",
+          "text": "Tarun's WiFi network name is visible to neighbours but he uses WPA3 encryption",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-005-d12",
+          "text": "Tarun set up a guest WiFi network for visitors that is isolated from his main network",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-005-d13",
+          "text": "Tarun's home has smart plugs and lights connected via the home WiFi",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d14",
+          "text": "Tarun experienced a two-day internet outage last December during a Telekom Malaysia maintenance",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d15",
+          "text": "Tarun stores his important passwords in 1Password and shares a family vault with Priya",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-005-d16",
+          "text": "Tarun changed all his home network passwords after a suspected phishing attempt",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-005-d17",
+          "text": "Tarun's home electricity usage dropped 30% after the solar panel installation",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d18",
+          "text": "Tarun uses a UPS battery backup for his home office equipment",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d19",
+          "text": "Tarun's Synology NAS at home stores backups of his business files",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-005-d20",
+          "text": "Tarun's home security cameras record to a local NVR and are accessible via a mobile app",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What is Tarun's home WiFi password?",
@@ -140,6 +740,126 @@
           "text": "Abundent Academy grew from 50 to 127 members between June and February",
           "category": "fact",
           "importance": 0.8
+        },
+        {
+          "id": "abs-006-d1",
+          "text": "Abundent Academy charges RM 97 per month for the standard membership tier",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d2",
+          "text": "Tarun launched a premium coaching tier at RM 297 per month in October 2024",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d3",
+          "text": "Abundent Academy's monthly recurring revenue reached RM 14,000 in January 2025",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d4",
+          "text": "Tarun runs live Q&A sessions for academy members every Thursday evening",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d5",
+          "text": "Abundent Academy members get access to a private Telegram group for daily discussions",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d6",
+          "text": "Tarun added 15 new members in January 2025 through a referral campaign",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d7",
+          "text": "Abundent Academy has a 7-day free trial before the paid subscription starts",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d8",
+          "text": "Tarun tracks member engagement metrics weekly using a custom Notion dashboard",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d9",
+          "text": "Abundent Academy's course completion rate averages 68% across all modules",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-006-d10",
+          "text": "Tarun surveyed members in December and the NPS score was 72",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d11",
+          "text": "Abundent Academy had a waitlist of 40 people before the last cohort opened",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d12",
+          "text": "Tarun's goal is to reach 200 active members by June 2025",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d13",
+          "text": "Several academy members reported that the community aspect is the main reason they stay",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-006-d14",
+          "text": "Tarun offers annual billing at RM 970 which gives members two months free",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d15",
+          "text": "Abundent Academy member retention improved after Tarun introduced weekly accountability calls",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-006-d16",
+          "text": "Tarun hired a community manager in November 2024 to handle member onboarding",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d17",
+          "text": "Abundent Academy's conversion rate from free trial to paid is approximately 45%",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-006-d18",
+          "text": "Tarun sends a monthly email newsletter to all academy members with growth tips",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-006-d19",
+          "text": "Abundent Academy's average member lifetime is tracked but Tarun only mentions growth numbers",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-006-d20",
+          "text": "Tarun attributes most new signups to LinkedIn content and word-of-mouth referrals",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What is Tarun's Abundent Academy churn rate?",
@@ -163,6 +883,126 @@
         {
           "id": "abs-007-m1",
           "text": "Tarun has a younger sister named Kavitha who lives in Singapore",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d1",
+          "text": "Tarun's parents celebrated their 35th wedding anniversary last year",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d2",
+          "text": "Tarun's father is retired and spends most of his time gardening at their Penang house",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-007-d3",
+          "text": "Tarun's mother makes the best rasam and sends containers of it back with him after visits",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d4",
+          "text": "Tarun usually drives up to Penang on Friday evenings and returns Sunday afternoon",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d5",
+          "text": "Kavitha works as a financial analyst at DBS Bank in Singapore",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d6",
+          "text": "Tarun's family gathers in Penang for Deepavali every year without fail",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d7",
+          "text": "Tarun's parents moved to Penang from Ipoh after his father retired in 2018",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d8",
+          "text": "Tarun sends RM 1,500 per month to his parents for their living expenses",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d9",
+          "text": "Tarun's uncle on his mother's side runs a textile shop in Little India, KL",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d10",
+          "text": "Tarun named his daughter after his late grandmother on his father's side",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-007-d11",
+          "text": "Tarun's father used to work as an engineer at Petronas before retiring",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-007-d12",
+          "text": "Kavitha's husband is named Arjun and he works in fintech in Singapore",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d13",
+          "text": "Tarun's parents prefer video calls over text messages and use WhatsApp daily",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d14",
+          "text": "Tarun is the eldest child in his family and feels responsible for his parents",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d15",
+          "text": "Tarun's mother's name is Lakshmi and she is known for her cooking in the neighbourhood",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-007-d16",
+          "text": "Tarun's family WhatsApp group has 12 members including extended relatives",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d17",
+          "text": "Priya gets along well with Tarun's parents and they call her every Sunday",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d18",
+          "text": "Tarun's father taught him to play chess when he was eight years old",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d19",
+          "text": "Tarun's parents have two cats at their Penang house named Chiku and Mango",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-007-d20",
+          "text": "Kavitha visits their parents in Penang about four times a year during long weekends",
           "category": "fact",
           "importance": 0.7
         }
@@ -190,6 +1030,126 @@
           "text": "The VPS has 4GB RAM and 80GB SSD storage at Hetzner",
           "category": "fact",
           "importance": 0.7
+        },
+        {
+          "id": "abs-008-d1",
+          "text": "Tarun's VPS is hosted in the Hetzner Falkenstein data centre in Germany",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d2",
+          "text": "Tarun pays EUR 8.50 per month for his Hetzner VPS plan",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d3",
+          "text": "Tarun uses SSH key authentication and has disabled password login on the VPS",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d4",
+          "text": "Tarun runs nginx as a reverse proxy on the VPS for his web services",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d5",
+          "text": "Tarun set up UFW firewall rules on the VPS to allow only ports 22, 80, and 443",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d6",
+          "text": "Tarun's VPS uptime has been 99.8% over the past six months",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d7",
+          "text": "Tarun uses Cloudflare DNS for his domains pointed at the VPS",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-008-d8",
+          "text": "Tarun schedules weekly automated backups of his VPS to Hetzner's backup storage",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d9",
+          "text": "Tarun monitors the VPS CPU and memory usage with a simple cron script",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d10",
+          "text": "Tarun also has a second smaller VPS for staging and testing purposes",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d11",
+          "text": "Tarun's VPS runs Docker containers for PostgreSQL and Redis alongside the gateway",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d12",
+          "text": "Tarun connects to his VPS using a Tailscale mesh network for secure access",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-008-d13",
+          "text": "Tarun's VPS hostname is set to openclaw-prod-sg but the server is in Germany",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-008-d14",
+          "text": "Tarun upgraded the VPS from 2GB to 4GB RAM in September 2024 due to memory pressure",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d15",
+          "text": "Tarun uses Let's Encrypt for SSL certificates on all domains hosted on the VPS",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d16",
+          "text": "The VPS network interface is configured with both IPv4 and IPv6 addresses",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-008-d17",
+          "text": "Tarun's domain abundentacademy.com resolves through Cloudflare proxy hiding the origin server",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-008-d18",
+          "text": "Tarun considered migrating to a DigitalOcean droplet in Singapore for lower latency",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d19",
+          "text": "Tarun's VPS disk usage is at 45% and he plans to clean up old Docker images",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-008-d20",
+          "text": "Tarun set up fail2ban on the VPS to block repeated SSH brute force attempts",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What is the IP address of Tarun's VPS?",
@@ -215,6 +1175,126 @@
           "text": "Tarun reads for 30 minutes every morning before starting work",
           "category": "fact",
           "importance": 0.6
+        },
+        {
+          "id": "abs-009-d1",
+          "text": "Tarun has a Kindle Paperwhite that he uses for most of his reading",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d2",
+          "text": "Tarun subscribes to Blinkist for book summaries when he is short on time",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d3",
+          "text": "Tarun keeps a reading list in Notion with books he wants to read next",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d4",
+          "text": "Tarun finished reading three books last month on entrepreneurship and mindset",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-009-d5",
+          "text": "Tarun prefers non-fiction over fiction and rarely picks up novels",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d6",
+          "text": "Tarun highlights passages in his Kindle and reviews them weekly",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d7",
+          "text": "Tarun recommended a book to his academy members about building online communities",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-009-d8",
+          "text": "Tarun listens to audiobooks on Audible during his commute as a supplement to reading",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d9",
+          "text": "Tarun's goal is to read at least 24 books in 2025",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d10",
+          "text": "Tarun prefers reading physical books for deep focus but uses Kindle for convenience",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d11",
+          "text": "Tarun joined a book club with other Malaysian entrepreneurs that meets monthly",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d12",
+          "text": "Tarun's bookshelf at home has about 150 books mostly on business and self-improvement",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d13",
+          "text": "Tarun mentioned that the last book he finished changed his perspective on pricing strategy",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-009-d14",
+          "text": "Priya reads mostly fiction and they sometimes swap book recommendations",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d15",
+          "text": "Tarun reads book reviews on Goodreads before adding titles to his list",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d16",
+          "text": "Tarun bought several books at the Big Bad Wolf book sale in KL last year",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d17",
+          "text": "Tarun's favourite author genre includes books by founders sharing startup lessons",
+          "category": "preference",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-009-d18",
+          "text": "Tarun takes handwritten notes in a Moleskine notebook while reading business books",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d19",
+          "text": "Tarun shares key takeaways from books he reads in his LinkedIn posts",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-009-d20",
+          "text": "Tarun gifted a stack of business books to his Abundent Academy top contributors",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What specific book is Tarun currently reading?",
@@ -238,6 +1318,126 @@
         {
           "id": "abs-010-m1",
           "text": "Tarun also accepts FPX and bank transfer payments for Malaysian customers",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d1",
+          "text": "Tarun's Stripe account is set up in live mode with Malaysian Ringgit as the default currency",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d2",
+          "text": "Tarun integrated Stripe webhooks with his backend to handle subscription lifecycle events",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d3",
+          "text": "Tarun's Stripe processing fees average around 2.9% plus RM 1 per transaction",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d4",
+          "text": "Tarun uses Stripe Billing for recurring subscription charges on the academy",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d5",
+          "text": "Tarun configured Stripe to retry failed payments up to three times before cancelling",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d6",
+          "text": "Tarun exports monthly Stripe payout reports for his accountant",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d7",
+          "text": "Tarun's bank account for Stripe payouts is with Maybank",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d8",
+          "text": "Tarun set up Stripe Radar for fraud detection on international card payments",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d9",
+          "text": "Tarun stores Stripe configuration in environment variables on his production server",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-010-d10",
+          "text": "Tarun uses Stripe's test mode with test API keys during development",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-010-d11",
+          "text": "Tarun received his first Stripe payout two weeks after launching the academy",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d12",
+          "text": "Tarun's FPX integration is through a local payment gateway called Billplz",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d13",
+          "text": "Tarun tracks payment analytics using Stripe Dashboard and exports to Google Sheets",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d14",
+          "text": "Tarun enabled two-factor authentication on his Stripe account for security",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-010-d15",
+          "text": "Tarun's Stripe account processes both MYR and USD transactions for international members",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d16",
+          "text": "Tarun rotates his payment service credentials quarterly as a security best practice",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "abs-010-d17",
+          "text": "Tarun investigated switching to Paddle for payment processing but stayed with Stripe",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d18",
+          "text": "Tarun's Stripe integration uses the latest API version 2024-12-18",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d19",
+          "text": "Tarun handles refunds manually through the Stripe Dashboard on a case-by-case basis",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "abs-010-d20",
+          "text": "Tarun's payment success rate on Stripe is approximately 96% for card transactions",
           "category": "fact",
           "importance": 0.7
         }

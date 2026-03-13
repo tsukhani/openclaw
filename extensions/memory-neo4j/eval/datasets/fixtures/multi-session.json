@@ -24,6 +24,146 @@
           "category": "fact",
           "importance": 0.8,
           "sessionKey": "session-2025-01-20"
+        },
+        {
+          "id": "ms-001-d1",
+          "text": "Ahmad mentioned he also has a catering arm that needs separate POS integration",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-02"
+        },
+        {
+          "id": "ms-001-d2",
+          "text": "Tarun's client Farid from Petaling Jaya runs an F&B chain with 5 outlets in Mont Kiara",
+          "category": "entity",
+          "importance": 0.8,
+          "sessionKey": "session-2024-12-05"
+        },
+        {
+          "id": "ms-001-d3",
+          "text": "Farid's AI automation budget is RM 3,500 per month starting February 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-08"
+        },
+        {
+          "id": "ms-001-d4",
+          "text": "Ahmad from Penang reached out about AI chatbot for his retail clothing stores",
+          "category": "entity",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-15"
+        },
+        {
+          "id": "ms-001-d5",
+          "text": "Tarun discussed F&B automation with a restaurant group in Bangsar that has 7 outlets",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-20"
+        },
+        {
+          "id": "ms-001-d6",
+          "text": "Ahmad's previous vendor quoted RM 5,000/month for basic inventory management software",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-18"
+        },
+        {
+          "id": "ms-001-d7",
+          "text": "Tarun quoted Ahmad RM 4,500 for a one-time website redesign project in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-12"
+        },
+        {
+          "id": "ms-001-d8",
+          "text": "A KL-based F&B client asked Tarun about AI-powered menu optimization tools",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-28"
+        },
+        {
+          "id": "ms-001-d9",
+          "text": "Ahmad initially wanted to start the automation project in January 2025 but delayed",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-20"
+        },
+        {
+          "id": "ms-001-d10",
+          "text": "Tarun's prospect list includes 4 F&B businesses in the Klang Valley looking for automation",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-25"
+        },
+        {
+          "id": "ms-001-d11",
+          "text": "Ahmad recommended Tarun to his friend who owns a bakery in Subang Jaya",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-01"
+        },
+        {
+          "id": "ms-001-d12",
+          "text": "Tarun prepared a proposal for Ahmad's competitor restaurant chain in Bangsar with RM 8,000/month scope",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2024-11-10"
+        },
+        {
+          "id": "ms-001-d13",
+          "text": "Tarun attended a KL F&B networking event and collected 12 business cards from restaurant owners",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-05"
+        },
+        {
+          "id": "ms-001-d14",
+          "text": "Ahmad's Bangsar restaurants use a legacy POS system that does not support API integrations",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-08"
+        },
+        {
+          "id": "ms-001-d15",
+          "text": "Farid from PJ also has 3 restaurants and a budget of RM 2,000/month for digital marketing automation",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2024-12-15"
+        },
+        {
+          "id": "ms-001-d16",
+          "text": "Tarun discussed inventory automation with a Bangsar cafe owner named Rizal who decided not to proceed",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-12"
+        },
+        {
+          "id": "ms-001-d17",
+          "text": "Ahmad asked about integrating Grab Food delivery data into his restaurant analytics dashboard",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-22"
+        },
+        {
+          "id": "ms-001-d18",
+          "text": "Tarun's retainer pricing for F&B clients starts at RM 1,500/month for basic automation packages",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-15"
+        },
+        {
+          "id": "ms-001-d19",
+          "text": "A Bangsar restaurant group approached Tarun about AI-powered staff scheduling with a March 2025 deadline",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-30"
+        },
+        {
+          "id": "ms-001-d20",
+          "text": "Tarun completed an AI automation audit for a food court operator in Midvalley last quarter",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-28"
         }
       ],
       "question": "What does Tarun know about his client Ahmad, including his business and budget?",
@@ -55,6 +195,146 @@
           "category": "fact",
           "importance": 0.8,
           "sessionKey": "session-2024-11-20"
+        },
+        {
+          "id": "ms-002-d1",
+          "text": "Tarun created a separate lead magnet: a free AI readiness scorecard for SMEs",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-15"
+        },
+        {
+          "id": "ms-002-d2",
+          "text": "The AI readiness scorecard covers 8 business areas and was published on October 1, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-01"
+        },
+        {
+          "id": "ms-002-d3",
+          "text": "Tarun discussed creating an AI tool comparison guide covering 15 business categories",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-20"
+        },
+        {
+          "id": "ms-002-d4",
+          "text": "The AI tool audit checklist draft initially had 7 business processes before Tarun expanded it",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-25"
+        },
+        {
+          "id": "ms-002-d5",
+          "text": "Tarun published a blog post about AI tools for Malaysian businesses on the Abundent Academy website in October 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-15"
+        },
+        {
+          "id": "ms-002-d6",
+          "text": "Vijay suggested turning the AI tool audit into a paid workshop instead of a free lead magnet",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-03"
+        },
+        {
+          "id": "ms-002-d7",
+          "text": "Tarun's lead magnet funnel generated 45 email subscribers in its first week after launch",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-28"
+        },
+        {
+          "id": "ms-002-d8",
+          "text": "Tarun planned to create an audit checklist for social media marketing tools specifically",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-08"
+        },
+        {
+          "id": "ms-002-d9",
+          "text": "The Abundent Academy website had a new lead magnet page launched on November 15, 2024 for a webinar signup",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-15"
+        },
+        {
+          "id": "ms-002-d10",
+          "text": "Tarun considered covering 12 business processes in the checklist but narrowed it down for simplicity",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-06"
+        },
+        {
+          "id": "ms-002-d11",
+          "text": "A competing academy published a similar AI audit tool on November 18, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-19"
+        },
+        {
+          "id": "ms-002-d12",
+          "text": "Tarun decided the next lead magnet after the checklist would be a free AI prompt template pack",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-01"
+        },
+        {
+          "id": "ms-002-d13",
+          "text": "The AI tool audit was originally planned as a video series before pivoting to a checklist format",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-10"
+        },
+        {
+          "id": "ms-002-d14",
+          "text": "Tarun hired a freelance designer to format the audit checklist PDF for RM 350",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-12"
+        },
+        {
+          "id": "ms-002-d15",
+          "text": "Tarun published an AI automation case study on the Abundent Academy blog on November 22, 2024",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2024-11-22"
+        },
+        {
+          "id": "ms-002-d16",
+          "text": "The free AI tool audit checklist was shared on LinkedIn and got 120 downloads in the first month",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-20"
+        },
+        {
+          "id": "ms-002-d17",
+          "text": "Tarun explored building an interactive AI tool audit quiz instead of a static checklist",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-25"
+        },
+        {
+          "id": "ms-002-d18",
+          "text": "Abundent Academy's email list had 230 subscribers before the lead magnet launch",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-01"
+        },
+        {
+          "id": "ms-002-d19",
+          "text": "Tarun created an AI tool audit presentation deck for a client workshop covering invoicing and hiring processes",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-25"
+        },
+        {
+          "id": "ms-002-d20",
+          "text": "The Abundent Academy website redesign in September 2024 added a dedicated resources page for lead magnets",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-20"
         }
       ],
       "question": "What was the outcome of the AI tool audit checklist project?",
@@ -86,6 +366,146 @@
           "category": "fact",
           "importance": 0.8,
           "sessionKey": "session-2025-03-01"
+        },
+        {
+          "id": "ms-003-d1",
+          "text": "Tarun's parents are planning to visit from India in May 2025 for two weeks",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-15"
+        },
+        {
+          "id": "ms-003-d2",
+          "text": "Tarun blocked the last week of December 2024 for a family vacation in Langkawi",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-10"
+        },
+        {
+          "id": "ms-003-d3",
+          "text": "Tarun's wife mentioned her mother might extend the visit until mid-April if flights are available",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-18"
+        },
+        {
+          "id": "ms-003-d4",
+          "text": "Tarun has a conference in Singapore scheduled for March 8-9, 2025 just before the visit",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-10"
+        },
+        {
+          "id": "ms-003-d5",
+          "text": "Tarun's mother-in-law visited last year from March 15 to April 10, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-03-15"
+        },
+        {
+          "id": "ms-003-d6",
+          "text": "Tarun rescheduled a client trip to Penang from March 20 to April 10, 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-02-22"
+        },
+        {
+          "id": "ms-003-d7",
+          "text": "Tarun's sister-in-law from Chennai is visiting KL in late February 2025 for a week",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-05"
+        },
+        {
+          "id": "ms-003-d8",
+          "text": "Tarun blocked April 7-11, 2025 for catching up on work backlog after the family visit",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-02"
+        },
+        {
+          "id": "ms-003-d9",
+          "text": "Tarun marked March as a low-travel month due to multiple personal commitments",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-28"
+        },
+        {
+          "id": "ms-003-d10",
+          "text": "Tarun's calendar shows a possible client meeting in Bangsar on March 12 that was not yet cancelled",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-28"
+        },
+        {
+          "id": "ms-003-d11",
+          "text": "Tarun needs to book a restaurant for his mother-in-law's birthday dinner on March 22",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-01"
+        },
+        {
+          "id": "ms-003-d12",
+          "text": "Tarun considered taking the family to Cameron Highlands during the visit but decided against travel",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-26"
+        },
+        {
+          "id": "ms-003-d13",
+          "text": "Tarun's wife requested that he reduce work hours to 4 hours/day during her mother's stay",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-22"
+        },
+        {
+          "id": "ms-003-d14",
+          "text": "Tarun planned a family outing to Genting Highlands on March 28 during the visit",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-03"
+        },
+        {
+          "id": "ms-003-d15",
+          "text": "Tarun has no travel restrictions for the second half of April 2025 after the visit ends",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-05"
+        },
+        {
+          "id": "ms-003-d16",
+          "text": "Tarun's mother-in-law's Chennai flight arrives at KLIA at 11:30 PM on March 10",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-01"
+        },
+        {
+          "id": "ms-003-d17",
+          "text": "Tarun had originally blocked March 5 to April 10 but shortened the window after confirming exact travel dates",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-21"
+        },
+        {
+          "id": "ms-003-d18",
+          "text": "Tarun moved his weekly Monday sync with Vijay to Tuesday for the duration of the family visit",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-04"
+        },
+        {
+          "id": "ms-003-d19",
+          "text": "Tarun's father-in-law is not joining this trip due to health reasons",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-19"
+        },
+        {
+          "id": "ms-003-d20",
+          "text": "Tarun blocked March 15-20 last year for a family visit from Chennai as well",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-03-10"
         }
       ],
       "question": "Is Tarun available for meetings or travel in late March 2025?",
@@ -117,6 +537,146 @@
           "category": "fact",
           "importance": 0.7,
           "sessionKey": "session-2024-10-20"
+        },
+        {
+          "id": "ms-004-d1",
+          "text": "Tarun explored using Buffer as an alternative to Phantombuster for LinkedIn scheduling",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-15"
+        },
+        {
+          "id": "ms-004-d2",
+          "text": "Tarun built an n8n workflow to automate Twitter/X post scheduling in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-10"
+        },
+        {
+          "id": "ms-004-d3",
+          "text": "The Twitter/X automation workflow uses Typefully and went live on September 20, 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-22"
+        },
+        {
+          "id": "ms-004-d4",
+          "text": "Tarun tested a Make.com workflow for LinkedIn automation before switching to n8n",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-20"
+        },
+        {
+          "id": "ms-004-d5",
+          "text": "Phantombuster subscription costs Tarun USD 69/month for the LinkedIn automation features",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-02"
+        },
+        {
+          "id": "ms-004-d6",
+          "text": "Tarun's LinkedIn automation posts 3 times per week: Monday, Wednesday, and Friday at 9 AM MYT",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-08"
+        },
+        {
+          "id": "ms-004-d7",
+          "text": "Tarun set up an n8n workflow for Instagram post automation using Later in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-05"
+        },
+        {
+          "id": "ms-004-d8",
+          "text": "The LinkedIn automation had a brief outage on November 2, 2024 due to Phantombuster API changes",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-03"
+        },
+        {
+          "id": "ms-004-d9",
+          "text": "Tarun considered adding LinkedIn comment automation to the existing workflow but decided against it",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-25"
+        },
+        {
+          "id": "ms-004-d10",
+          "text": "Vijay asked Tarun to set up a similar LinkedIn automation for the Abundent Academy company page",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-22"
+        },
+        {
+          "id": "ms-004-d11",
+          "text": "Tarun's WhatsApp notification bot also sends daily revenue summaries from Stripe",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-05"
+        },
+        {
+          "id": "ms-004-d12",
+          "text": "Tarun built an n8n workflow for email newsletter automation that sends via ConvertKit",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-20"
+        },
+        {
+          "id": "ms-004-d13",
+          "text": "The LinkedIn scheduling workflow was originally planned to go live in September 2024 but was delayed",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-28"
+        },
+        {
+          "id": "ms-004-d14",
+          "text": "Tarun's LinkedIn profile reached 5,000 followers after the automated posting began",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-01"
+        },
+        {
+          "id": "ms-004-d15",
+          "text": "Tarun explored using Phantombuster for LinkedIn lead scraping alongside the posting automation",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-10"
+        },
+        {
+          "id": "ms-004-d16",
+          "text": "The n8n instance for all automations is self-hosted on a Hetzner VPS costing EUR 12/month",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-10"
+        },
+        {
+          "id": "ms-004-d17",
+          "text": "Tarun's social media automation sends Telegram confirmations for Twitter/X posts",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-15"
+        },
+        {
+          "id": "ms-004-d18",
+          "text": "Tarun planned to add LinkedIn article publishing to the n8n workflow in Q1 2025",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-15"
+        },
+        {
+          "id": "ms-004-d19",
+          "text": "Phantombuster was chosen over Hootsuite because it supports headless browser-based LinkedIn interactions",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-30"
+        },
+        {
+          "id": "ms-004-d20",
+          "text": "Tarun's client Hafiz asked for a similar LinkedIn automation setup for his consulting firm",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-10"
         }
       ],
       "question": "What was the outcome of the LinkedIn posting automation project?",
@@ -148,6 +708,146 @@
           "category": "fact",
           "importance": 0.8,
           "sessionKey": "session-2025-01-06"
+        },
+        {
+          "id": "ms-005-d1",
+          "text": "Tarun considered hiring a freelance UI/UX designer alongside the developer role",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-20"
+        },
+        {
+          "id": "ms-005-d2",
+          "text": "Tarun interviewed a developer named Arjun who had React experience but wanted RM 8,000/month",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2024-12-18"
+        },
+        {
+          "id": "ms-005-d3",
+          "text": "Tarun posted a separate job listing on JobStreet for a part-time content writer",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-12"
+        },
+        {
+          "id": "ms-005-d4",
+          "text": "Siva previously worked at a fintech startup in Cyberjaya for 3 years",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-08"
+        },
+        {
+          "id": "ms-005-d5",
+          "text": "Tarun hired a virtual assistant named Priya in October 2024 at RM 2,500/month",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-15"
+        },
+        {
+          "id": "ms-005-d6",
+          "text": "The developer job posting received 45 applications within the first two weeks",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-22"
+        },
+        {
+          "id": "ms-005-d7",
+          "text": "Tarun budgeted RM 6,500/month for a marketing specialist role he plans to fill in Q2 2025",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-01-15"
+        },
+        {
+          "id": "ms-005-d8",
+          "text": "Vijay recommended hiring from a talent agency in Penang that specializes in tech roles",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-05"
+        },
+        {
+          "id": "ms-005-d9",
+          "text": "Tarun posted a job on LinkedIn for a DevOps engineer in February 2025 but did not fill it yet",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-05"
+        },
+        {
+          "id": "ms-005-d10",
+          "text": "Tarun considered hiring Siva's former colleague Ravi as a second developer but decided to wait",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-20"
+        },
+        {
+          "id": "ms-005-d11",
+          "text": "The full-stack developer role initially required Python and Django skills before Tarun changed to React and Node.js",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-28"
+        },
+        {
+          "id": "ms-005-d12",
+          "text": "Tarun received a referral from his friend Kamal for a developer who ended up being overqualified",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-15"
+        },
+        {
+          "id": "ms-005-d13",
+          "text": "Tarun allocated RM 7,000/month total for the developer role including EPF and SOCSO contributions",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-08"
+        },
+        {
+          "id": "ms-005-d14",
+          "text": "Siva started his onboarding with Abundent Academy codebase setup and access provisioning on January 6",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-07"
+        },
+        {
+          "id": "ms-005-d15",
+          "text": "Tarun hired a bookkeeper named Mei Ling on a contract basis at RM 1,200/month in November 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-10"
+        },
+        {
+          "id": "ms-005-d16",
+          "text": "Tarun posted a full-stack developer job on LinkedIn in August 2024 but cancelled the search due to budget constraints",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2024-08-20"
+        },
+        {
+          "id": "ms-005-d17",
+          "text": "The developer position requires working from Tarun's co-working space in Bangsar 3 days a week",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-03"
+        },
+        {
+          "id": "ms-005-d18",
+          "text": "Tarun's total monthly payroll including Siva and Priya is RM 9,000 as of January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-10"
+        },
+        {
+          "id": "ms-005-d19",
+          "text": "A candidate named Kumar from Johor Bahru applied for the developer role but lacked Node.js experience",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-20"
+        },
+        {
+          "id": "ms-005-d20",
+          "text": "Tarun considered outsourcing the Abundent Academy development to a Malaysian agency at RM 15,000/month instead of hiring",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-25"
         }
       ],
       "question": "Did Tarun hire a developer and what are the details?",
@@ -172,6 +872,146 @@
           "category": "fact",
           "importance": 0.7,
           "sessionKey": "session-2025-03-01"
+        },
+        {
+          "id": "ms-006-d1",
+          "text": "Tarun's previous dentist was Dr. Raj at KL Dental Clinic in Petaling Jaya",
+          "category": "entity",
+          "importance": 0.8,
+          "sessionKey": "session-2024-03-10"
+        },
+        {
+          "id": "ms-006-d2",
+          "text": "Dr. Anitha recommended Tarun get a crown replacement within the next 6 months",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-15"
+        },
+        {
+          "id": "ms-006-d3",
+          "text": "Tarun had a dental cleaning appointment on September 15, 2024 at 3 PM",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-10"
+        },
+        {
+          "id": "ms-006-d4",
+          "text": "Smile Perfect Dental in Bangsar is open Monday to Saturday, 9 AM to 6 PM",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-02"
+        },
+        {
+          "id": "ms-006-d5",
+          "text": "Tarun's wife sees Dr. Sarah at Bangsar Dental Care, a different clinic in Bangsar",
+          "category": "entity",
+          "importance": 0.7,
+          "sessionKey": "session-2024-06-20"
+        },
+        {
+          "id": "ms-006-d6",
+          "text": "Dr. Anitha's clinic charges RM 180 per routine cleaning session",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-16"
+        },
+        {
+          "id": "ms-006-d7",
+          "text": "Tarun rescheduled a dental appointment from December 2024 to March 2025 due to travel",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-05"
+        },
+        {
+          "id": "ms-006-d8",
+          "text": "Tarun has an eye checkup with Dr. Lim at ISEC KL on March 20, 2025 at 10 AM",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-28"
+        },
+        {
+          "id": "ms-006-d9",
+          "text": "Tarun visited a dentist in Chennai during his India trip in June 2024 for an emergency filling",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-06-15"
+        },
+        {
+          "id": "ms-006-d10",
+          "text": "Dr. Anitha referred Tarun to an orthodontist at Smile Perfect Dental for a consultation",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-20"
+        },
+        {
+          "id": "ms-006-d11",
+          "text": "Tarun's dental insurance through AIA covers up to RM 1,500/year for routine procedures",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-01-15"
+        },
+        {
+          "id": "ms-006-d12",
+          "text": "Tarun scheduled his daughter's dental checkup at a pediatric dentist in Bangsar for March 16, 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-02"
+        },
+        {
+          "id": "ms-006-d13",
+          "text": "Smile Perfect Dental sent Tarun a reminder about his 6-monthly checkup being overdue",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-15"
+        },
+        {
+          "id": "ms-006-d14",
+          "text": "Tarun considered switching to a dental clinic closer to his home in Damansara",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-10"
+        },
+        {
+          "id": "ms-006-d15",
+          "text": "Dr. Anitha is on leave from March 1-10, 2025 and her colleague Dr. Priya covers during that period",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-25"
+        },
+        {
+          "id": "ms-006-d16",
+          "text": "Tarun had a wisdom tooth extraction at Smile Perfect Dental in April 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-04-10"
+        },
+        {
+          "id": "ms-006-d17",
+          "text": "Tarun's next dental checkup after March is tentatively planned for September 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-01"
+        },
+        {
+          "id": "ms-006-d18",
+          "text": "Dr. Raj at KL Dental Clinic had quoted Tarun RM 3,500 for a crown before Tarun switched dentists",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-05-20"
+        },
+        {
+          "id": "ms-006-d19",
+          "text": "Tarun's medical appointment schedule for March 2025 includes dentist, eye doctor, and annual physical",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-20"
+        },
+        {
+          "id": "ms-006-d20",
+          "text": "Bangsar has 4 dental clinics within walking distance of Tarun's co-working space",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-05"
         }
       ],
       "question": "Who is Tarun's dentist and does he have any upcoming appointments?",
@@ -203,6 +1043,146 @@
           "category": "fact",
           "importance": 0.8,
           "sessionKey": "session-2025-02-01"
+        },
+        {
+          "id": "ms-007-d1",
+          "text": "Tarun explored building an AI-powered invoice generator as a separate SaaS product",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-15"
+        },
+        {
+          "id": "ms-007-d2",
+          "text": "The invoice generator was planned with React frontend and Firebase backend",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-20"
+        },
+        {
+          "id": "ms-007-d3",
+          "text": "Tarun considered pricing the expense tracker at RM 29/month before settling on RM 49",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-28"
+        },
+        {
+          "id": "ms-007-d4",
+          "text": "Siva is building the expense tracker's receipt scanning feature using Google Cloud Vision API",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-05"
+        },
+        {
+          "id": "ms-007-d5",
+          "text": "Tarun researched competitor expense trackers: Wave, Zoho Expense, and a local app called Kakitangan",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-22"
+        },
+        {
+          "id": "ms-007-d6",
+          "text": "The expense tracker initially targeted freelancers before pivoting to Malaysian SMEs",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-01-18"
+        },
+        {
+          "id": "ms-007-d7",
+          "text": "Tarun built a quick prototype of the expense tracker using Bubble.io in December 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-20"
+        },
+        {
+          "id": "ms-007-d8",
+          "text": "The expense tracker will integrate with Malaysian banks via open banking APIs when available",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-10"
+        },
+        {
+          "id": "ms-007-d9",
+          "text": "Tarun considered using Supabase for the Abundent Academy platform before choosing it for the expense tracker",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-05"
+        },
+        {
+          "id": "ms-007-d10",
+          "text": "Vijay suggested adding a payroll module to the expense tracker for an additional RM 29/month",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-08"
+        },
+        {
+          "id": "ms-007-d11",
+          "text": "Tarun planned to launch the expense tracker MVP by end of March 2025",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-01"
+        },
+        {
+          "id": "ms-007-d12",
+          "text": "The expense tracker's AI categorization model will be trained on Malaysian SST tax categories",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-15"
+        },
+        {
+          "id": "ms-007-d13",
+          "text": "Tarun explored building a project management tool for small businesses using Next.js and Supabase",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-10"
+        },
+        {
+          "id": "ms-007-d14",
+          "text": "The expense tracker domain name belanja.ai was purchased for RM 250 in January 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-21"
+        },
+        {
+          "id": "ms-007-d15",
+          "text": "Tarun allocated RM 5,000/month budget for the expense tracker development and hosting costs",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-25"
+        },
+        {
+          "id": "ms-007-d16",
+          "text": "A competing Malaysian expense tracker app priced at RM 39/month launched in February 2025",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-12"
+        },
+        {
+          "id": "ms-007-d17",
+          "text": "Tarun's earlier SaaS project (a CRM tool) was abandoned in August 2024 after 3 months of development",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-15"
+        },
+        {
+          "id": "ms-007-d18",
+          "text": "The expense tracker backend uses Supabase Edge Functions for serverless AI processing",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-30"
+        },
+        {
+          "id": "ms-007-d19",
+          "text": "Tarun considered targeting Indonesian SMEs alongside Malaysian ones but decided to focus on Malaysia first",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-03"
+        },
+        {
+          "id": "ms-007-d20",
+          "text": "Tarun asked Ahmad if his restaurants would be interested in beta testing the expense tracker",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-18"
         }
       ],
       "question": "Tell me about Tarun's expense tracker project: tech stack, target market, and pricing",
@@ -227,6 +1207,146 @@
           "category": "fact",
           "importance": 0.8,
           "sessionKey": "session-2024-08-15"
+        },
+        {
+          "id": "ms-008-d1",
+          "text": "Tarun and his former business partner Deepak dissolved their previous venture in 2023",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-03-10"
+        },
+        {
+          "id": "ms-008-d2",
+          "text": "Vijay introduced Tarun to a potential investor named Datuk Razak at a KL networking event",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-20"
+        },
+        {
+          "id": "ms-008-d3",
+          "text": "Tarun and Vijay originally discussed a 50-50 equity split before settling on 70-30",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2024-05-15"
+        },
+        {
+          "id": "ms-008-d4",
+          "text": "Vijay has 15 years of sales experience in the Malaysian education technology sector",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-06-10"
+        },
+        {
+          "id": "ms-008-d5",
+          "text": "Tarun's weekly sync with Siva is every Wednesday at 10 AM to review development progress",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-10"
+        },
+        {
+          "id": "ms-008-d6",
+          "text": "Vijay closed a partnership deal with a Malaysian corporate training company worth RM 50,000",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-05"
+        },
+        {
+          "id": "ms-008-d7",
+          "text": "Tarun considered bringing on a third partner for product development but decided against it",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-20"
+        },
+        {
+          "id": "ms-008-d8",
+          "text": "Vijay handles the Abundent Academy social media accounts alongside his sales responsibilities",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-01"
+        },
+        {
+          "id": "ms-008-d9",
+          "text": "The Monday sync was previously at 9 AM but was moved to 11 AM in July 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-05"
+        },
+        {
+          "id": "ms-008-d10",
+          "text": "Vijay owns 40% equity in a separate e-commerce business that sells Malaysian products online",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2024-06-20"
+        },
+        {
+          "id": "ms-008-d11",
+          "text": "Tarun's business mentor Rajan meets with him monthly on the first Friday to review strategy",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-04-05"
+        },
+        {
+          "id": "ms-008-d12",
+          "text": "Vijay proposed expanding Abundent Academy into the Singapore market by Q3 2025",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-15"
+        },
+        {
+          "id": "ms-008-d13",
+          "text": "Tarun and Vijay signed a formal shareholders agreement in June 2024 with a 2-year vesting schedule",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-06-15"
+        },
+        {
+          "id": "ms-008-d14",
+          "text": "Deepak from Tarun's previous venture now runs a competing AI training academy in KL",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-20"
+        },
+        {
+          "id": "ms-008-d15",
+          "text": "Vijay's sales pipeline for Q1 2025 includes 8 corporate training proposals totaling RM 120,000",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-05"
+        },
+        {
+          "id": "ms-008-d16",
+          "text": "Tarun handles the technical product side while Vijay manages all client-facing sales meetings",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-10"
+        },
+        {
+          "id": "ms-008-d17",
+          "text": "Vijay suggested having a bi-weekly strategy meeting in addition to the Monday sync",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-15"
+        },
+        {
+          "id": "ms-008-d18",
+          "text": "Tarun's Monday calendar is typically blocked from 10 AM to 1 PM for internal meetings",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-01"
+        },
+        {
+          "id": "ms-008-d19",
+          "text": "Abundent Academy's board of advisors includes 3 members who meet quarterly",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-15"
+        },
+        {
+          "id": "ms-008-d20",
+          "text": "Vijay and Tarun attended a Malaysian startup founders retreat in Langkawi in August 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-25"
         }
       ],
       "question": "Who is Vijay and what is his role at Abundent Academy?",
@@ -258,6 +1378,146 @@
           "category": "fact",
           "importance": 0.8,
           "sessionKey": "session-2025-02-15"
+        },
+        {
+          "id": "ms-009-d1",
+          "text": "Tarun ran a 1-day AI workshop at Menara KL in November 2024 with 30 attendees",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-25"
+        },
+        {
+          "id": "ms-009-d2",
+          "text": "The November 2024 workshop tickets were priced at RM 500 each",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-10"
+        },
+        {
+          "id": "ms-009-d3",
+          "text": "Tarun considered hosting the AI Bootcamp at Sunway Convention Centre before choosing KLCC",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-20"
+        },
+        {
+          "id": "ms-009-d4",
+          "text": "Vijay suggested running a 2-day intensive instead of 3 days to reduce venue costs",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-12"
+        },
+        {
+          "id": "ms-009-d5",
+          "text": "Tarun is also planning an online AI Masterclass webinar series starting May 2025",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-20"
+        },
+        {
+          "id": "ms-009-d6",
+          "text": "The KLCC Convention Centre venue rental for 3 days costs RM 18,000",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-12"
+        },
+        {
+          "id": "ms-009-d7",
+          "text": "Tarun planned an AI Bootcamp for February 2025 that was postponed to April due to low registrations",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-01-25"
+        },
+        {
+          "id": "ms-009-d8",
+          "text": "The early bird pricing for the postponed February bootcamp was RM 1,200",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-08"
+        },
+        {
+          "id": "ms-009-d9",
+          "text": "Tarun's AI Bootcamp will feature guest speakers from Grab and Petronas",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-18"
+        },
+        {
+          "id": "ms-009-d10",
+          "text": "A competing AI bootcamp in KL is scheduled for April 25-26, 2025 at RM 1,800 per ticket",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-22"
+        },
+        {
+          "id": "ms-009-d11",
+          "text": "Tarun offered a VIP ticket tier at RM 3,500 with 1-on-1 consultation included",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-16"
+        },
+        {
+          "id": "ms-009-d12",
+          "text": "The AI Bootcamp target is 100 attendees with a breakeven point of 50 tickets sold",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-10"
+        },
+        {
+          "id": "ms-009-d13",
+          "text": "Tarun ran a free AI workshop at a KL co-working space in September 2024 to test content",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-20"
+        },
+        {
+          "id": "ms-009-d14",
+          "text": "The bootcamp registration page went live on February 1, 2025 on the Abundent Academy website",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-01"
+        },
+        {
+          "id": "ms-009-d15",
+          "text": "Tarun considered an April 11-13, 2025 date for the bootcamp before finalizing April 18-20",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-30"
+        },
+        {
+          "id": "ms-009-d16",
+          "text": "Vijay secured a sponsorship from a Malaysian bank for the AI Bootcamp worth RM 10,000",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-25"
+        },
+        {
+          "id": "ms-009-d17",
+          "text": "Tarun planned to offer group discounts: 5+ tickets at RM 1,300 each for early bird groups",
+          "category": "fact",
+          "importance": 0.8,
+          "sessionKey": "session-2025-02-14"
+        },
+        {
+          "id": "ms-009-d18",
+          "text": "The live AI Bootcamp event requires AV equipment rental estimated at RM 5,000",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-13"
+        },
+        {
+          "id": "ms-009-d19",
+          "text": "Tarun is considering hosting a second bootcamp in Penang in June 2025 if KL is successful",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2025-03-01"
+        },
+        {
+          "id": "ms-009-d20",
+          "text": "The AI Bootcamp curriculum covers prompt engineering, n8n automation, and AI for Malaysian businesses",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-02-05"
         }
       ],
       "question": "When and where is Tarun's AI Bootcamp, and how much do tickets cost?",
@@ -289,6 +1549,146 @@
           "category": "fact",
           "importance": 0.7,
           "sessionKey": "session-2024-12-31"
+        },
+        {
+          "id": "ms-010-d1",
+          "text": "Tarun considered buying a SecretLab Titan gaming chair before choosing the Herman Miller Aeron",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-25"
+        },
+        {
+          "id": "ms-010-d2",
+          "text": "Tarun bought a FlexiSpot desk mat for RM 120 to go with his standing desk",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-22"
+        },
+        {
+          "id": "ms-010-d3",
+          "text": "Tarun set up dual Dell U2723QE 4K monitors on a monitor arm in September 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-05"
+        },
+        {
+          "id": "ms-010-d4",
+          "text": "The Herman Miller Aeron was purchased from an authorized dealer in Petaling Jaya for RM 5,200",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-12"
+        },
+        {
+          "id": "ms-010-d5",
+          "text": "Tarun's co-working space in Bangsar already has an ergonomic setup with a standing desk",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-06-15"
+        },
+        {
+          "id": "ms-010-d6",
+          "text": "Tarun invested RM 3,500 in a Rode PodMic and audio interface for podcast recording in October 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-10"
+        },
+        {
+          "id": "ms-010-d7",
+          "text": "Vijay set up his home office with a budget of RM 8,000 in 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-09-15"
+        },
+        {
+          "id": "ms-010-d8",
+          "text": "Tarun's previous desk was an IKEA Bekant that he used for 3 years before upgrading",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-18"
+        },
+        {
+          "id": "ms-010-d9",
+          "text": "Tarun considered the FlexiSpot E7 Pro at RM 3,400 but chose the standard E7 to save costs",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-15"
+        },
+        {
+          "id": "ms-010-d10",
+          "text": "Tarun added a Logitech MX Master 3S mouse and MX Keys keyboard to his setup for RM 850",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-20"
+        },
+        {
+          "id": "ms-010-d11",
+          "text": "Tarun claimed the home office equipment as a business expense for tax deduction in 2024",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-28"
+        },
+        {
+          "id": "ms-010-d12",
+          "text": "Tarun installed acoustic panels in his home office in November 2024 for RM 600",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-11-15"
+        },
+        {
+          "id": "ms-010-d13",
+          "text": "The FlexiSpot E7 desk has a 12-year warranty and was delivered within 5 business days",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-07-21"
+        },
+        {
+          "id": "ms-010-d14",
+          "text": "Tarun spent RM 2,500 on home office lighting including a BenQ ScreenBar and Elgato Key Light",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-10-20"
+        },
+        {
+          "id": "ms-010-d15",
+          "text": "Siva uses a basic IKEA desk setup at home and Tarun offered to help him upgrade",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-15"
+        },
+        {
+          "id": "ms-010-d16",
+          "text": "Tarun's home office room was renovated in June 2024 for RM 8,000 before the equipment purchases",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-06-30"
+        },
+        {
+          "id": "ms-010-d17",
+          "text": "Tarun plans to add a treadmill under-desk pad to his home office setup in Q1 2025",
+          "category": "decision",
+          "importance": 0.7,
+          "sessionKey": "session-2025-01-02"
+        },
+        {
+          "id": "ms-010-d18",
+          "text": "The total home office spending in 2024 was initially budgeted at RM 10,000 but went over by RM 5,000",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-12-30"
+        },
+        {
+          "id": "ms-010-d19",
+          "text": "Tarun ordered the Herman Miller Aeron from the same dealer where Ahmad got his office chairs",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-08"
+        },
+        {
+          "id": "ms-010-d20",
+          "text": "Tarun donated his old IKEA desk and chair to a community centre in Bangsar after the upgrade",
+          "category": "fact",
+          "importance": 0.7,
+          "sessionKey": "session-2024-08-15"
         }
       ],
       "question": "What ergonomic equipment has Tarun set up in his home office?",

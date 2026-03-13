@@ -15,6 +15,126 @@
           "text": "Tarun's secondary timezone preference is IST when working with Indian collaborators",
           "category": "preference",
           "importance": 0.6
+        },
+        {
+          "id": "ext-001-d1",
+          "text": "Tarun schedules client calls in SGT (Singapore Time, UTC+8) when meeting Singaporean partners",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d2",
+          "text": "Tarun occasionally uses JST (Japan Standard Time, UTC+9) for Tokyo-based vendor calls",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d3",
+          "text": "Tarun sets deadlines in EST (Eastern Standard Time, UTC-5) for US clients",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d4",
+          "text": "Tarun avoids scheduling meetings in GMT because it confuses his ASEAN collaborators",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d5",
+          "text": "Tarun uses AEST (UTC+10) when coordinating with the Melbourne office",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d6",
+          "text": "Tarun tried using UTC for all scheduling but switched back after team complaints",
+          "category": "decision",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d7",
+          "text": "Tarun uses PST (UTC-8) references when posting content aimed at Silicon Valley audience",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d8",
+          "text": "Tarun keeps his calendar in CST (China Standard Time, UTC+8) for cross-border Shenzhen meetings",
+          "category": "preference",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-001-d9",
+          "text": "Tarun prefers Google Calendar over Outlook for managing his meeting schedule",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d10",
+          "text": "Tarun blocks 12-2 PM MYT daily as a no-meeting zone for deep work",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d11",
+          "text": "Tarun uses Calendly for external meeting scheduling with a 30-minute default slot",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d12",
+          "text": "Tarun limits meetings to a maximum of 4 per day to preserve focus time",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d13",
+          "text": "Tarun's meeting recordings are stored in Google Drive under the Meetings folder",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d14",
+          "text": "Tarun prefers 45-minute meetings over the default 60-minute blocks",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d15",
+          "text": "Priya schedules her yoga classes in MYT at the Bangsar studio every morning",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d16",
+          "text": "The Abundent Academy webinars are scheduled in MYT for the Southeast Asian audience",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d17",
+          "text": "Ravi from the Mumbai team prefers IST and refuses to adjust for MYT",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d18",
+          "text": "The preferred timezone for Abundent Academy live sessions is MYT on weekday evenings",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-001-d19",
+          "text": "Tarun's preferred meeting tool is Google Meet for internal calls",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-001-d20",
+          "text": "Tarun sets timezone reminders in Slack for cross-region standups",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What is Tarun's preferred timezone for meetings?",
@@ -35,6 +155,126 @@
         {
           "id": "ext-002-m1",
           "text": "Tarun's WhatsApp is linked to his primary phone number",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d1",
+          "text": "Tarun's office landline number is +60321456789",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d2",
+          "text": "Tarun's previous Malaysian phone number was +60129934217 before he switched carriers",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d3",
+          "text": "Tarun's secondary SIM card number is +60178823410 on the Digi network",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d4",
+          "text": "Tarun's Indian phone number +919876543210 is still active for family calls",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d5",
+          "text": "Tarun's fax number at the Bangsar South office is +60321456790",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d6",
+          "text": "Tarun ported his phone number from Celcom to Maxis in January 2025",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d7",
+          "text": "Tarun's Google Voice number for US contacts is +14155557890",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d8",
+          "text": "Tarun registered his Grab account with a different phone number ending in 4217",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d9",
+          "text": "Tarun uses his phone number as the 2FA recovery for all banking apps",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d10",
+          "text": "Tarun's phone plan is Maxis MaxisONE with unlimited data at RM 158/month",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d11",
+          "text": "Tarun's phone is a Samsung Galaxy S24 Ultra with a black titanium case",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d12",
+          "text": "Tarun prefers Signal over WhatsApp for sensitive business conversations",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d13",
+          "text": "Tarun's Telegram handle is @tarunsharma_kl linked to his primary number",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d14",
+          "text": "Tarun's phone number is registered with the Malaysian Do Not Call Registry",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d15",
+          "text": "Priya's phone number is +60127745612 on the Celcom network",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d16",
+          "text": "The Abundent Academy support line is +60321009988 staffed during business hours",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d17",
+          "text": "Ravi's phone number in Mumbai is +912245678901 for coordination calls",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d18",
+          "text": "The Bangsar South co-working space reception phone number is +60321456700",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d19",
+          "text": "Tarun's phone has international roaming activated for trips to India and Singapore",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-002-d20",
+          "text": "Tarun uses his phone primarily for WhatsApp Business and Telegram group management",
           "category": "fact",
           "importance": 0.7
         }
@@ -59,6 +299,126 @@
           "text": "Tarun's work-from-home setup includes a Blue Yeti microphone and Logitech 4K webcam",
           "category": "fact",
           "importance": 0.7
+        },
+        {
+          "id": "ext-003-d1",
+          "text": "Tarun tested the Rode NT-USB microphone but returned it due to background noise pickup",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d2",
+          "text": "Tarun considered upgrading to a Shure MV7 microphone for podcast recording",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d3",
+          "text": "Tarun's previous microphone was an Audio-Technica AT2020 before switching setups",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d4",
+          "text": "Tarun uses a HyperX QuadCast microphone at the Bangsar South office",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d5",
+          "text": "Tarun bought a Samson Q2U microphone as a travel backup for conferences",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d6",
+          "text": "Tarun recommends the Fifine K669 microphone to Abundent Academy students on a budget",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d7",
+          "text": "Tarun's Blue Yeti Nano was gifted to Ravi after upgrading to the full-size model",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-003-d8",
+          "text": "Tarun keeps a lapel microphone in his laptop bag for on-the-go recordings",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d9",
+          "text": "Tarun's home office has acoustic foam panels installed to reduce echo during calls",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d10",
+          "text": "Tarun uses an Elgato Stream Deck to toggle mute and switch scenes during webinars",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d11",
+          "text": "Tarun's dual monitors are 27-inch Dell UltraSharp models with USB-C connectivity",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d12",
+          "text": "Tarun's standing desk is a FlexiSpot E7 with programmable height presets",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d13",
+          "text": "Tarun uses a Logitech MX Master 3S mouse and MX Keys keyboard at home",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d14",
+          "text": "Tarun's webcam light is a Neewer ring light mounted above the monitor",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d15",
+          "text": "Priya uses an AirPods microphone for her work calls from the living room",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d16",
+          "text": "The Abundent Academy recording studio uses a Rode PodMic for course content",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d17",
+          "text": "Ahmad from the co-working space uses a Blue Snowball microphone for client demos",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d18",
+          "text": "The Bangsar South meeting room has a Jabra Speak 750 speakerphone for group calls",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d19",
+          "text": "Tarun's work-from-home setup cost approximately RM 8,500 including all peripherals",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-003-d20",
+          "text": "Tarun uses OBS Studio with his microphone for recording Abundent Academy tutorials",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What microphone does Tarun use for work calls?",
@@ -81,6 +441,126 @@
           "text": "Tarun pays all business expenses via Maybank Visa credit card ending in 4521",
           "category": "fact",
           "importance": 0.8
+        },
+        {
+          "id": "ext-004-d1",
+          "text": "Tarun opened an RHB Bank savings account for his children's education fund",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d2",
+          "text": "Tarun keeps a Public Bank fixed deposit earning 3.8% per annum",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d3",
+          "text": "Tarun closed his Hong Leong Bank account after switching to Maybank in 2023",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d4",
+          "text": "Tarun's HSBC Malaysia account is used exclusively for international wire transfers",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d5",
+          "text": "Tarun uses a CIMB Mastercard ending in 8832 for online subscriptions",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d6",
+          "text": "Tarun tried Bank Islam for a shariah-compliant business loan but was declined",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d7",
+          "text": "Tarun's Wise account holds USD and SGD balances for overseas payments",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d8",
+          "text": "Tarun has an AmBank account that he rarely uses, opened for a promotional rate",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d9",
+          "text": "Tarun's Maybank account number ends in 7823 and is linked to DuitNow",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d10",
+          "text": "Tarun uses Maybank MAE app for daily expense tracking and QR payments",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d11",
+          "text": "Tarun's CIMB business current account handles all Abundent Academy revenue",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d12",
+          "text": "Tarun set up auto-debit from Maybank for utility bills and internet payments",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d13",
+          "text": "Tarun's bank loan for the Sri Hartamas apartment is with Maybank at 3.5% interest",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-004-d14",
+          "text": "Tarun prefers Touch 'n Go eWallet over GrabPay for toll and parking payments",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d15",
+          "text": "Priya's primary bank is CIMB and she handles household budgeting through it",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d16",
+          "text": "Abundent Academy's corporate bank account is with CIMB under Abundent Sdn Bhd",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d17",
+          "text": "Ravi uses ICICI Bank as his primary bank in Mumbai for business transfers",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d18",
+          "text": "Ahmad recommended Maybank to Tarun when he first moved to Malaysia",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d19",
+          "text": "Tarun's primary bank offers a Treatspoints rewards program on credit card spending",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-004-d20",
+          "text": "Tarun keeps emergency funds of RM 50,000 across bank accounts",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What is Tarun's primary bank?",
@@ -103,6 +583,126 @@
           "text": "Abundent Academy monthly subscription is priced at RM 299 per member",
           "category": "fact",
           "importance": 0.8
+        },
+        {
+          "id": "ext-005-d1",
+          "text": "Abundent Academy annual plan costs RM 2,499, saving members roughly RM 1,089 per year",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d2",
+          "text": "Abundent Academy lifetime membership was offered at RM 4,999 during the 2024 launch",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d3",
+          "text": "Abundent Academy's competitor Digital Durian charges RM 199/month for social media courses",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d4",
+          "text": "Abundent Academy previously offered a free tier with limited access to 3 modules",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d5",
+          "text": "Tarun plans to raise Abundent Academy pricing to RM 399/month in Q3 2026",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d6",
+          "text": "Abundent Academy corporate training packages start at RM 5,000 per team of 10",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d7",
+          "text": "Abundent Academy originally started as a digital marketing bootcamp before pivoting",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d8",
+          "text": "Abundent Academy plans to add prompt engineering courses in Q2 2026",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d9",
+          "text": "Abundent Academy has 340 active paying members as of March 2026",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d10",
+          "text": "Abundent Academy hosts weekly live Q&A sessions every Wednesday at 8 PM MYT",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d11",
+          "text": "Abundent Academy content is delivered through a custom-built LMS on Next.js",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d12",
+          "text": "Abundent Academy's refund policy allows cancellation within the first 14 days",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d13",
+          "text": "Tarun's friend Amir runs a coding bootcamp in Penang called CodeKampung charging RM 1,500 per cohort",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d14",
+          "text": "MDEC (Malaysia Digital Economy Corporation) featured Abundent Academy in their 2025 report",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d15",
+          "text": "Tarun teaches AI automation workshops at the Bangsar South WeWork on Saturdays",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-005-d16",
+          "text": "The academy uses Stripe for international payments and Billplz for Malaysian ringgit",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d17",
+          "text": "Tarun teaches solopreneurs how to use ChatGPT for content creation in his free YouTube series",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-005-d18",
+          "text": "Abundent Academy's automation curriculum covers n8n, Make, and Zapier comparisons",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d19",
+          "text": "Tarun costs RM 500/hour for private AI automation consulting outside the academy",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-005-d20",
+          "text": "Abundent Academy teaches solopreneurs how to build landing pages but not full web apps",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What does Abundent Academy teach and how much does it cost?",
@@ -123,6 +723,126 @@
         {
           "id": "ext-006-m1",
           "text": "Tarun takes his kids to school every weekday at 7:30 AM before starting work",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d1",
+          "text": "Tarun's niece Ananya (age 9) visits from Mumbai every school holiday",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d2",
+          "text": "Tarun's nephew Vikram (age 12) lives in Chennai with Tarun's brother",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d3",
+          "text": "Tarun's colleague Ahmad has three children: Aisyah (10), Hakim (8), and Zara (3)",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d4",
+          "text": "Tarun's sister Meera has a daughter named Kavya (age 5) who is Arya's closest cousin",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d5",
+          "text": "Tarun enrolled Arya in piano lessons at the Yamaha Music School in Mont Kiara",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d6",
+          "text": "Rohan attends Tadika Brainy Bunch preschool near Sri Hartamas",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d7",
+          "text": "Arya is in Year 1 at Sri KDU International School in Kota Damansara",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d8",
+          "text": "Tarun plans to enrol Rohan in the same international school as Arya next year",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d9",
+          "text": "Tarun and Priya celebrated their 10th wedding anniversary in December 2025",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d10",
+          "text": "Priya works part-time as a UX designer for a Penang-based startup",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d11",
+          "text": "Tarun's parents live in Jaipur and visit KL twice a year to see the grandchildren",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d12",
+          "text": "Tarun's family has a domestic helper named Siti who assists with childcare",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d13",
+          "text": "Ravi's children are named Dev (age 6) and Mira (age 3) and attend school in Mumbai",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d14",
+          "text": "Tarun's friend Sanjay has twins named Aditya and Aditi who are the same age as Arya",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d15",
+          "text": "Tarun coaches Rohan's weekend football team at the Desa ParkCity field",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d16",
+          "text": "Arya and Rohan both enjoy swimming at the condo pool on Saturday mornings",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d17",
+          "text": "Tarun reads bedtime stories to his children every night at 8:30 PM",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d18",
+          "text": "Tarun's kids enjoy weekend trips to Kidzania and Aquaria KLCC",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d19",
+          "text": "Priya's brother has children named Rahul (age 8) and Shreya (age 6)",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-006-d20",
+          "text": "Tarun's children speak English, Malay, and basic Hindi at home",
           "category": "fact",
           "importance": 0.7
         }
@@ -147,6 +867,126 @@
           "text": "Tarun uses Neovim for quick file edits and server-side work",
           "category": "preference",
           "importance": 0.6
+        },
+        {
+          "id": "ext-007-d1",
+          "text": "Tarun tried JetBrains WebStorm but found it too heavy for his workflow",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d2",
+          "text": "Tarun used Sublime Text for years before switching to VS Code in 2020",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d3",
+          "text": "Tarun tested GitHub Copilot but prefers Cursor AI for its chat-based pair programming",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d4",
+          "text": "Tarun experimented with Windsurf editor for a week but switched back to VS Code",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d5",
+          "text": "Tarun uses the Codeium extension as a free AI code completion alternative for personal projects",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d6",
+          "text": "Tarun evaluated Zed editor for its speed but missed VS Code's extension ecosystem",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d7",
+          "text": "Tarun uses the standalone Cursor IDE for some projects instead of the VS Code extension",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-007-d8",
+          "text": "Tarun recommends Replit to Abundent Academy students for browser-based AI coding",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d9",
+          "text": "Tarun's VS Code theme is One Dark Pro with JetBrains Mono font at 14px",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d10",
+          "text": "Tarun has 47 VS Code extensions installed including Prettier, ESLint, and GitLens",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d11",
+          "text": "Tarun uses VS Code Remote SSH to edit code directly on his VPS",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d12",
+          "text": "Tarun prefers VS Code's integrated terminal over iTerm2 for most development tasks",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d13",
+          "text": "Tarun uses Vim keybindings in VS Code via the Vim extension for faster navigation",
+          "category": "preference",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d14",
+          "text": "Tarun codes primarily in TypeScript, Python, and occasionally Go",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d15",
+          "text": "Priya uses Figma for design work and occasionally VS Code for HTML prototyping",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d16",
+          "text": "Ahmad prefers Cursor AI as his primary editor for all coding tasks",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d17",
+          "text": "Ravi uses IntelliJ IDEA for Java development and Cursor for Python AI projects",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d18",
+          "text": "The Abundent Academy coding labs recommend VS Code as the default editor for students",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d19",
+          "text": "Tarun uses AI code review tools integrated into his VS Code workflow",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-007-d20",
+          "text": "Tarun's editor setup syncs across devices using VS Code Settings Sync",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What code editor does Tarun prefer for AI-assisted coding?",
@@ -167,6 +1007,126 @@
         {
           "id": "ext-008-m1",
           "text": "Tarun's office is located in Bangsar South, Kuala Lumpur — he goes in on Tuesdays and Thursdays",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d1",
+          "text": "Tarun's previous home address was Unit 8A, Kiara View Condominium, Mont Kiara 50480",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d2",
+          "text": "Tarun's parents' home address in Jaipur is 42 Malviya Nagar, Jaipur 302017",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d3",
+          "text": "Tarun's Airbnb for the Penang retreat was at 15 Gurney Drive, Georgetown 10250",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d4",
+          "text": "Tarun is considering moving to a larger unit at Seri Riana Residences in Wangsa Maju",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d5",
+          "text": "Tarun's Bangsar South office address is Level 8, Nexus Tower, Bangsar South 59200",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d6",
+          "text": "Tarun rented a serviced apartment at Unit 3C, Tropicana Gardens, Kota Damansara during renovations",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d7",
+          "text": "Tarun's mailing address for Abundent Academy is PO Box 1247, Bangsar South 59200",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d8",
+          "text": "Tarun stayed at Unit 22F, The Residences KLCC during a 2-week home renovation in 2024",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d9",
+          "text": "Tarun's home at Sri Hartamas Residences has 3 bedrooms and a dedicated home office",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d10",
+          "text": "Tarun pays RM 3,200/month rent for his Sri Hartamas apartment",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d11",
+          "text": "Tarun's home is a 15-minute drive from the Bangsar South office via the SPRINT highway",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d12",
+          "text": "Tarun's condo management office is on the ground floor of Sri Hartamas Residences",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d13",
+          "text": "Tarun parks in basement B2, lot 12B at Sri Hartamas Residences",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d14",
+          "text": "Tarun's home WiFi is on the Unifi 500Mbps plan with a TP-Link mesh system",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d15",
+          "text": "Priya's parents live at 18 Damansara Heights, Kuala Lumpur 50490",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d16",
+          "text": "Ahmad's home address is Unit 5D, Desa ParkCity Residences, Kuala Lumpur 52200",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d17",
+          "text": "Ravi's address in Mumbai is Flat 301, Hiranandani Gardens, Powai 400076",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d18",
+          "text": "The Abundent Academy physical workshop space is at Level 3, The Hub SS2, Petaling Jaya 47300",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d19",
+          "text": "Tarun's home address is registered with Pos Malaysia for all business correspondence",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-008-d20",
+          "text": "Tarun's home is located near Hartamas Shopping Centre in the Sri Hartamas neighbourhood",
           "category": "fact",
           "importance": 0.7
         }
@@ -191,6 +1151,126 @@
           "text": "n8n instance runs on the same server as the OpenClaw gateway at port 5678",
           "category": "fact",
           "importance": 0.7
+        },
+        {
+          "id": "ext-009-d1",
+          "text": "Tarun previously used Zapier for 2 years before migrating all workflows to n8n",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d2",
+          "text": "Tarun evaluated Make (formerly Integromat) but found n8n's self-hosted model more cost-effective",
+          "category": "decision",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d3",
+          "text": "Tarun tested Pipedream for API-heavy automations but preferred n8n's visual builder",
+          "category": "decision",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d4",
+          "text": "Tarun tried Power Automate for Microsoft Teams integration but abandoned it after a week",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d5",
+          "text": "Tarun uses Activepieces as a backup automation platform for non-critical workflows",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d6",
+          "text": "Tarun briefly used IFTTT for personal home automation before consolidating into n8n",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d7",
+          "text": "Tarun considered Temporal.io for complex multi-step workflows requiring durability",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d8",
+          "text": "Tarun rejected Tray.io due to its enterprise pricing model being too expensive for solopreneurs",
+          "category": "decision",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d9",
+          "text": "Tarun's n8n instance has 73 active workflows handling CRM, email, and social media tasks",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d10",
+          "text": "Tarun's automation setup includes webhook triggers for Stripe payment events",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d11",
+          "text": "Tarun's VPS runs on Hetzner with 4 vCPU and 8GB RAM hosting multiple services",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d12",
+          "text": "Tarun backs up his n8n workflows to a private GitHub repository every night",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d13",
+          "text": "Tarun uses Docker Compose to manage all self-hosted services on the VPS",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d14",
+          "text": "Tarun teaches workflow automation using Zapier in Abundent Academy because students find it easier",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-009-d15",
+          "text": "Ahmad uses Zapier as his primary automation platform for his e-commerce business",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d16",
+          "text": "Ravi uses Make (Integromat) for automating his Mumbai consulting practice workflows",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d17",
+          "text": "The Abundent Academy website uses Zapier to sync form submissions to the CRM",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d18",
+          "text": "Tarun's VPS automation stack includes n8n, Caddy reverse proxy, and PostgreSQL",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d19",
+          "text": "Tarun self-hosts his automation platform to avoid per-task pricing of cloud services",
+          "category": "decision",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-009-d20",
+          "text": "Tarun's workflow automation handles lead nurturing sequences for Abundent Academy signups",
+          "category": "fact",
+          "importance": 0.7
         }
       ],
       "question": "What automation platform does Tarun use?",
@@ -211,6 +1291,126 @@
         {
           "id": "ext-010-m1",
           "text": "Tarun posts on LinkedIn every Tuesday and Thursday at 9 AM MYT for maximum reach",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d1",
+          "text": "Tarun posts on Twitter/X every weekday at 10 AM MYT targeting the tech audience",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d2",
+          "text": "Tarun posts LinkedIn carousels on Mondays at 8 AM MYT as an experiment",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-010-d3",
+          "text": "Tarun previously posted on LinkedIn daily at 7 AM MYT before optimizing the schedule",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d4",
+          "text": "Tarun tested posting on LinkedIn at 12 PM MYT but engagement dropped 40%",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d5",
+          "text": "Tarun schedules LinkedIn posts at 6 PM IST when targeting the Indian professional audience",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d6",
+          "text": "Tarun plans to add Friday LinkedIn posts in Q2 2026 covering weekend reading recommendations",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d7",
+          "text": "Tarun used to post on LinkedIn three times a week including Saturdays before reducing",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d8",
+          "text": "Tarun's LinkedIn newsletter goes out every Sunday at 10 AM MYT to 2,400 subscribers",
+          "category": "fact",
+          "importance": 0.8
+        },
+        {
+          "id": "ext-010-d9",
+          "text": "Tarun's LinkedIn profile has over 12,000 followers as of March 2026",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d10",
+          "text": "Tarun uses Buffer to schedule all LinkedIn posts in advance",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d11",
+          "text": "Tarun's LinkedIn content focuses on AI automation, solopreneurship, and Malaysian tech ecosystem",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d12",
+          "text": "Tarun's top-performing LinkedIn post was about n8n vs Zapier with 45,000 impressions",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d13",
+          "text": "Tarun repurposes LinkedIn posts for the Abundent Academy blog every Friday",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d14",
+          "text": "Tarun writes LinkedIn posts in batches on Sunday evenings for the upcoming week",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d15",
+          "text": "Ahmad posts on LinkedIn every Monday and Wednesday at 8 AM MYT about e-commerce",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d16",
+          "text": "Ravi posts on LinkedIn daily at 9 AM IST covering startup funding news in India",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d17",
+          "text": "Priya posts on LinkedIn once a month sharing UX design case studies",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d18",
+          "text": "The Abundent Academy LinkedIn company page posts three times a week managed by a VA",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d19",
+          "text": "Tarun posts on LinkedIn about AI tools and shares his posting schedule publicly",
+          "category": "fact",
+          "importance": 0.7
+        },
+        {
+          "id": "ext-010-d20",
+          "text": "Tarun engages with LinkedIn comments for 30 minutes after each post goes live",
           "category": "fact",
           "importance": 0.7
         }
