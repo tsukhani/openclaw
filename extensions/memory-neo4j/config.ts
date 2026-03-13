@@ -34,6 +34,7 @@ export type MemoryNeo4jConfig = {
   };
   autoCapture: boolean;
   autoCaptureAssistant: boolean;
+  autoCaptureTasks: boolean;
   autoCaptureSkipPattern?: RegExp;
   autoRecall: boolean;
   autoRecallMinScore: number;
@@ -135,6 +136,7 @@ export type ExtractionConfig = {
   baseUrl: string;
   temperature: number;
   maxRetries: number;
+  autoCaptureTasks: boolean;
 };
 
 export const EMBEDDING_DIMENSIONS: Record<string, number> = {
@@ -228,6 +230,7 @@ function resolveEnvVars(value: string): string {
  */
 export function resolveExtractionConfig(
   cfgExtraction?: MemoryNeo4jConfig["extraction"],
+  autoCaptureTasks: boolean = false,
 ): ExtractionConfig {
   const model = cfgExtraction?.model ?? process.env.EXTRACTION_MODEL ?? "anthropic/claude-opus-4-6";
 
@@ -288,6 +291,7 @@ export function resolveExtractionConfig(
     baseUrl,
     temperature: 0.0,
     maxRetries: 2,
+    autoCaptureTasks,
   };
 }
 
@@ -325,6 +329,7 @@ export const memoryNeo4jConfigSchema = {
         "neo4j",
         "autoCapture",
         "autoCaptureAssistant",
+        "autoCaptureTasks",
         "autoCaptureSkipPattern",
         "autoRecall",
         "autoRecallMinScore",
@@ -658,6 +663,7 @@ export const memoryNeo4jConfigSchema = {
       extraction,
       autoCapture: cfg.autoCapture !== false,
       autoCaptureAssistant: cfg.autoCaptureAssistant === true, // off by default
+      autoCaptureTasks: cfg.autoCaptureTasks === true, // off by default
       autoCaptureSkipPattern: autoCaptureSkipPatternCompiled,
       autoRecall: cfg.autoRecall !== false,
       autoRecallMinScore: parseAutoRecallMinScore(cfg.autoRecallMinScore),

@@ -40,6 +40,10 @@
       "label": "Auto-Capture",
       "help": "Automatically capture important information from conversations"
     },
+    "autoCaptureTasks": {
+      "label": "Auto-Capture Tasks",
+      "help": "Detect task signals in assistant replies and write them to TASKS.md"
+    },
     "autoRecall": {
       "label": "Auto-Recall",
       "help": "Automatically inject relevant memories into context"
@@ -135,6 +139,9 @@
         "type": "boolean"
       },
       "autoCaptureAssistant": {
+        "type": "boolean"
+      },
+      "autoCaptureTasks": {
         "type": "boolean"
       },
       "autoRecall": {

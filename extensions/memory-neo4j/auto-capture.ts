@@ -8,6 +8,8 @@
  */
 
 import { randomUUID } from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 import { passesAttentionGate, passesAssistantAttentionGate } from "./attention-gate.js";
 import type { ExtractionConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
@@ -16,7 +18,13 @@ import { extractUserMessages, extractAssistantMessages } from "./message-utils.j
 import { metrics } from "./metrics.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger, MemorySource } from "./schema.js";
-import { parseTaskLedger } from "./task-ledger.js";
+import { detectTaskSignals } from "./task-detector.js";
+import {
+  addTaskToLedger,
+  completeTaskInLedger,
+  parseTaskLedger,
+  updateTaskInLedger,
+} from "./task-ledger.js";
 
 // ============================================================================
 // Layer 3: TASKS.md cache for auto-capture task tagging
@@ -47,10 +55,8 @@ async function getActiveTaskIdForCapture(
   let activeTaskId: string | undefined;
   if (workspaceDir) {
     try {
-      const fs = await import("node:fs/promises");
-      const path = await import("node:path");
-      const tasksPath = path.default.join(workspaceDir, "TASKS.md");
-      const content = await fs.default.readFile(tasksPath, "utf-8");
+      const tasksPath = path.join(workspaceDir, "TASKS.md");
+      const content = await fs.readFile(tasksPath, "utf-8");
       const ledger = parseTaskLedger(content);
       // Only auto-tag when there's exactly one active task to avoid ambiguity
       if (ledger.activeTasks.length === 1) {
@@ -73,6 +79,140 @@ async function getActiveTaskIdForCapture(
 
 // Exported for testing
 export { getActiveTaskIdForCapture as _getActiveTaskIdForCapture };
+
+function invalidateTaskLedgerCache(workspaceDir: string | undefined): void {
+  _taskLedgerCache.delete(workspaceDir ?? "__default__");
+}
+
+function normalizeTaskTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+async function loadActiveTasks(
+  workspaceDir: string,
+): Promise<Array<{ id: string; title: string }> | null> {
+  const tasksPath = path.join(workspaceDir, "TASKS.md");
+
+  try {
+    const content = await fs.readFile(tasksPath, "utf-8");
+    if (!content.trim()) {
+      return [];
+    }
+    const ledger = parseTaskLedger(content);
+    return ledger.activeTasks.map((task) => ({ id: task.id, title: task.title }));
+  } catch {
+    return null;
+  }
+}
+
+async function findMatchingActiveTaskId(
+  workspaceDir: string,
+  title: string,
+  preferredTaskId?: string,
+): Promise<string | undefined> {
+  const activeTasks = await loadActiveTasks(workspaceDir);
+  if (!activeTasks || activeTasks.length === 0) {
+    return undefined;
+  }
+
+  if (preferredTaskId && activeTasks.some((task) => task.id === preferredTaskId)) {
+    return preferredTaskId;
+  }
+
+  const normalizedTitle = normalizeTaskTitle(title);
+  if (normalizedTitle.length > 0) {
+    const exactMatches = activeTasks.filter(
+      (task) => normalizeTaskTitle(task.title) === normalizedTitle,
+    );
+    if (exactMatches.length === 1) {
+      return exactMatches[0].id;
+    }
+
+    const containsMatches = activeTasks.filter((task) => {
+      const candidateTitle = normalizeTaskTitle(task.title);
+      return candidateTitle.includes(normalizedTitle) || normalizedTitle.includes(candidateTitle);
+    });
+    if (containsMatches.length === 1) {
+      return containsMatches[0].id;
+    }
+  }
+
+  if (activeTasks.length === 1) {
+    return activeTasks[0].id;
+  }
+
+  return undefined;
+}
+
+async function runTaskAutoCapture(
+  retainedAssistant: string[],
+  config: ExtractionConfig,
+  workspaceDir: string,
+  logger: Logger,
+  signal?: AbortSignal,
+): Promise<void> {
+  try {
+    const assistantText = retainedAssistant.join("\n\n").trim();
+    const result = await detectTaskSignals(assistantText, config, signal);
+    if (result.skipped || result.signals.length === 0) {
+      return;
+    }
+
+    for (const taskSignal of result.signals) {
+      if (signal?.aborted) {
+        return;
+      }
+
+      try {
+        if (taskSignal.kind === "new_task") {
+          await addTaskToLedger(workspaceDir, {
+            title: taskSignal.title,
+            status: "in_progress",
+            details: taskSignal.details,
+            currentStep: taskSignal.currentStep,
+            started: undefined,
+            updated: undefined,
+            blockedOn: undefined,
+          });
+          invalidateTaskLedgerCache(workspaceDir);
+          continue;
+        }
+
+        const taskId = await findMatchingActiveTaskId(
+          workspaceDir,
+          taskSignal.title,
+          taskSignal.completedTaskId,
+        );
+        if (!taskId) {
+          logger.debug?.(
+            `memory-neo4j: task auto-capture could not match "${taskSignal.title}" (${taskSignal.kind})`,
+          );
+          continue;
+        }
+
+        if (taskSignal.kind === "task_update") {
+          await updateTaskInLedger(workspaceDir, taskId, {
+            status: "in_progress",
+            details: taskSignal.details,
+            currentStep: taskSignal.currentStep,
+          });
+          invalidateTaskLedgerCache(workspaceDir);
+          continue;
+        }
+
+        await completeTaskInLedger(workspaceDir, taskId);
+        invalidateTaskLedgerCache(workspaceDir);
+      } catch (err) {
+        logger.warn(`memory-neo4j: task auto-capture signal failed: ${String(err)}`);
+      }
+    }
+  } catch (err) {
+    logger.warn(`memory-neo4j: task auto-capture failed: ${String(err)}`);
+  }
+}
 
 // ============================================================================
 // Auto-capture pipeline (fire-and-forget from agent_end hook)
@@ -283,6 +423,11 @@ async function runAutoCapture(
       `memory-neo4j: [bench] auto-capture ${totalMs.toFixed(0)}ms total (gate=${gateMs.toFixed(0)}ms, embed=${embedMs.toFixed(0)}ms, process=${processMs.toFixed(0)}ms), ` +
         `${retained.length}+${retainedAssistant.length} gated, ${stored} stored, ${semanticDeduped} deduped`,
     );
+
+    // Layer 4: Task auto-detection
+    if (extractionConfig.autoCaptureTasks && workspaceDir && retainedAssistant.length > 0) {
+      await runTaskAutoCapture(retainedAssistant, extractionConfig, workspaceDir, logger, signal);
+    }
   } catch (err) {
     logger.warn(`memory-neo4j: auto-capture failed: ${String(err)}`);
   }

@@ -78,6 +78,7 @@ const minimalExtractionConfig: ExtractionConfig = {
   baseUrl: "",
   temperature: 0,
   maxRetries: 0,
+  autoCaptureTasks: false,
 };
 
 const mockLogger = {

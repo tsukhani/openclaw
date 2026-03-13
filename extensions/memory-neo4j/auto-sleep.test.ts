@@ -112,6 +112,7 @@ function makeExtractionConfig(): ExtractionConfig {
     baseUrl: "",
     temperature: 0,
     maxRetries: 0,
+    autoCaptureTasks: false,
   };
 }
 

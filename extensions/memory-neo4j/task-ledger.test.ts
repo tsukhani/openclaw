@@ -3,12 +3,16 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  addTaskToLedger,
+  completeTaskInLedger,
   findStaleTasks,
+  getNextTaskId,
   parseTaskDate,
   parseTaskLedger,
   reviewAndArchiveStaleTasks,
   serializeTask,
   serializeTaskLedger,
+  updateTaskInLedger,
 } from "./task-ledger.js";
 
 // ============================================================================
@@ -351,6 +355,30 @@ describe("serializeTaskLedger", () => {
 });
 
 // ============================================================================
+// Write operations
+// ============================================================================
+
+describe("getNextTaskId", () => {
+  it("returns the next ID across active and completed tasks", () => {
+    const ledger = parseTaskLedger(
+      [
+        "# Active Tasks",
+        "",
+        "## TASK-002: Active Task",
+        "- **Status:** in_progress",
+        "",
+        "# Completed",
+        "",
+        "## ~~TASK-010: Done Task~~",
+        "- **Status:** done",
+      ].join("\n"),
+    );
+
+    expect(getNextTaskId(ledger)).toBe("TASK-011");
+  });
+});
+
+// ============================================================================
 // reviewAndArchiveStaleTasks (integration with filesystem)
 // ============================================================================
 
@@ -374,6 +402,91 @@ describe("reviewAndArchiveStaleTasks", () => {
     await fs.writeFile(path.join(tmpDir, "TASKS.md"), "", "utf-8");
     const result = await reviewAndArchiveStaleTasks(tmpDir);
     expect(result).toBeNull();
+  });
+
+  it("adds a task to TASKS.md", async () => {
+    const taskId = await addTaskToLedger(
+      tmpDir,
+      {
+        title: "Implement task auto-capture",
+        status: "in_progress",
+        details: "Write TASKS.md entries from assistant replies",
+        currentStep: "Add task detector",
+        started: undefined,
+        updated: undefined,
+        blockedOn: undefined,
+      },
+      new Date("2026-02-15T10:05:00"),
+    );
+
+    expect(taskId).toBe("TASK-001");
+
+    const content = await fs.readFile(path.join(tmpDir, "TASKS.md"), "utf-8");
+    const ledger = parseTaskLedger(content);
+    expect(ledger.activeTasks).toHaveLength(1);
+    expect(ledger.activeTasks[0].id).toBe("TASK-001");
+    expect(ledger.activeTasks[0].title).toBe("Implement task auto-capture");
+    expect(ledger.activeTasks[0].currentStep).toBe("Add task detector");
+  });
+
+  it("updates an existing task in TASKS.md", async () => {
+    await fs.writeFile(
+      path.join(tmpDir, "TASKS.md"),
+      [
+        "# Active Tasks",
+        "",
+        "## TASK-001: Implement task auto-capture",
+        "- **Status:** blocked",
+        "- **Started:** 2026-02-15 09:00",
+        "- **Details:** Waiting on design",
+        "",
+        "# Completed",
+      ].join("\n"),
+      "utf-8",
+    );
+
+    await updateTaskInLedger(
+      tmpDir,
+      "TASK-001",
+      {
+        status: "in_progress",
+        currentStep: "Wire auto-capture pipeline",
+        details: "Implementation in progress",
+      },
+      new Date("2026-02-15T10:10:00"),
+    );
+
+    const ledger = parseTaskLedger(await fs.readFile(path.join(tmpDir, "TASKS.md"), "utf-8"));
+    expect(ledger.activeTasks[0].status).toBe("in_progress");
+    expect(ledger.activeTasks[0].currentStep).toBe("Wire auto-capture pipeline");
+    expect(ledger.activeTasks[0].details).toBe("Implementation in progress");
+    expect(ledger.activeTasks[0].updated).toBe("2026-02-15 10:10");
+  });
+
+  it("completes an active task and moves it to completed", async () => {
+    await fs.writeFile(
+      path.join(tmpDir, "TASKS.md"),
+      [
+        "# Active Tasks",
+        "",
+        "## TASK-001: Implement task auto-capture",
+        "- **Status:** in_progress",
+        "- **Started:** 2026-02-15 09:00",
+        "",
+        "# Completed",
+      ].join("\n"),
+      "utf-8",
+    );
+
+    await completeTaskInLedger(tmpDir, "TASK-001", new Date("2026-02-15T11:00:00"));
+
+    const ledger = parseTaskLedger(await fs.readFile(path.join(tmpDir, "TASKS.md"), "utf-8"));
+    expect(ledger.activeTasks).toHaveLength(0);
+    expect(ledger.completedTasks).toHaveLength(1);
+    expect(ledger.completedTasks[0].id).toBe("TASK-001");
+    expect(ledger.completedTasks[0].status).toBe("done");
+    expect(ledger.completedTasks[0].isCompleted).toBe(true);
+    expect(ledger.completedTasks[0].updated).toBe("2026-02-15 11:00");
   });
 
   it("archives stale tasks", async () => {

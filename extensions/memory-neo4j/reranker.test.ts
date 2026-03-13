@@ -47,6 +47,7 @@ const EXTRACTION_CONFIG: ExtractionConfig = {
   baseUrl: "https://openrouter.ai/api/v1",
   temperature: 0.0,
   maxRetries: 0,
+  autoCaptureTasks: false,
 };
 
 const LOGGER = {

@@ -48,7 +48,7 @@ const memoryNeo4jPlugin = {
 
     // Parse configuration
     const cfg = memoryNeo4jConfigSchema.parse(api.pluginConfig);
-    const extractionConfig = resolveExtractionConfig(cfg.extraction);
+    const extractionConfig = resolveExtractionConfig(cfg.extraction, cfg.autoCaptureTasks);
     const vectorDim = vectorDimsForModel(cfg.embedding.model);
 
     // Warn on empty neo4j password (may be valid for some setups, but usually a misconfiguration)

@@ -109,6 +109,7 @@ const baseConfig: ExtractionConfig = {
   baseUrl: "http://localhost:8080",
   temperature: 0,
   maxRetries: 0,
+  autoCaptureTasks: false,
 };
 
 // Options that skip all LLM-dependent phases for fast, deterministic tests

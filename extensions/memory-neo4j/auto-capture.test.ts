@@ -26,6 +26,7 @@ const enabledConfig: ExtractionConfig = {
   baseUrl: "https://test.ai/api/v1",
   temperature: 0.0,
   maxRetries: 0,
+  autoCaptureTasks: false,
 };
 
 const disabledConfig: ExtractionConfig = {

@@ -34,6 +34,7 @@ const baseConfig: ExtractionConfig = {
   baseUrl: "http://localhost:8080",
   temperature: 0,
   maxRetries: 0,
+  autoCaptureTasks: false,
 };
 
 const disabledConfig: ExtractionConfig = {
