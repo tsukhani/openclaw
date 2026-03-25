@@ -294,10 +294,20 @@ const RECENCY_DECAY_DAYS = 365;
  * to an earlier fact. Sorted by freshness score descending to create ranks for RRF.
  *
  * Freshness score: exp(-daysSince / 365) — decays over ~1 year.
+ *
+ * OP-194: For "updates" queries, falls back to createdAt-based freshness when
+ * validFrom is not informative (validFrom === createdAt). This activates the 0.6
+ * freshness weight in RRF so that recently created memories outrank stale versions
+ * of the same fact.
  */
-function buildFreshnessSignal(candidates: SearchSignalResult[], now: number): SearchSignalResult[] {
+function buildFreshnessSignal(
+  candidates: SearchSignalResult[],
+  now: number,
+  queryType?: QueryType,
+): SearchSignalResult[] {
   const seen = new Set<string>();
   const withFreshness: SearchSignalResult[] = [];
+  const isUpdatesQuery = queryType === "updates";
 
   for (const c of candidates) {
     if (seen.has(c.id)) {
@@ -306,6 +316,14 @@ function buildFreshnessSignal(candidates: SearchSignalResult[], now: number): Se
     seen.add(c.id);
 
     if (!c.validFrom) {
+      // OP-194: For updates queries, fall back to createdAt when validFrom is missing
+      if (isUpdatesQuery && c.createdAt) {
+        const createdAtMs = new Date(c.createdAt).getTime();
+        if (Number.isNaN(createdAtMs)) continue;
+        const daysSince = (now - createdAtMs) / (1000 * 60 * 60 * 24);
+        const freshnessScore = Math.min(1.0, Math.exp(-daysSince / FRESHNESS_DECAY_DAYS));
+        withFreshness.push({ ...c, score: freshnessScore });
+      }
       continue;
     }
     const validFromMs = new Date(c.validFrom).getTime();
@@ -315,6 +333,12 @@ function buildFreshnessSignal(candidates: SearchSignalResult[], now: number): Se
     if (Number.isNaN(createdAtMs)) continue;
     // Only apply freshness when validFrom was explicitly set to differ from createdAt
     if (Math.abs(validFromMs - createdAtMs) <= SEVEN_DAYS_MS) {
+      // OP-194: For updates queries, use createdAt when validFrom is not informative
+      if (isUpdatesQuery) {
+        const daysSince = (now - createdAtMs) / (1000 * 60 * 60 * 24);
+        const freshnessScore = Math.min(1.0, Math.exp(-daysSince / FRESHNESS_DECAY_DAYS));
+        withFreshness.push({ ...c, score: freshnessScore });
+      }
       continue;
     }
 
@@ -344,6 +368,7 @@ type FusedCandidate = {
   importance: number;
   createdAt: string;
   validFrom?: string;
+  supersededBy?: string | null; // OP-194
   rrfScore: number;
   signals: {
     vector: SignalAttribution;
@@ -400,6 +425,7 @@ export function fuseWithConfidenceRRF(
       importance: number;
       createdAt: string;
       validFrom?: string;
+      supersededBy?: string | null; // OP-194
       trustScore?: number;
     }
   >();
@@ -413,6 +439,7 @@ export function fuseWithConfidenceRRF(
           importance: Number.isFinite(entry.importance) ? entry.importance : 0.5,
           createdAt: entry.createdAt,
           validFrom: entry.validFrom,
+          supersededBy: entry.supersededBy,
           trustScore: entry.trustScore,
         });
       }
@@ -457,6 +484,7 @@ export function fuseWithConfidenceRRF(
       importance: meta.importance,
       createdAt: meta.createdAt,
       validFrom: meta.validFrom,
+      supersededBy: meta.supersededBy,
       rrfScore: weightedRrfScore,
       signals,
     });
@@ -1003,6 +1031,7 @@ export async function hybridSearch(
 
   // 4b. Build temporal freshness signal from validFrom dates across all candidates (OP-129).
   //     Only candidates where validFrom differs from createdAt by >7 days participate.
+  //     OP-194: For "updates" queries, falls back to createdAt-based freshness.
   const now = Date.now();
   const freshnessSignal = buildFreshnessSignal(
     [
@@ -1015,6 +1044,7 @@ export async function hybridSearch(
       ...normalizedOpinionResults,
     ],
     now,
+    queryType,
   );
 
   // 5. Fuse all signals with confidence-weighted RRF.
@@ -1056,6 +1086,18 @@ export async function hybridSearch(
     fused = applyFactTypeBoost(fused, factTypeIntent);
     logger?.info?.(`memory-neo4j: [fact-type] detected intent="${factTypeIntent}"`);
   }
+
+  // 5c. OP-194: Superseded memory demotion (defense-in-depth).
+  //     When includeExpired=true or asOf queries surface superseded memories,
+  //     demote them by halving their RRF score so the replacement ranks higher.
+  const supersededCount = fused.filter((c) => c.supersededBy).length;
+  if (supersededCount > 0) {
+    fused = fused
+      .map((c) => (c.supersededBy ? { ...c, rrfScore: c.rrfScore * 0.5 } : c))
+      .sort((a, b) => b.rrfScore - a.rrfScore);
+    logger?.info?.(`memory-neo4j: [superseded] demoted ${supersededCount} superseded memories`);
+  }
+
   const tFuse = performance.now();
 
   // 6. Apply recency as a multiplicative boost (OP-121).
@@ -1064,6 +1106,10 @@ export async function hybridSearch(
   //    Then normalize to 0-1 range.
   //    Apply to a larger window (limit*2) so recent memories ranked just outside
   //    the RRF top-N can still surface after the recency re-sort.
+  //    OP-194: Higher recency weight for "updates" queries (0.3 vs 0.1 default)
+  //    to further differentiate recently created memories from stale versions.
+  const effectiveRecencyWeight =
+    queryType === "updates" ? Math.max(recencyWeight, 0.3) : recencyWeight;
   const recencyWindow = Math.min(fused.length, limit * 2);
   const candidates = fused.slice(0, recencyWindow).map((r) => {
     const createdAtMs = r.createdAt ? new Date(r.createdAt).getTime() : NaN;
@@ -1071,7 +1117,7 @@ export async function hybridSearch(
       ? (now - createdAtMs) / (1000 * 60 * 60 * 24)
       : RECENCY_DECAY_DAYS; // default to 1 year if missing or malformed createdAt
     const recencyScore = Math.exp(-ageDays / RECENCY_DECAY_DAYS);
-    const boostedScore = r.rrfScore * (1 + recencyWeight * recencyScore);
+    const boostedScore = r.rrfScore * (1 + effectiveRecencyWeight * recencyScore);
     return { ...r, recencyScore, boostedScore };
   });
 

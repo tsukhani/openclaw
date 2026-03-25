@@ -178,6 +178,7 @@ export type SearchSignalResult = {
   importance: number;
   createdAt: string;
   validFrom?: string; // ISO-8601 — when this fact became true (used for temporal freshness signal)
+  supersededBy?: string | null; // OP-194: ID of the memory that replaced this one (for demotion)
   score: number;
   trustScore?: number; // 0.0–1.0 — memory reliability (for trust-weighted ranking)
 };

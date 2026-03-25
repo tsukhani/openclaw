@@ -112,6 +112,7 @@ export async function vectorSearch(
      RETURN node.id AS id, node.text AS text, node.category AS category,
             node.importance AS importance, node.createdAt AS createdAt,
             node.validFrom AS validFrom,
+            node.supersededBy AS supersededBy,
             COALESCE(node.trustScore, 1.0) AS trustScore,
             score AS similarity
      ORDER BY score DESC
@@ -135,6 +136,7 @@ export async function vectorSearch(
     importance: toJsNumber(r.get("importance")),
     createdAt: String(r.get("createdAt") ?? ""),
     validFrom: r.get("validFrom") != null ? String(r.get("validFrom")) : undefined,
+    supersededBy: r.get("supersededBy") != null ? String(r.get("supersededBy")) : null,
     score: r.get("similarity") as number,
     trustScore: toJsNumber(r.get("trustScore")) || 1.0,
   }));
@@ -179,6 +181,7 @@ export async function bm25Search(
      RETURN node.id AS id, node.text AS text, node.category AS category,
             node.importance AS importance, node.createdAt AS createdAt,
             node.validFrom AS validFrom,
+            node.supersededBy AS supersededBy,
             COALESCE(node.trustScore, 1.0) AS trustScore,
             score AS bm25Score
      ORDER BY score DESC
@@ -201,6 +204,7 @@ export async function bm25Search(
     importance: toJsNumber(r.get("importance")),
     createdAt: String(r.get("createdAt") ?? ""),
     validFrom: r.get("validFrom") != null ? String(r.get("validFrom")) : undefined,
+    supersededBy: r.get("supersededBy") != null ? String(r.get("supersededBy")) : null,
     rawScore: r.get("bm25Score") as number,
     trustScore: toJsNumber(r.get("trustScore")) || 1.0,
   }));
