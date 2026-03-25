@@ -450,15 +450,44 @@ export function resolveContextTokensForModel(params: {
   fallbackContextTokens?: number;
   allowAsyncLoad?: boolean;
 }): number | undefined {
-  if (typeof params.contextTokensOverride === "number" && params.contextTokensOverride > 0) {
-    return params.contextTokensOverride;
-  }
-
+  // Resolve model reference first so we can cap the override to the configured limit
   const ref = resolveProviderModelRef({
     provider: params.provider,
     model: params.model,
   });
   const explicitProvider = params.provider?.trim();
+
+  // Look up the configured context window for this model to cap the override.
+  // Check config first, then cache. Use the resolved ref provider even when
+  // params.provider was not explicitly passed (e.g. provider embedded in model
+  // string like "ollama/kimi-k2.5:cloud").
+  let configuredLimit: number | undefined;
+  if (ref) {
+    configuredLimit = resolveConfiguredProviderContextWindow(params.cfg, ref.provider, ref.model);
+  }
+  // Also try cache lookups if config didn't return a value
+  if (configuredLimit === undefined && ref) {
+    if (!ref.model.includes("/")) {
+      configuredLimit = lookupContextTokens(`${normalizeProviderId(ref.provider)}/${ref.model}`, {
+        allowAsyncLoad: params.allowAsyncLoad,
+      });
+    }
+    if (configuredLimit === undefined) {
+      configuredLimit = lookupContextTokens(params.model, {
+        allowAsyncLoad: params.allowAsyncLoad,
+      });
+    }
+  }
+
+  if (typeof params.contextTokensOverride === "number" && params.contextTokensOverride > 0) {
+    // Cap the persisted override to the configured model limit to prevent
+    // stale high values from being used when config has a lower limit
+    if (configuredLimit !== undefined && params.contextTokensOverride > configuredLimit) {
+      return configuredLimit;
+    }
+    return params.contextTokensOverride;
+  }
+
   if (ref) {
     const modelParams = resolveConfiguredModelParams(params.cfg, ref.provider, ref.model);
     if (modelParams?.context1m === true && isAnthropic1MModel(ref.provider, ref.model)) {

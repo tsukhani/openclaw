@@ -58,6 +58,8 @@ export type SkillCommandSpec = {
   promptTemplate?: string;
   /** Source markdown path for bundle-backed commands. */
   sourceFilePath?: string;
+  thinking?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
+  model?: string;
 };
 
 export type SkillsInstallPreferences = {

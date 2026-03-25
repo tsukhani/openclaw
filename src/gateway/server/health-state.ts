@@ -75,6 +75,7 @@ export function setBroadcastHealthUpdate(fn: ((snap: HealthSummary) => void) | n
 export async function refreshGatewayHealthSnapshot(opts?: {
   probe?: boolean;
   includeSensitive?: boolean;
+  timeoutMs?: number;
   getRuntimeSnapshot?: () => ChannelRuntimeSnapshot;
 }) {
   const includeSensitive = opts?.includeSensitive === true;
@@ -90,6 +91,7 @@ export async function refreshGatewayHealthSnapshot(opts?: {
       const snap = await getHealthSnapshot({
         probe: opts?.probe,
         includeSensitive,
+        timeoutMs: opts?.timeoutMs,
         runtimeSnapshot,
       });
       if (!includeSensitive) {

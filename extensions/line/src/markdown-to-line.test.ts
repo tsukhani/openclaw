@@ -1,9 +1,9 @@
+import { stripMarkdown } from "openclaw/plugin-sdk/text-runtime";
 import { describe, expect, it } from "vitest";
 import {
   extractMarkdownTables,
   extractCodeBlocks,
   extractLinks,
-  stripMarkdown,
   processLineMessage,
   convertTableToFlexBubble,
   convertCodeBlockToFlexBubble,

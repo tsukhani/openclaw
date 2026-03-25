@@ -255,6 +255,16 @@ export async function probeGateway(opts: {
       });
     };
 
+    // On loopback, identify as the gateway's own backend client so the handshake
+    // recognises it as a trusted local process and preserves operator.read scope
+    // without requiring a paired device identity (OP-143).
+    const clientName = disableDeviceIdentity
+      ? GATEWAY_CLIENT_NAMES.GATEWAY_CLIENT
+      : GATEWAY_CLIENT_NAMES.CLI;
+    const clientMode = disableDeviceIdentity
+      ? GATEWAY_CLIENT_MODES.BACKEND
+      : GATEWAY_CLIENT_MODES.PROBE;
+
     const client = new GatewayClient({
       url: opts.url,
       token: opts.auth?.token,
@@ -262,9 +272,9 @@ export async function probeGateway(opts: {
       tlsFingerprint: opts.tlsFingerprint,
       preauthHandshakeTimeoutMs: opts.preauthHandshakeTimeoutMs,
       scopes: [READ_SCOPE],
-      clientName: GATEWAY_CLIENT_NAMES.CLI,
+      clientName,
       clientVersion: "dev",
-      mode: GATEWAY_CLIENT_MODES.PROBE,
+      mode: clientMode,
       instanceId,
       deviceIdentity,
       onConnectError: (err) => {

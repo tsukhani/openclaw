@@ -10,6 +10,9 @@ const xiaomiPresetAppliers = createDefaultModelsPresetAppliers({
   primaryModelRef: XIAOMI_DEFAULT_MODEL_REF,
   resolveParams: (_cfg: OpenClawConfig) => {
     const defaultProvider = buildXiaomiProvider();
+    if (!defaultProvider.baseUrl) {
+      return null;
+    }
     return {
       providerId: "xiaomi",
       api: defaultProvider.api ?? "openai-completions",

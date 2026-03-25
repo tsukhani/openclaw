@@ -1,0 +1,492 @@
+{
+  "dataset": "production",
+  "description": "50 questions grounded in actual production memories (agentId: main). Used with --production flag to evaluate real-world retrieval quality.",
+  "test_cases": [
+    {
+      "id": "prod-ext-001",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What is Tarun's phone number and Telegram handle?",
+      "golden_answer": "Phone: +60125886583, Telegram: @ts1974_001 (ID: 878224171)",
+      "gold_memory_ids": ["077124da-ebf6-4be9-aeb4-d15adca95825"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-002",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What are the names and nicknames of Tarun's sons?",
+      "golden_answer": "Kheshav Sukhani (nickname: Lyuvez) is the older son, Aaditya Sukhani (nickname: Dudez) is the younger son",
+      "gold_memory_ids": [
+        "9d60738d-babf-4ecb-97f9-08bb0aa28e2a",
+        "e034108c-fd89-43e3-a21b-1c28b9bef7a8"
+      ],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-003",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What is the address and contact info for Klinik Pergigian Nair?",
+      "golden_answer": "176A Jalan Tun Sambanthan, Brickfields, Kuala Lumpur 50470. Mobile +60 11-6061 9532, Email nairdental@gmail.com. Dr Naveen Divakaran.",
+      "gold_memory_ids": ["fa3dcf25-5db3-4197-b249-b1c1f7ae4c76"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-004",
+      "ability": "extraction",
+      "memories": [],
+      "question": "Where should morning and evening briefings be displayed?",
+      "golden_answer": "Only in the Slack channel called 'daily-briefings'. Not in Telegram or other channels.",
+      "gold_memory_ids": ["de196567-edd0-430d-b1f8-413aedefba6e"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-005",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What martial arts style does Tarun teach and what forms does his school cover?",
+      "golden_answer": "Tarun teaches Taekwondo in the Moo Duk Kwan style. His school teaches both Pyong Ahn hyungs and Taegeuk poomsae.",
+      "gold_memory_ids": ["237943fa-eab7-4e80-801b-e14118d73a08"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-006",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What is the Claude Code spawn command pattern for Telegram origin notifications?",
+      "golden_answer": "Use ~/.openclaw/workspace/scripts/claude-code-monitor/claude-spawn-with-origin.sh telegram 878224171 -- instead of direct claude-rotate calls",
+      "gold_memory_ids": ["4f5717f2-5255-4709-9e1b-89ad342e660d"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-007",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What are Tarun and Renu's birthdays?",
+      "golden_answer": "Tarun — August 23, 1974. Renu (wife) — June 16, 1978.",
+      "gold_memory_ids": [
+        "91450ce8-3343-41e6-bdf2-90bd7cf0f6ee",
+        "643ce015-347d-4d95-84c0-41f6f2cc6cd9"
+      ],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-008",
+      "ability": "extraction",
+      "memories": [],
+      "question": "Where is the correct docker-compose.yml for Neo4j and what other services are defined there?",
+      "golden_answer": "~/Downloads/db/docker-compose.yml — includes Neo4j, SonarQube, Nexus, PostgreSQL, Redis",
+      "gold_memory_ids": ["f23bcf4b-8828-4e8d-bcac-efd7befb9b9e"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-009",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What is the TKD attendance system usage command and current accuracy?",
+      "golden_answer": "python3 take_attendance.py <photo> [--date YYYY-MM-DD]. Current accuracy: 9/12 (75%)",
+      "gold_memory_ids": ["e3db960b-3332-4f4f-b38a-bc88f33c40af"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ext-010",
+      "ability": "extraction",
+      "memories": [],
+      "question": "What query mode should be used for the ai-videos collection in RAG-Anything?",
+      "golden_answer": "Use -m naive (vector search only) instead of default hybrid mode — hybrid looks for knowledge graph entities that don't exist for YouTube videos",
+      "gold_memory_ids": ["f4420a5e-f621-4d69-bfdb-0ff0a2fda96a"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-001",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was the dental reminder sent to Tarun on March 19?",
+      "golden_answer": "2026-03-19 at 11:01 MYT — reminder for 1:00 PM appointment with Dr Naveen at Klinik Pergigian Nair",
+      "gold_memory_ids": ["18e3ca39-f724-4ffe-8427-867d015d05bb"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-002",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was the most recent WhatsApp lead analysis run?",
+      "golden_answer": "2026-03-21 at 16:22. No new messages were found. Media cleanup completed.",
+      "gold_memory_ids": ["1d5d7d3c-4968-4207-8ccb-4ed73f57e2cb"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-003",
+      "ability": "temporal",
+      "memories": [],
+      "question": "What time was the Google Meet with Yusra Waqar reminded on March 19?",
+      "golden_answer": "Reminded at 14:36 MYT for a 5:00 PM Google Meet — topic: Participation Discussion, Koncept Conference",
+      "gold_memory_ids": ["62171873-ef02-48f5-ac56-0f29b831763d"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-004",
+      "ability": "temporal",
+      "memories": [],
+      "question": "As of what date was the TKD Yellow Belt student list last recorded?",
+      "golden_answer": "As of 2026-03-21",
+      "gold_memory_ids": ["c270718a-5feb-464c-b413-5902d46f883e"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-005",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was the YouTube video ingest pipeline fixed and what were the key changes?",
+      "golden_answer": "2026-03-20. Installed deno 2.7.7, updated yt-dlp from 2026.02.04 to 2026.03.17, exported YouTube cookies, created global yt-dlp config.",
+      "gold_memory_ids": ["3115625d-c956-4d07-bb75-550f26d89abd"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-temp-006",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When was the self-hosted vs vendor lock-in analysis posted in Slack?",
+      "golden_answer": "Saturday 2026-03-21 at 10:36 GMT+8",
+      "gold_memory_ids": ["487d0953-7b64-4dce-bdbc-cd617106bc73"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-007",
+      "ability": "temporal",
+      "memories": [],
+      "question": "What yt-dlp version was replaced and what was it updated to during the pipeline fix?",
+      "golden_answer": "Updated from 2026.02.04 to 2026.03.17 via pipx",
+      "gold_memory_ids": ["3115625d-c956-4d07-bb75-550f26d89abd"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-temp-008",
+      "ability": "temporal",
+      "memories": [],
+      "question": "What is the age difference between Tarun's two sons?",
+      "golden_answer": "About 6 years — Kheshav born February 7, 2008 and Aaditya born March 7, 2014",
+      "gold_memory_ids": [
+        "9d60738d-babf-4ecb-97f9-08bb0aa28e2a",
+        "e034108c-fd89-43e3-a21b-1c28b9bef7a8"
+      ],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-temp-009",
+      "ability": "temporal",
+      "memories": [],
+      "question": "When is Renu's birthday relative to Tarun's in the calendar year?",
+      "golden_answer": "Renu's birthday is June 16, about two months before Tarun's on August 23",
+      "gold_memory_ids": [
+        "91450ce8-3343-41e6-bdf2-90bd7cf0f6ee",
+        "643ce015-347d-4d95-84c0-41f6f2cc6cd9"
+      ],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-temp-010",
+      "ability": "temporal",
+      "memories": [],
+      "question": "What two heartbeat events were logged on March 19, 2026 and at what times?",
+      "golden_answer": "11:01 MYT — dental reminder for Dr Naveen at 1 PM. 14:36 MYT — Google Meet reminder with Yusra Waqar at 5 PM.",
+      "gold_memory_ids": [
+        "18e3ca39-f724-4ffe-8427-867d015d05bb",
+        "62171873-ef02-48f5-ac56-0f29b831763d"
+      ],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-upd-001",
+      "ability": "updates",
+      "memories": [],
+      "question": "What is the current rule about Ollama embedding keep_alive configuration?",
+      "golden_answer": "Always specify keep_alive: 0 in the fetch request to prevent the model from staying loaded in VRAM after completion",
+      "gold_memory_ids": ["ab4030ca-724f-4fed-9929-b44cf590938b"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-002",
+      "ability": "updates",
+      "memories": [],
+      "question": "What is the current rule for preventing Cypher injection in dynamic Neo4j queries?",
+      "golden_answer": "Validate each dynamic relationship type against the schema pattern ^[A-Z_]+$ before including it in the query",
+      "gold_memory_ids": ["c44e98b4-bbdc-41a0-af0f-c966ca3a7b34"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-upd-003",
+      "ability": "updates",
+      "memories": [],
+      "question": "What fallback should be used when cypher-shell is unavailable or Neo4j labels are missing?",
+      "golden_answer": "Fall back to the Neo4j REST API (http://localhost:7474/db/neo4j/tx/commit) with basic auth — more reliable than the shell tool",
+      "gold_memory_ids": ["07a2397a-05ed-4e26-932c-046fbd1f411c"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-004",
+      "ability": "updates",
+      "memories": [],
+      "question": "What O'Reilly API version should be used for book lookups?",
+      "golden_answer": "Use v2 endpoint (/api/v2/epubs/urn:orm:book:{id}) — v1 (/api/v1/book/id/) is deprecated and returns 404 for all lookups",
+      "gold_memory_ids": ["4c944436-9ffd-4e53-8e84-7116b70e23c0"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-005",
+      "ability": "updates",
+      "memories": [],
+      "question": "What format should openclaw message send commands use?",
+      "golden_answer": "Use CLI flag format (--target, --channel, --message) not JSON-style properties — the tool expects command-line flags",
+      "gold_memory_ids": ["249fee95-258b-4e73-8e61-d5a9edc21fff"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-006",
+      "ability": "updates",
+      "memories": [],
+      "question": "What is the required directory for Telegram media files?",
+      "golden_answer": "Must be in workspace directory (e.g., /home/tsukhani/.openclaw/workspace/media/) — /tmp is not allowed and will cause validation errors",
+      "gold_memory_ids": ["40380e3e-dba2-4494-a8e1-21b9e6e463ce"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-007",
+      "ability": "updates",
+      "memories": [],
+      "question": "What is the book renaming format for NAS storage?",
+      "golden_answer": "'Title - Author.epub' format — keep filenames concise to avoid HTTP 414 (URI Too Long) errors",
+      "gold_memory_ids": ["207d31ba-150e-45e7-a64e-84d4d4ecbc18"],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-upd-009",
+      "ability": "updates",
+      "memories": [],
+      "question": "What rule applies to capping maxHops in graph traversal queries?",
+      "golden_answer": "Use Math.min(maxAllowed, value) to enforce upper bounds — unbounded hops can cause performance issues or infinite loops",
+      "gold_memory_ids": ["0f7e96d0-5d1d-44ed-8ae7-4c81cb4ee103"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-upd-010",
+      "ability": "updates",
+      "memories": [],
+      "question": "What is the current stance on self-hosted agents versus vendor lock-in?",
+      "golden_answer": "Self-hosted agents are preferable for privacy, flexibility, cost control, and longevity. Vendor lock-in ties you to their models, pricing, and roadmap.",
+      "gold_memory_ids": ["487d0953-7b64-4dce-bdbc-cd617106bc73"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-001",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What is Tarun's full contact information across all channels?",
+      "golden_answer": "Phone: +60125886583, Telegram: @ts1974_001 (ID: 878224171), Slack ID: UA6PAPH8U, Address: 10-8 The Capsquare Residences, No. 2 Persiaran Capsquare, 50100 KL. Timezone: Asia/Kuala_Lumpur (GMT+8)",
+      "gold_memory_ids": ["077124da-ebf6-4be9-aeb4-d15adca95825"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-002",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What are all the Sukhani family members' names and birthdays?",
+      "golden_answer": "Tarun (Aug 23, 1974), Renu (Jun 16, 1978), Kheshav (Feb 7, 2008), Aaditya (Mar 7, 2014)",
+      "gold_memory_ids": [
+        "077124da-ebf6-4be9-aeb4-d15adca95825",
+        "643ce015-347d-4d95-84c0-41f6f2cc6cd9",
+        "91450ce8-3343-41e6-bdf2-90bd7cf0f6ee",
+        "9d60738d-babf-4ecb-97f9-08bb0aa28e2a",
+        "e034108c-fd89-43e3-a21b-1c28b9bef7a8"
+      ],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-003",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What is the complete Taekwondo setup — style, student roster, and attendance system?",
+      "golden_answer": "Moo Duk Kwan style teaching Pyong Ahn hyungs and Taegeuk poomsae. 12 yellow belt students. Attendance system at tkd-attendance/ using face recognition with 75% accuracy.",
+      "gold_memory_ids": [
+        "237943fa-eab7-4e80-801b-e14118d73a08",
+        "c270718a-5feb-464c-b413-5902d46f883e",
+        "e3db960b-3332-4f4f-b38a-bc88f33c40af"
+      ],
+      "metadata": { "difficulty": "hard" }
+    },
+    {
+      "id": "prod-ms-004",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What heartbeat events were logged on March 19, 2026?",
+      "golden_answer": "Two events: dental reminder at 11:01 MYT (1 PM appointment with Dr Naveen) and Google Meet reminder at 14:36 MYT (5 PM with Yusra Waqar, Koncept Conference)",
+      "gold_memory_ids": [
+        "18e3ca39-f724-4ffe-8427-867d015d05bb",
+        "62171873-ef02-48f5-ac56-0f29b831763d"
+      ],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-005",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What YouTube-related lessons and fixes have been recorded?",
+      "golden_answer": "Pipeline fixes on 2026-03-20 (deno 2.7.7, yt-dlp update, cookies, config). Also: inject source metadata at ingestion time, and extract video ID via regex rather than storing full URLs.",
+      "gold_memory_ids": [
+        "3115625d-c956-4d07-bb75-550f26d89abd",
+        "60d6cf60-f8b7-4adc-9b79-dbd859836c2f",
+        "3502dae7-dceb-4a7c-991b-f1769b13c127"
+      ],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-006",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What dental clinic does Tarun visit and when was his last recorded appointment?",
+      "golden_answer": "Klinik Pergigian Nair with Dr Naveen Divakaran at 176A Jalan Tun Sambanthan. Last appointment: March 19, 2026 at 1:00 PM.",
+      "gold_memory_ids": [
+        "fa3dcf25-5db3-4197-b249-b1c1f7ae4c76",
+        "18e3ca39-f724-4ffe-8427-867d015d05bb"
+      ],
+      "metadata": { "difficulty": "easy" }
+    },
+    {
+      "id": "prod-ms-007",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What are the rules for environment variables and origin notifications in Claude Code spawning?",
+      "golden_answer": "Use claude-spawn-with-origin.sh for Telegram origin notifications. Don't rely on env vars being inherited — write origin/session info to a file. Use CLAUDE_ORIGIN for routing completion notifications.",
+      "gold_memory_ids": [
+        "4f5717f2-5255-4709-9e1b-89ad342e660d",
+        "05fb7335-f3c5-4775-8016-4bb1af62e6df",
+        "0db3bae8-b56c-4dd8-a907-1ae7a6098df7"
+      ],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-008",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What are the rules for sending and editing Slack messages via the message tool?",
+      "golden_answer": "Use action:'send' with channel:'slack' and target for channel ID. When editing, include the 'to' field with user ID (e.g., 'user:UA6PAPH8U') to avoid errors.",
+      "gold_memory_ids": [
+        "c88d797e-143d-4b14-99fa-dac5ec31a03d",
+        "96149f7a-81c0-4104-8934-7ce2f57a97a8"
+      ],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-009",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What are the names of all 12 TKD Yellow Belt students?",
+      "golden_answer": "Chaitan, Charvik, Anirudra, Manihaas, Ananya, Kavin, Hari, Riya, Ashvik, Swara, Tejas, Arjun",
+      "gold_memory_ids": ["c270718a-5feb-464c-b413-5902d46f883e"],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-ms-010",
+      "ability": "multi-session",
+      "memories": [],
+      "question": "What are the WhatsApp message delivery rules and fallbacks?",
+      "golden_answer": "On LID cache or sync timeout, fall back to wacli and check status first. On delivery failure with 'couldn't find message ID', generate a new message ID instead of retrying with the same one.",
+      "gold_memory_ids": [
+        "b2b64f73-a341-4d93-8001-4525cf38962b",
+        "d1d2ddb6-9274-46b5-8e3d-842199d785aa"
+      ],
+      "metadata": { "difficulty": "medium" }
+    },
+    {
+      "id": "prod-abs-001",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is Tarun's NRIC number?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Sensitive PII — should not be in memory" }
+    },
+    {
+      "id": "prod-abs-002",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is Tarun's Netflix password?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Credential — should never be stored" }
+    },
+    {
+      "id": "prod-abs-003",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is the exact revenue figure for Abundent Academy in Q4 2025?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium", "notes": "Specific financial data not stored" }
+    },
+    {
+      "id": "prod-abs-004",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is the Neo4j database password used by memory-neo4j?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Credentials never stored in memory" }
+    },
+    {
+      "id": "prod-abs-005",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What are Tarun's children's school names?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Personal info not recorded" }
+    },
+    {
+      "id": "prod-abs-006",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is Tarun's favourite TV series right now?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Entertainment preference not stored" }
+    },
+    {
+      "id": "prod-abs-007",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is the monthly cost of the Abundent Academy server infrastructure?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "medium", "notes": "Infrastructure cost details not stored" }
+    },
+    {
+      "id": "prod-abs-008",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is Tarun's car registration number?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Vehicle details not stored in memory" }
+    },
+    {
+      "id": "prod-abs-009",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What specific book is Tarun currently reading?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "easy", "notes": "Current reading not stored" }
+    },
+    {
+      "id": "prod-abs-010",
+      "ability": "abstention",
+      "memories": [],
+      "question": "What is the git commit hash for the first OpenClaw commit Tarun ever made?",
+      "golden_answer": "Not in memory",
+      "gold_memory_ids": [],
+      "metadata": { "difficulty": "hard", "notes": "Extremely specific historical fact not stored" }
+    }
+  ]
+}

@@ -28,6 +28,7 @@ export type NodeEventContext = {
   refreshHealthSnapshot: (opts?: {
     probe?: boolean;
     includeSensitive?: boolean;
+    timeoutMs?: number;
   }) => Promise<HealthSummary>;
   loadGatewayModelCatalog: () => Promise<ModelCatalogEntry[]>;
   logGateway: { warn: (msg: string) => void };

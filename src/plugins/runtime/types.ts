@@ -1,7 +1,7 @@
 import type { PluginRuntimeChannel } from "./types-channel.js";
-import type { PluginRuntimeCore, RuntimeLogger } from "./types-core.js";
+import type { PluginRuntimeCore, PluginRuntimeLlm, RuntimeLogger } from "./types-core.js";
 
-export type { RuntimeLogger };
+export type { PluginRuntimeLlm, RuntimeLogger };
 
 // ── Subagent runtime types ──────────────────────────────────────────
 
@@ -76,6 +76,7 @@ export type RuntimeNodeInvokeParams = {
 
 /** Trusted in-process runtime surface injected into native plugins. */
 export type PluginRuntime = PluginRuntimeCore & {
+  llm: PluginRuntimeLlm;
   subagent: {
     run: (params: SubagentRunParams) => Promise<SubagentRunResult>;
     waitForRun: (params: SubagentWaitParams) => Promise<SubagentWaitResult>;

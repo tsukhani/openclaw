@@ -24,6 +24,7 @@ Telegraph style. Root rules only. Read scoped `AGENTS.md` before subtree work.
 
 ## Architecture
 
+- Ontology: before architectural decisions, new top-level objects/types, or boundary refactors, read `ONTOLOGY.md` (Agent, Session, Message, Memory, Channel, Plugin, Skill).
 - Core stays extension-agnostic. No bundled ids in core when manifest/registry/capability contracts work.
 - Extensions cross into core only via `openclaw/plugin-sdk/*`, manifest metadata, injected runtime helpers, documented barrels (`api.ts`, `runtime-api.ts`).
 - Extension prod code: no core `src/**`, `src/plugin-sdk-internal/**`, other extension `src/**`, or relative outside package.

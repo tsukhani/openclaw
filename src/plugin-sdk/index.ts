@@ -57,6 +57,7 @@ export type { ProviderRuntimeModel } from "../plugins/provider-runtime-model.typ
 export type { ResolvedProviderRuntimeAuth } from "../plugins/runtime/model-auth-types.js";
 export type {
   PluginRuntime,
+  PluginRuntimeLlm,
   RuntimeLogger,
   SubagentRunParams,
   SubagentRunResult,

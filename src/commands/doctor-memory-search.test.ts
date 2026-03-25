@@ -570,6 +570,56 @@ describe("noteMemorySearchHealth", () => {
     expect(message).toContain("openclaw configure --section model");
   });
 
+  it("does not warn when memory plugin owns slot and gateway probe is ready", async () => {
+    resolveMemorySearchConfig.mockReturnValue(null);
+    const pluginCfg = {
+      plugins: { slots: { memory: "memory-neo4j" } },
+    } as unknown as OpenClawConfig;
+
+    await noteMemorySearchHealth(pluginCfg, {
+      gatewayMemoryProbe: { checked: true, ready: true },
+    });
+
+    expect(note).not.toHaveBeenCalled();
+  });
+
+  it("warns when memory plugin owns slot and gateway probe is NOT ready", async () => {
+    resolveMemorySearchConfig.mockReturnValue(null);
+    const pluginCfg = {
+      plugins: { slots: { memory: "memory-neo4j" } },
+    } as unknown as OpenClawConfig;
+
+    await noteMemorySearchHealth(pluginCfg, {
+      gatewayMemoryProbe: { checked: true, ready: false, error: "Neo4j connection refused" },
+    });
+
+    expect(note).toHaveBeenCalledTimes(1);
+    const message = String(note.mock.calls[0]?.[0] ?? "");
+    expect(message).toContain('provided by plugin "memory-neo4j"');
+    expect(message).toContain("Neo4j connection refused");
+  });
+
+  it("does not warn when memory plugin owns slot and gateway not probed", async () => {
+    resolveMemorySearchConfig.mockReturnValue(null);
+    const pluginCfg = {
+      plugins: { slots: { memory: "memory-neo4j" } },
+    } as unknown as OpenClawConfig;
+
+    await noteMemorySearchHealth(pluginCfg);
+
+    expect(note).not.toHaveBeenCalled();
+  });
+
+  it("shows disabled note when no memory plugin and config returns null", async () => {
+    resolveMemorySearchConfig.mockReturnValue(null);
+
+    await noteMemorySearchHealth(cfg);
+
+    expect(note).toHaveBeenCalledTimes(1);
+    const message = String(note.mock.calls[0]?.[0] ?? "");
+    expect(message).toContain("explicitly disabled");
+  });
+
   it("does not probe unrelated embedding providers in auto mode", async () => {
     resolveMemorySearchConfig.mockReturnValue({
       provider: "auto",

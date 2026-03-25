@@ -41,7 +41,14 @@ function canUseNodeFs(): boolean {
   }
 }
 
+// When running under vitest, isolate logs to avoid polluting production logs.
 function resolveDefaultLogDir(): string {
+  if (process.env.OPENCLAW_LOG_DIR) {
+    return process.env.OPENCLAW_LOG_DIR;
+  }
+  if (process.env.VITEST === "true") {
+    return "/tmp/openclaw-test";
+  }
   return canUseNodeFs() ? resolvePreferredOpenClawTmpDir() : POSIX_OPENCLAW_TMP_DIR;
 }
 
@@ -611,9 +618,11 @@ export function getChildLogger(
   const base = getLogger();
   const minLevel = opts?.level ? levelToMinLevel(opts.level) : base.settings.minLevel;
   const name = bindings ? JSON.stringify(bindings) : undefined;
+  // Only pass minLevel when explicitly set; spreading `minLevel: undefined`
+  // overwrites the parent logger's minLevel, disabling tslog's level filter.
   return base.getSubLogger({
     name,
-    minLevel,
+    ...(minLevel != null ? { minLevel } : {}),
     prefix: bindings ? [name ?? ""] : [],
   });
 }

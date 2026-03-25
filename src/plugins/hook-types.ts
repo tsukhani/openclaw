@@ -79,6 +79,7 @@ export type PluginHookName =
   | "llm_output"
   | "before_agent_finalize"
   | "agent_end"
+  | "agent_bootstrap"
   | "before_compaction"
   | "after_compaction"
   | "before_reset"
@@ -116,6 +117,7 @@ export const PLUGIN_HOOK_NAMES = [
   "llm_output",
   "before_agent_finalize",
   "agent_end",
+  "agent_bootstrap",
   "before_compaction",
   "after_compaction",
   "before_reset",
@@ -299,6 +301,27 @@ export type PluginHookBeforeAgentFinalizeResult = {
    */
   action?: "continue" | "revise" | "finalize";
   reason?: string;
+};
+
+export type PluginHookBootstrapFile = {
+  name: string;
+  path: string;
+  content?: string;
+  missing?: boolean;
+};
+
+export type PluginHookBootstrapEvent = {
+  files: PluginHookBootstrapFile[];
+};
+
+export type PluginHookBootstrapResult = {
+  files?: PluginHookBootstrapFile[];
+};
+
+export type PluginHookBootstrapContext = {
+  agentId?: string;
+  sessionKey?: string;
+  workspaceDir?: string;
 };
 
 export type PluginHookBeforeCompactionEvent = {
@@ -830,6 +853,10 @@ export type PluginHookHandlerMap = {
     | PluginHookBeforeAgentFinalizeResult
     | void;
   agent_end: (event: PluginHookAgentEndEvent, ctx: PluginHookAgentContext) => Promise<void> | void;
+  agent_bootstrap: (
+    event: PluginHookBootstrapEvent,
+    ctx: PluginHookBootstrapContext,
+  ) => Promise<PluginHookBootstrapResult | void> | PluginHookBootstrapResult | void;
   before_compaction: (
     event: PluginHookBeforeCompactionEvent,
     ctx: PluginHookAgentContext,

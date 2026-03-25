@@ -1,8 +1,9 @@
 /**
  * Session memory hook handler
  *
- * Saves session context to memory when /new or /reset command is triggered
- * Creates a new dated memory file with LLM-generated slug
+ * Saves session context when /new or /reset command is triggered.
+ * Default target: writes SESSION_CONTEXT.md in the workspace root (overwrite).
+ * LanceDB target: stores to LanceDB via Gateway API with LLM-generated slug.
  */
 
 import fs from "node:fs/promises";
@@ -14,8 +15,8 @@ import {
 } from "../../../agents/agent-scope.js";
 import { resolveStateDir } from "../../../config/paths.js";
 import type { OpenClawConfig } from "../../../config/types.openclaw.js";
-import { writeFileWithinRoot } from "../../../infra/fs-safe.js";
 import { createSubsystemLogger } from "../../../logging/subsystem.js";
+import { localDateStr, localTimeStr, tzOffsetLabel } from "../../../logging/timestamp.js";
 import {
   parseAgentSessionKey,
   resolveAgentIdFromSessionKey,
@@ -27,63 +28,6 @@ import { generateSlugViaLLM } from "../../llm-slug-generator.js";
 import { findPreviousSessionFile, getRecentSessionContentWithResetFallback } from "./transcript.js";
 
 const log = createSubsystemLogger("hooks/session-memory");
-
-function pickDateTimePart(
-  parts: Intl.DateTimeFormatPart[],
-  type: Intl.DateTimeFormatPartTypes,
-): string | undefined {
-  return parts.find((part) => part.type === type)?.value;
-}
-
-function resolveLocalTimeZone(): string | undefined {
-  const timeZone = process.env.TZ?.trim();
-  if (!timeZone) {
-    return undefined;
-  }
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone }).format(new Date());
-    return timeZone;
-  } catch {
-    return undefined;
-  }
-}
-
-function formatLocalSessionTimestamp(date: Date): {
-  date: string;
-  time: string;
-  timeSlug: string;
-  timeZoneName?: string;
-} {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: resolveLocalTimeZone(),
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-    timeZoneName: "short",
-  }).formatToParts(date);
-
-  const year = pickDateTimePart(parts, "year") ?? String(date.getFullYear()).padStart(4, "0");
-  const month = pickDateTimePart(parts, "month") ?? String(date.getMonth() + 1).padStart(2, "0");
-  const day = pickDateTimePart(parts, "day") ?? String(date.getDate()).padStart(2, "0");
-  const hour = pickDateTimePart(parts, "hour") ?? String(date.getHours()).padStart(2, "0");
-  const minute = pickDateTimePart(parts, "minute") ?? String(date.getMinutes()).padStart(2, "0");
-  const second = pickDateTimePart(parts, "second") ?? String(date.getSeconds()).padStart(2, "0");
-  const timeZoneName = [...parts]
-    .toReversed()
-    .find((part) => part.type === "timeZoneName")
-    ?.value?.trim();
-
-  return {
-    date: `${year}-${month}-${day}`,
-    time: `${hour}:${minute}:${second}`,
-    timeSlug: `${hour}${minute}`,
-    timeZoneName,
-  };
-}
 
 function resolveDisplaySessionKey(params: {
   cfg?: OpenClawConfig;
@@ -102,6 +46,68 @@ function resolveDisplaySessionKey(params: {
     agentId: workspaceAgentId,
     requestKey: parsed.rest,
   });
+}
+
+/**
+ * Save session to LanceDB via Gateway API
+ */
+async function saveToLanceDB(params: {
+  cfg: OpenClawConfig;
+  sessionKey: string;
+  slug: string;
+  sessionContent: string;
+  timestamp: Date;
+}): Promise<void> {
+  const { cfg, sessionKey, slug, sessionContent, timestamp } = params;
+
+  // Get gateway config
+  const gatewayPort = cfg.gateway?.port || 18789;
+  const gatewayToken = cfg.gateway?.auth?.token;
+
+  if (!gatewayToken || typeof gatewayToken !== "string") {
+    throw new Error("Gateway auth token not found in config");
+  }
+
+  // Format memory text with metadata and truncated content
+  const dateStr = localDateStr(timestamp);
+  const timeStr = localTimeStr(timestamp);
+  const tz = tzOffsetLabel(timestamp);
+  const truncatedContent = sessionContent.slice(0, 2000);
+  const wasTruncated = sessionContent.length > 2000;
+
+  const memoryText = [
+    `Session: ${slug}`,
+    `Date: ${dateStr} ${timeStr} ${tz}`,
+    `Session Key: ${sessionKey}`,
+    "",
+    truncatedContent,
+    wasTruncated ? "\n[...truncated to 2000 chars]" : "",
+  ].join("\n");
+
+  // Call Gateway API to invoke memory_store
+  const apiUrl = `http://localhost:${gatewayPort}/tools/invoke`;
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${gatewayToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      tool: "memory_store",
+      args: {
+        text: memoryText,
+        importance: 0.7,
+        category: "fact",
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gateway API call failed: ${response.status} ${errorText}`);
+  }
+
+  log.debug("Successfully stored to LanceDB via Gateway API");
 }
 
 /**
@@ -134,13 +140,10 @@ const saveSessionToMemory: HookHandler = async (event) => {
       workspaceDir: contextWorkspaceDir,
       sessionKey: event.sessionKey,
     });
-    const memoryDir = path.join(workspaceDir, "memory");
-    await fs.mkdir(memoryDir, { recursive: true });
 
     // Use the user's local timezone for memory artifact names and headings.
     const now = new Date(event.timestamp);
-    const localTimestamp = formatLocalSessionTimestamp(now);
-    const dateStr = localTimestamp.date;
+    const dateStr = localDateStr(now);
 
     // Generate descriptive slug from session using LLM
     // Prefer previousSessionEntry (old session before /new) over current (which may be empty)
@@ -182,12 +185,15 @@ const saveSessionToMemory: HookHandler = async (event) => {
 
     const sessionFile = currentSessionFile || undefined;
 
-    // Read message count from hook config (default: 15)
+    // Read hook config (default: 15 messages, file target)
     const hookConfig = resolveHookConfig(cfg, "session-memory");
     const messageCount =
       typeof hookConfig?.messages === "number" && hookConfig.messages > 0
         ? hookConfig.messages
         : 15;
+    const target = hookConfig?.target === "lancedb" ? "lancedb" : "file";
+
+    log.debug("Storage target resolved", { target });
 
     let slug: string | null = null;
     let sessionContent: string | null = null;
@@ -218,54 +224,65 @@ const saveSessionToMemory: HookHandler = async (event) => {
 
     // If no slug, use timestamp
     if (!slug) {
-      slug = localTimestamp.timeSlug;
+      const timeSlug = localTimeStr(now).replace(/:/g, "");
+      slug = timeSlug.slice(0, 4); // HHMM
       log.debug("Using fallback timestamp slug", { slug });
     }
 
-    // Create filename with date and slug
-    const filename = `${dateStr}-${slug}.md`;
-    const memoryFilePath = path.join(memoryDir, filename);
-    log.debug("Memory file path resolved", {
-      filename,
-      path: memoryFilePath.replace(os.homedir(), "~"),
-    });
+    // Route to appropriate storage target
+    if (target === "lancedb") {
+      // Store in LanceDB via Gateway API
+      if (!cfg) {
+        throw new Error("Config not available for LanceDB storage");
+      }
+      if (!sessionContent) {
+        log.debug("No session content available, skipping LanceDB storage");
+        return;
+      }
 
-    const timeStr = localTimestamp.time;
-    const timeZoneSuffix = localTimestamp.timeZoneName ? ` ${localTimestamp.timeZoneName}` : "";
+      await saveToLanceDB({
+        cfg,
+        sessionKey: event.sessionKey,
+        slug,
+        sessionContent,
+        timestamp: now,
+      });
+      log.info(`Session context stored in LanceDB: ${slug}`);
+    } else {
+      // Write session context to SESSION_CONTEXT.md (overwrite, not append).
+      // This file is read by the session-context hook at bootstrap to provide
+      // continuity across sessions. It is separate from MEMORY.md (core memories).
+      const sessionContextPath = path.join(workspaceDir, "SESSION_CONTEXT.md");
 
-    // Extract context details
-    const sessionId = (sessionEntry.sessionId as string) || "unknown";
-    const source = (context.commandSource as string) || "unknown";
+      const timeStr = localTimeStr(now);
+      const tz = tzOffsetLabel(now);
+      const sessionId = (sessionEntry.sessionId as string) || "unknown";
+      const source = (context.commandSource as string) || "unknown";
 
-    // Build Markdown entry
-    const entryParts = [
-      `# Session: ${dateStr} ${timeStr}${timeZoneSuffix}`,
-      "",
-      `- **Session Key**: ${displaySessionKey}`,
-      `- **Session ID**: ${sessionId}`,
-      `- **Source**: ${source}`,
-      "",
-    ];
+      // Build Markdown entry
+      const entryParts = [
+        `# Session Context — ${dateStr} ${timeStr} ${tz}`,
+        "",
+        `- **Session Key**: ${displaySessionKey}`,
+        `- **Session ID**: ${sessionId}`,
+        `- **Source**: ${source}`,
+        "",
+      ];
 
-    // Include conversation content if available
-    if (sessionContent) {
-      entryParts.push("## Conversation Summary", "", sessionContent, "");
+      // Include conversation content if available
+      if (sessionContent) {
+        entryParts.push("## Recent Conversation", "", sessionContent, "");
+      }
+
+      const entry = entryParts.join("\n");
+
+      // Overwrite SESSION_CONTEXT.md
+      await fs.writeFile(sessionContextPath, entry, "utf-8");
+      log.debug("SESSION_CONTEXT.md written successfully");
+
+      const relPath = sessionContextPath.replace(os.homedir(), "~");
+      log.info(`Session context saved to ${relPath}`);
     }
-
-    const entry = entryParts.join("\n");
-
-    // Write under memory root with alias-safe file validation.
-    await writeFileWithinRoot({
-      rootDir: memoryDir,
-      relativePath: filename,
-      data: entry,
-      encoding: "utf-8",
-    });
-    log.debug("Memory file written successfully");
-
-    // Log completion (but don't send user-visible confirmation - it's internal housekeeping)
-    const relPath = memoryFilePath.replace(os.homedir(), "~");
-    log.info(`Session context saved to ${relPath}`);
   } catch (err) {
     if (err instanceof Error) {
       log.error("Failed to save session memory", {

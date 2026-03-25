@@ -1,0 +1,454 @@
+/**
+ * TypeScript types for the memory-neo4j evaluation harness.
+ *
+ * Covers:
+ * - Dataset format (test cases, memories, fixtures)
+ * - Evaluation results (retrieval metrics, context completeness, end-to-end)
+ * - Reporter interfaces
+ * - Config variants for A/B testing
+ */
+
+// ============================================================================
+// Ability Types
+// ============================================================================
+
+/** Core memory abilities from LongMemEval taxonomy + graph/validfrom signals. */
+export type MemoryAbility =
+  | "extraction"
+  | "temporal"
+  | "updates"
+  | "multi-session"
+  | "abstention"
+  | "graph"
+  | "validfrom";
+
+// ============================================================================
+// Dataset / Fixture Types
+// ============================================================================
+
+/** A single memory to store during test setup. */
+export type TestMemory = {
+  /** Stable ID assigned at fixture load time: "<case-id>-m<index>" */
+  id: string;
+  text: string;
+  category: string;
+  importance: number;
+  /** Optional session key to simulate multi-session data. */
+  sessionKey?: string;
+  /** ISO-8601 timestamp (defaults to now at ingest time if not provided). */
+  createdAt?: string;
+  /** ISO-8601 timestamp indicating when the fact became valid (OP-129 freshness signal). */
+  validFrom?: string;
+};
+
+/** A single evaluation test case. */
+export type TestCase = {
+  id: string;
+  ability: MemoryAbility;
+  /** Memories to store in the eval namespace before running this test. */
+  memories: TestMemory[];
+  /**
+   * Optional shared haystack identifier. When multiple test cases share the
+   * same haystackId, the harness stores their memories once (under a single
+   * agentId) and cleans up once after all cases in the group are evaluated.
+   * This is critical for large benchmarks like LoCoMo where each of 10
+   * samples has ~580 turns shared across 150–250 QA pairs — without this,
+   * the harness would embed/write/delete ~580 memories per QA pair instead
+   * of once per sample (a ~200× speedup).
+   */
+  haystackId?: string;
+  /** The query sent to hybridSearch(). */
+  question: string;
+  /** Human-readable expected answer (used by LLM judge for E2E grading). */
+  golden_answer: string;
+  /** IDs of memories that MUST appear in retrieved results (subset). */
+  gold_memory_ids: string[];
+  metadata?: {
+    difficulty?: "easy" | "medium" | "hard";
+    notes?: string;
+  };
+};
+
+/** Raw fixture file format (as loaded from JSON). */
+export type FixtureFile = {
+  test_cases: TestCase[];
+};
+
+// ============================================================================
+// Retrieval Evaluation Results
+// ============================================================================
+
+/** Signal attribution recorded per retrieved memory. */
+export type RetrievedSignals = {
+  vector: { rank: number; score: number };
+  bm25: { rank: number; score: number };
+  graph: { rank: number; score: number };
+  recency?: { rank: number; score: number };
+};
+
+/** A single retrieved memory result. */
+export type RetrievedMemory = {
+  id: string;
+  text: string;
+  score: number;
+  rank: number; // 1-indexed position in result list
+  signals?: RetrievedSignals;
+};
+
+/** Retrieval metrics for a single test case. */
+export type CaseRetrievalMetrics = {
+  caseId: string;
+  ability: MemoryAbility;
+  question: string;
+  retrieved: RetrievedMemory[];
+  goldIds: string[];
+  /** How many gold memories were retrieved at K. */
+  hitsAtK: number;
+  precisionAtK: number;
+  recallAtK: number;
+  f1AtK: number;
+  /** Position of the first relevant result (0 if none found). */
+  firstRelevantRank: number;
+  /** Reciprocal rank: 1/firstRelevantRank, or 0 if none found. */
+  reciprocalRank: number;
+  /** Normalized Discounted Cumulative Gain at K. */
+  ndcgAtK: number;
+  /** True when goldIds is empty (abstention / LongMemEval) — retrieval metrics are vacuous. */
+  emptyGoldSet: boolean;
+  /** Wall-clock latency of the hybridSearch call in milliseconds (sub-ms precision). */
+  latencyMs?: number;
+};
+
+// ============================================================================
+// Context Completeness (LLM Judge — Tier 1)
+// ============================================================================
+
+export type ContextVerdict = "COMPLETE" | "PARTIAL" | "INSUFFICIENT";
+
+/** LLM judge verdict for context completeness. */
+export type ContextCompletenessResult = {
+  caseId: string;
+  ability: MemoryAbility;
+  verdict: ContextVerdict;
+  reasoning: string;
+  /** True if judge call succeeded, false on error (treated as INSUFFICIENT). */
+  judgeSucceeded: boolean;
+};
+
+// ============================================================================
+// End-to-End Evaluation Results (Tier 2)
+// ============================================================================
+
+export type AnswerCorrectness = "correct" | "incorrect" | "partial";
+
+/** LLM-generated answer and grading result. */
+export type EndToEndResult = {
+  caseId: string;
+  ability: MemoryAbility;
+  question: string;
+  goldenAnswer: string;
+  generatedAnswer: string | null;
+  /** LLM judge verdict. */
+  correctness: AnswerCorrectness;
+  reasoning: string;
+  judgeSucceeded: boolean;
+};
+
+// ============================================================================
+// Aggregate Metrics
+// ============================================================================
+
+/** Per-ability aggregate retrieval metrics. */
+export type AbilityMetrics = {
+  ability: MemoryAbility;
+  caseCount: number;
+  avgPrecisionAtK: number;
+  avgRecallAtK: number;
+  avgF1AtK: number;
+  avgMRR: number;
+  avgNDCG: number;
+  /** Fraction of cases with at least one relevant result. */
+  hitRate: number;
+};
+
+/** Context completeness breakdown. */
+export type ContextCompletenessAggregate = {
+  total: number;
+  complete: number;
+  partial: number;
+  insufficient: number;
+  /** Fraction of COMPLETE verdicts. */
+  completenessRate: number;
+};
+
+/** End-to-end metrics breakdown. */
+export type EndToEndAggregate = {
+  total: number;
+  correct: number;
+  partial: number;
+  incorrect: number;
+  accuracyRate: number;
+};
+
+/** Full evaluation run results. */
+export type EvalRunResult = {
+  runId: string;
+  timestamp: string;
+  datasetName: string;
+  /** Named variant used for this run (default: "default"). */
+  variant: string;
+  k: number;
+  agentNamespace: string;
+  /** Per-case retrieval metrics. */
+  retrievalCases: CaseRetrievalMetrics[];
+  /** Per-ability aggregate. */
+  abilityMetrics: AbilityMetrics[];
+  /** Overall aggregate. */
+  overall: {
+    caseCount: number;
+    avgPrecisionAtK: number;
+    avgRecallAtK: number;
+    avgF1AtK: number;
+    avgMRR: number;
+    avgNDCG: number;
+    hitRate: number;
+  };
+  /** Context completeness (LLM judge, Tier 1). */
+  contextCompleteness?: {
+    cases: ContextCompletenessResult[];
+    aggregate: ContextCompletenessAggregate;
+  };
+  /** End-to-end accuracy (Tier 2). */
+  endToEnd?: {
+    cases: EndToEndResult[];
+    aggregate: EndToEndAggregate;
+  };
+  /** Per-signal attribution stats (populated when signalAttribution option is enabled). */
+  signalAttribution?: SignalAttributionStats;
+  /** Latency and throughput performance metrics. */
+  performance?: PerformanceMetrics;
+  durationMs: number;
+};
+
+// ============================================================================
+// Performance Metrics (Latency / Throughput)
+// ============================================================================
+
+/** Latency distribution statistics computed from per-query samples. */
+export type LatencyStats = {
+  count: number;
+  min: number;
+  max: number;
+  mean: number;
+  /** Population standard deviation. */
+  stddev: number;
+  p50: number;
+  p95: number;
+  p99: number;
+};
+
+/** Ingestion throughput metrics for memory storage phase. */
+export type IngestionMetrics = {
+  totalMemories: number;
+  totalDurationMs: number;
+  memoriesPerSecond: number;
+};
+
+/** Performance metrics for an eval run. */
+export type PerformanceMetrics = {
+  retrieval: {
+    /** Latency distribution for the primary (or cold) pass. */
+    cold: LatencyStats;
+    /** Latency distribution for the warm pass (present only when --warmup used). */
+    warm?: LatencyStats;
+    /** Latency distribution per ability category. */
+    perAbility: Record<string, LatencyStats>;
+    /** Queries per second (retrieval phase only). */
+    qps: number;
+  };
+  /** Ingestion throughput (omitted in production mode). */
+  ingestion?: IngestionMetrics;
+};
+
+// ============================================================================
+// Config Variants (A/B Testing)
+// ============================================================================
+
+/** A named config variant for A/B testing. */
+export type ConfigVariant = {
+  name: string;
+  graphEnabled: boolean;
+  rrfK?: number;
+  candidateMultiplier?: number;
+  graphSearchDepth?: number;
+  graphSeedCap?: number;
+  recencyWeight?: number;
+};
+
+// ============================================================================
+// Signal Attribution (Phase 3)
+// ============================================================================
+
+export type SignalName = "vector" | "bm25" | "graph";
+
+/** Statistics about which signals found the gold memories. */
+export type SignalAttributionStats = {
+  /** Total gold memories that were retrieved (at any rank). */
+  total: number;
+  /** Gold memories found exclusively by the vector signal. */
+  vectorOnlyHits: number;
+  /** Gold memories found exclusively by the BM25 signal. */
+  bm25OnlyHits: number;
+  /** Gold memories found exclusively by the graph signal. */
+  graphOnlyHits: number;
+  /** Gold memories found by 2+ signals (RRF fusion candidates). */
+  multiSignalHits: number;
+  /**
+   * Fraction of multi-signal hits where the fused rank is better than
+   * the best single-signal rank — indicates RRF uplift.
+   */
+  rrfUplift: number;
+};
+
+// ============================================================================
+// A/B Comparison (Phase 3)
+// ============================================================================
+
+/** 95% bootstrap confidence interval. */
+export type BootstrapCI = {
+  lower: number;
+  upper: number;
+  /** Observed delta (B − A). */
+  mean: number;
+};
+
+/** Comparison of one metric between two variants. */
+export type MetricComparison = {
+  metricName: string;
+  variantA: number;
+  variantB: number;
+  /** B − A */
+  delta: number;
+  /** Paired bootstrap CI for the delta. */
+  ci: BootstrapCI;
+  /** True when CI does not include 0 (statistically significant at 95%). */
+  significant: boolean;
+};
+
+/** Full A/B comparison result. */
+export type AbComparisonResult = {
+  variantA: string;
+  variantB: string;
+  datasetName: string;
+  k: number;
+  timestamp: string;
+  runA: EvalRunResult;
+  runB: EvalRunResult;
+  metrics: MetricComparison[];
+  /** Variant that wins significantly on more metrics, or no_significant_difference. */
+  winner: "A" | "B" | "no_significant_difference";
+};
+
+// ============================================================================
+// Regression Detection (Phase 4)
+// ============================================================================
+
+/** A single metric regression entry. */
+export type MetricDelta = {
+  metric: string;
+  current: number;
+  baseline: number;
+  /** current − baseline (negative = regression). */
+  delta: number;
+  /** Minimum acceptable drop before flagging as regression (negative). */
+  threshold: number;
+  isRegression: boolean;
+};
+
+/** Regression comparison report. */
+export type RegressionReport = {
+  hasRegression: boolean;
+  regressions: MetricDelta[];
+  currentTimestamp: string;
+  baselineTimestamp: string;
+};
+
+/** Flat CI-friendly metrics summary for JSON output. */
+export type CiMetricsSummary = {
+  recall_at_k: number;
+  precision_at_k: number;
+  f1_at_k: number;
+  mrr: number;
+  ndcg_at_k: number;
+  context_completeness: number;
+  /** p50 retrieval latency in milliseconds (0 if no performance data). */
+  p50_latency_ms: number;
+  /** p95 retrieval latency in milliseconds (0 if no performance data). */
+  p95_latency_ms: number;
+  /** Queries per second (0 if no performance data). */
+  qps: number;
+  regression: boolean;
+  dataset: string;
+  variant: string;
+  timestamp: string;
+};
+
+// ============================================================================
+// Eval Runner Options
+// ============================================================================
+
+export type EvalOutputFormat = "console" | "json" | "markdown";
+
+export type EvalRunOptions = {
+  /** Dataset name to load (e.g. "custom", "longmemeval_s"). */
+  dataset: string;
+  /** Only run cases for this ability. */
+  ability?: MemoryAbility;
+  /** Max test cases to load (useful for quick smoke tests). */
+  limit?: number;
+  /** Number of results to retrieve per query. */
+  k?: number;
+  /** Output format. */
+  format?: EvalOutputFormat;
+  /** If true, run LLM judge for context completeness (Tier 1). */
+  judgeContext?: boolean;
+  /** If true, run end-to-end answer generation and grading (Tier 2). */
+  endToEnd?: boolean;
+  /** Named config variant to use. */
+  variant?: string;
+  /** If true, skip cleanup of eval namespace after run. */
+  keepData?: boolean;
+  /** Output file path (for JSON/markdown formats). */
+  outputFile?: string;
+  /** If true, output JSON to stdout and exit 1 on regression. */
+  ciMode?: boolean;
+  /** Path to baseline JSON for regression comparison. */
+  baselinePath?: string;
+  /** Path to save current results as new baseline. */
+  saveBaselinePath?: string;
+  /** If true, include per-signal attribution stats in results. */
+  signalAttribution?: boolean;
+  /**
+   * Production mode: skip memory ingestion and cleanup.
+   * Queries run against existing memories in the store (e.g. agentId "main").
+   * Only context completeness is scored (no gold IDs).
+   */
+  productionMode?: boolean;
+  /**
+   * Agent ID to query when productionMode is true.
+   * Defaults to "main" if not specified.
+   */
+  agentId?: string;
+  /**
+   * If true, run queries twice: cold pass (cache empty) then warm pass
+   * (Neo4j page cache warm, query-result-cache cleared between passes).
+   * Retrieval quality metrics are computed from the warm pass only.
+   */
+  warmup?: boolean;
+  /**
+   * Relative threshold for p95 latency regression detection.
+   * Flags regression when current p95 > baseline p95 * (1 + threshold).
+   * Default: 0.20 (20%).
+   */
+  perfRegressionThreshold?: number;
+};

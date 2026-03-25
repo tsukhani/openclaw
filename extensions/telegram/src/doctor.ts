@@ -407,11 +407,30 @@ export async function maybeRepairTelegramAllowFromUsernames(cfg: OpenClawConfig)
   return { config: next, changes };
 }
 
-function hasConfiguredGroups(account: DoctorAccountRecord, parent?: DoctorAccountRecord): boolean {
+function hasConfiguredGroupPolicy(
+  account: DoctorAccountRecord,
+  parent?: DoctorAccountRecord,
+): boolean {
   const groups =
     (asObjectRecord(account.groups) as DoctorAccountRecord | null) ??
     (asObjectRecord(parent?.groups) as DoctorAccountRecord | null);
-  return Boolean(groups) && Object.keys(groups ?? {}).length > 0;
+  if (groups && Object.keys(groups).length > 0) {
+    return true;
+  }
+  // Treat an explicitly set groupPolicy or groupAllowFrom as evidence of
+  // intentional configuration — not "first-time setup".
+  const groupPolicy =
+    (account.groupPolicy as string | undefined) ?? (parent?.groupPolicy as string | undefined);
+  if (groupPolicy) {
+    return true;
+  }
+  const groupAllowFrom =
+    (account.groupAllowFrom as unknown[] | undefined) ??
+    (parent?.groupAllowFrom as unknown[] | undefined);
+  if (groupAllowFrom && groupAllowFrom.length > 0) {
+    return true;
+  }
+  return false;
 }
 
 export function collectTelegramGroupPolicyWarnings(params: {
@@ -421,7 +440,7 @@ export function collectTelegramGroupPolicyWarnings(params: {
   dmPolicy?: string;
   parent?: DoctorAccountRecord;
 }): string[] {
-  if (!hasConfiguredGroups(params.account, params.parent)) {
+  if (!hasConfiguredGroupPolicy(params.account, params.parent)) {
     const effectiveDmPolicy = params.dmPolicy ?? "pairing";
     const dmSetupLine =
       effectiveDmPolicy === "pairing"

@@ -61,6 +61,30 @@ export type PluginRuntimeThinkingPolicy = {
   defaultLevel?: import("../../auto-reply/thinking.js").ThinkLevel | null;
 };
 
+// ── Plugin LLM runtime ─────────────────────────────────────────────────────
+
+export type PluginRuntimeLlm = {
+  /**
+   * Make an LLM call through OpenClaw's model routing layer.
+   * Uses the configured provider stack (fallbacks, caching, cost tracking).
+   *
+   * @param model - Model alias or full provider/model ID (e.g. "sonnet", "anthropic/claude-sonnet-4-6")
+   * @param messages - Chat messages in standard format
+   * @param options - Optional: maxTokens, abortSignal
+   * @returns The assistant's response text, or null on failure
+   */
+  callModel: (
+    model: string,
+    messages: Array<{ role: "user" | "assistant" | "system"; content: string }>,
+    options?: {
+      maxTokens?: number;
+      abortSignal?: AbortSignal;
+    },
+  ) => Promise<string | null>;
+};
+
+// ── Runtime logger ─────────────────────────────────────────────────────────
+
 /** Structured logger surface injected into runtime-backed plugin helpers. */
 export type RuntimeLogger = {
   debug?: (message: string, meta?: Record<string, unknown>) => void;

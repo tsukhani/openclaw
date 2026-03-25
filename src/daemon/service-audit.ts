@@ -270,17 +270,25 @@ function auditGatewayToken(
   command: GatewayServiceCommand,
   issues: ServiceConfigIssue[],
   expectedGatewayToken?: string,
+  platform?: NodeJS.Platform,
 ) {
   const serviceToken = readEmbeddedGatewayToken(command);
   if (!serviceToken) {
     return;
   }
-  issues.push({
-    code: SERVICE_AUDIT_CODES.gatewayTokenEmbedded,
-    message: "Gateway service embeds OPENCLAW_GATEWAY_TOKEN and should be reinstalled.",
-    detail: "Run `openclaw gateway install --force` to remove embedded service token.",
-    level: "recommended",
-  });
+  // On Linux (systemd), the unit generator always embeds the token as an inline
+  // Environment= line — there is no EnvironmentFile= generation path. The
+  // "embedded token" warning only applies to macOS (launchd) where the install
+  // can use a file-backed plist entry.
+  const effectivePlatform = platform ?? process.platform;
+  if (effectivePlatform !== "linux") {
+    issues.push({
+      code: SERVICE_AUDIT_CODES.gatewayTokenEmbedded,
+      message: "Gateway service embeds OPENCLAW_GATEWAY_TOKEN and should be reinstalled.",
+      detail: "Run `openclaw gateway install --force` to remove embedded service token.",
+      level: "recommended",
+    });
+  }
   const expectedToken = normalizeOptionalString(expectedGatewayToken);
   if (!expectedToken || serviceToken === expectedToken) {
     return;
@@ -581,7 +589,7 @@ export async function auditGatewayServiceConfig(params: {
   });
   auditManagedServiceEnvironment(params.command, issues, params.expectedManagedServiceEnvKeys);
   auditProxyServiceEnvironment(params.command, issues);
-  auditGatewayToken(params.command, issues, params.expectedGatewayToken);
+  auditGatewayToken(params.command, issues, params.expectedGatewayToken, platform);
   auditGatewayServicePath(params.command, issues, params.env, platform);
   await auditGatewayRuntime(params.env, params.command, issues, platform);
 

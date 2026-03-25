@@ -105,6 +105,7 @@
   "acp-runtime-backend",
   "acp-binding-runtime",
   "acp-binding-resolve-runtime",
+  "memory-neo4j",
   "lazy-runtime",
   "agent-runtime-test-contracts",
   "channel-target-testing",

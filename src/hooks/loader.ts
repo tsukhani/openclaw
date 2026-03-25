@@ -36,13 +36,13 @@ function safeLogValue(value: string): string {
 
 function maybeWarnTrustedHookSource(source: string): void {
   if (source === "openclaw-workspace") {
-    log.warn(
+    log.info(
       "Loading workspace hook code into the gateway process. Workspace hooks are trusted local code.",
     );
     return;
   }
   if (source === "openclaw-managed") {
-    log.warn(
+    log.info(
       "Loading managed hook code into the gateway process. Managed hooks are trusted local code.",
     );
   }

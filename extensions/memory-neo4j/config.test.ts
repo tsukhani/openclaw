@@ -1,0 +1,797 @@
+/**
+ * Tests for config.ts — Configuration Parsing.
+ *
+ * Tests memoryNeo4jConfigSchema.parse(), vectorDimsForModel(), and resolveExtractionConfig().
+ */
+
+import { describe, it, expect, afterEach } from "vitest";
+import {
+  memoryNeo4jConfigSchema,
+  vectorDimsForModel,
+  contextLengthForModel,
+  DEFAULT_EMBEDDING_CONTEXT_LENGTH,
+  resolveExtractionConfig,
+} from "./config.js";
+
+// ============================================================================
+// memoryNeo4jConfigSchema.parse()
+// ============================================================================
+
+describe("memoryNeo4jConfigSchema.parse", () => {
+  // Store original env vars so we can restore them
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  describe("valid complete configs", () => {
+    it("should parse a minimal valid config with ollama provider", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", user: "neo4j", password: "test" },
+        embedding: { provider: "ollama" },
+      });
+
+      expect(config.neo4j.uri).toBe("bolt://localhost:7687");
+      expect(config.neo4j.username).toBe("neo4j");
+      expect(config.neo4j.password).toBe("test");
+      expect(config.embedding.provider).toBe("ollama");
+      expect(config.embedding.model).toBe("mxbai-embed-large");
+      expect(config.embedding.apiKey).toBeUndefined();
+      expect(config.autoCapture).toBe(true);
+      expect(config.autoRecall).toBe(true);
+      expect(config.coreMemory.enabled).toBe(true);
+    });
+
+    it("should parse a full config with openai provider", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: {
+          uri: "neo4j+s://cloud.neo4j.io:7687",
+          username: "admin",
+          password: "secret",
+        },
+        embedding: {
+          provider: "openai",
+          apiKey: "sk-test-key",
+          model: "text-embedding-3-large",
+        },
+        autoCapture: false,
+        autoRecall: false,
+        coreMemory: {
+          enabled: false,
+          refreshAtContextPercent: 75,
+        },
+      });
+
+      expect(config.neo4j.uri).toBe("neo4j+s://cloud.neo4j.io:7687");
+      expect(config.neo4j.username).toBe("admin");
+      expect(config.neo4j.password).toBe("secret");
+      expect(config.embedding.provider).toBe("openai");
+      expect(config.embedding.apiKey).toBe("sk-test-key");
+      expect(config.embedding.model).toBe("text-embedding-3-large");
+      expect(config.autoCapture).toBe(false);
+      expect(config.autoRecall).toBe(false);
+      expect(config.coreMemory.enabled).toBe(false);
+      expect(config.coreMemory.refreshAtContextPercent).toBe(75);
+    });
+
+    it("should support 'user' field as alias for 'username' in neo4j config", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", user: "custom-user", password: "pass" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.neo4j.username).toBe("custom-user");
+    });
+
+    it("should support 'username' field in neo4j config", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", username: "custom-user", password: "pass" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.neo4j.username).toBe("custom-user");
+    });
+
+    it("should default neo4j username to 'neo4j' when not specified", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "pass" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.neo4j.username).toBe("neo4j");
+    });
+  });
+
+  describe("missing required fields", () => {
+    it("should throw when config is null", () => {
+      expect(() => memoryNeo4jConfigSchema.parse(null)).toThrow("memory-neo4j config required");
+    });
+
+    it("should throw when config is undefined", () => {
+      expect(() => memoryNeo4jConfigSchema.parse(undefined)).toThrow(
+        "memory-neo4j config required",
+      );
+    });
+
+    it("should throw when config is not an object", () => {
+      expect(() => memoryNeo4jConfigSchema.parse("string")).toThrow("memory-neo4j config required");
+    });
+
+    it("should throw when config is an array", () => {
+      expect(() => memoryNeo4jConfigSchema.parse([])).toThrow("memory-neo4j config required");
+    });
+
+    it("should throw when neo4j section is missing", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          embedding: { provider: "ollama" },
+        }),
+      ).toThrow("neo4j config section is required");
+    });
+
+    it("should throw when neo4j.uri is missing", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { password: "test" },
+          embedding: { provider: "ollama" },
+        }),
+      ).toThrow("neo4j.uri is required");
+    });
+
+    it("should throw when neo4j.uri is empty string", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "", password: "test" },
+          embedding: { provider: "ollama" },
+        }),
+      ).toThrow("neo4j.uri is required");
+    });
+  });
+
+  describe("environment variable resolution", () => {
+    it("should resolve ${ENV_VAR} in neo4j.password", () => {
+      process.env.NEO4J_TEST_PASSWORD = "resolved-password";
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: {
+          uri: "bolt://localhost:7687",
+          password: "${NEO4J_TEST_PASSWORD}",
+        },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.neo4j.password).toBe("resolved-password");
+    });
+
+    it("should resolve ${ENV_VAR} in embedding.apiKey", () => {
+      process.env.OPENAI_TEST_KEY = "sk-from-env";
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "openai", apiKey: "${OPENAI_TEST_KEY}" },
+      });
+      expect(config.embedding.apiKey).toBe("sk-from-env");
+    });
+
+    it("should resolve ${ENV_VAR} in neo4j.user (username)", () => {
+      process.env.NEO4J_TEST_USER = "resolved-user";
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: {
+          uri: "bolt://localhost:7687",
+          user: "${NEO4J_TEST_USER}",
+          password: "",
+        },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.neo4j.username).toBe("resolved-user");
+    });
+
+    it("should resolve ${ENV_VAR} in neo4j.username", () => {
+      process.env.NEO4J_TEST_USERNAME = "resolved-username";
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: {
+          uri: "bolt://localhost:7687",
+          username: "${NEO4J_TEST_USERNAME}",
+          password: "",
+        },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.neo4j.username).toBe("resolved-username");
+    });
+
+    it("should throw when referenced env var is not set", () => {
+      delete process.env.NEO4J_NONEXISTENT_VAR;
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: {
+            uri: "bolt://localhost:7687",
+            password: "${NEO4J_NONEXISTENT_VAR}",
+          },
+          embedding: { provider: "ollama" },
+        }),
+      ).toThrow("Environment variable NEO4J_NONEXISTENT_VAR is not set");
+    });
+
+    it("should throw when a non-allowlisted env var is referenced", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: {
+            uri: "bolt://localhost:7687",
+            password: "${SECRET_TOKEN}",
+          },
+          embedding: { provider: "ollama" },
+        }),
+      ).toThrow("resolveEnvVars blocked non-allowlisted env var: SECRET_TOKEN");
+    });
+  });
+
+  describe("default values", () => {
+    it("should default autoCapture to true", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.autoCapture).toBe(true);
+    });
+
+    it("should default autoRecall to true", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.autoRecall).toBe(true);
+    });
+
+    it("should default coreMemory.enabled to true", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.coreMemory.enabled).toBe(true);
+    });
+
+    it("should default refreshAtContextPercent to undefined", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.coreMemory.refreshAtContextPercent).toBeUndefined();
+    });
+
+    it("should default embedding model to mxbai-embed-large for ollama", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.embedding.model).toBe("mxbai-embed-large");
+    });
+
+    it("should default embedding model to text-embedding-3-small for openai", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "openai", apiKey: "sk-test" },
+      });
+      expect(config.embedding.model).toBe("text-embedding-3-small");
+    });
+
+    it("should default neo4j.password to empty string when not provided", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.neo4j.password).toBe("");
+    });
+  });
+
+  describe("provider validation", () => {
+    it("should require apiKey for openai provider", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "" },
+          embedding: { provider: "openai" },
+        }),
+      ).toThrow("embedding.apiKey is required for OpenAI provider");
+    });
+
+    it("should not require apiKey for ollama provider", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.embedding.apiKey).toBeUndefined();
+    });
+
+    it("should default to openai when no provider is specified", () => {
+      // No provider but has apiKey — should default to openai
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { apiKey: "sk-test" },
+      });
+      expect(config.embedding.provider).toBe("openai");
+    });
+
+    it("should accept embedding.baseUrl", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama", baseUrl: "http://my-ollama:11434" },
+      });
+      expect(config.embedding.baseUrl).toBe("http://my-ollama:11434");
+    });
+  });
+
+  describe("unknown keys rejected", () => {
+    it("should reject unknown top-level keys", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "" },
+          embedding: { provider: "ollama" },
+          unknownKey: "value",
+        }),
+      ).toThrow("unknown keys: unknownKey");
+    });
+
+    it("should reject unknown neo4j keys", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "", port: 7687 },
+          embedding: { provider: "ollama" },
+        }),
+      ).toThrow("unknown keys: port");
+    });
+
+    it("should reject unknown embedding keys", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "" },
+          embedding: { provider: "ollama", temperature: 0.5 },
+        }),
+      ).toThrow("unknown keys: temperature");
+    });
+
+    it("should reject unknown coreMemory keys", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "" },
+          embedding: { provider: "ollama" },
+          coreMemory: { unknownField: true },
+        }),
+      ).toThrow("unknown keys: unknownField");
+    });
+  });
+
+  describe("refreshAtContextPercent edge cases", () => {
+    it("should accept refreshAtContextPercent of 1 (minimum valid)", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        coreMemory: { refreshAtContextPercent: 1 },
+      });
+      expect(config.coreMemory.refreshAtContextPercent).toBe(1);
+    });
+
+    it("should accept refreshAtContextPercent of 100 (maximum valid)", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        coreMemory: { refreshAtContextPercent: 100 },
+      });
+      expect(config.coreMemory.refreshAtContextPercent).toBe(100);
+    });
+
+    it("should reject refreshAtContextPercent of 0", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        coreMemory: { refreshAtContextPercent: 0 },
+      });
+      expect(config.coreMemory.refreshAtContextPercent).toBeUndefined();
+    });
+
+    it("should reject refreshAtContextPercent over 100 by throwing", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "" },
+          embedding: { provider: "ollama" },
+          coreMemory: { refreshAtContextPercent: 150 },
+        }),
+      ).toThrow("coreMemory.refreshAtContextPercent must be between 1 and 100");
+    });
+
+    it("should reject negative refreshAtContextPercent", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        coreMemory: { refreshAtContextPercent: -10 },
+      });
+      expect(config.coreMemory.refreshAtContextPercent).toBeUndefined();
+    });
+
+    it("should ignore non-number refreshAtContextPercent", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        coreMemory: { refreshAtContextPercent: "50" },
+      });
+      expect(config.coreMemory.refreshAtContextPercent).toBeUndefined();
+    });
+  });
+
+  describe("autoRecallMinScore", () => {
+    it("should default autoRecallMinScore to 0.25 when not specified", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.autoRecallMinScore).toBe(0.25);
+    });
+
+    it("should accept an explicit autoRecallMinScore value", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        autoRecallMinScore: 0.5,
+      });
+      expect(config.autoRecallMinScore).toBe(0.5);
+    });
+
+    it("should accept autoRecallMinScore of 0", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        autoRecallMinScore: 0,
+      });
+      expect(config.autoRecallMinScore).toBe(0);
+    });
+
+    it("should accept autoRecallMinScore of 1", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        autoRecallMinScore: 1,
+      });
+      expect(config.autoRecallMinScore).toBe(1);
+    });
+
+    it("should throw when autoRecallMinScore is negative", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "" },
+          embedding: { provider: "ollama" },
+          autoRecallMinScore: -0.1,
+        }),
+      ).toThrow("autoRecallMinScore must be between 0 and 1");
+    });
+
+    it("should throw when autoRecallMinScore is greater than 1", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "" },
+          embedding: { provider: "ollama" },
+          autoRecallMinScore: 1.5,
+        }),
+      ).toThrow("autoRecallMinScore must be between 0 and 1");
+    });
+
+    it("should default to 0.25 when autoRecallMinScore is a non-number type", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        autoRecallMinScore: "0.5",
+      });
+      expect(config.autoRecallMinScore).toBe(0.25);
+    });
+  });
+
+  describe("sleepCycle config section", () => {
+    it("should default sleepCycle.schedule to null (disabled)", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.sleepCycle.schedule).toBeNull();
+    });
+
+    it("should accept a cron expression for sleepCycle.schedule", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        sleepCycle: { schedule: "0 3 * * *" },
+      });
+      expect(config.sleepCycle.schedule).toBe("0 3 * * *");
+    });
+
+    it("should accept deprecated auto/autoIntervalMs without error (backwards compat, emits warning)", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        sleepCycle: { auto: true, autoIntervalMs: 3600000 },
+      });
+      // Deprecated fields are ignored; schedule defaults to null
+      expect(config.sleepCycle.schedule).toBeNull();
+    });
+
+    it("should default sleepCycle.tz to 'local'", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+      });
+      expect(config.sleepCycle.tz).toBe("local");
+    });
+
+    it("should respect explicit sleepCycle.tz", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        sleepCycle: { schedule: "0 3 * * *", tz: "America/New_York" },
+      });
+      expect(config.sleepCycle.tz).toBe("America/New_York");
+    });
+
+    it("should reject unknown sleepCycle keys", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "" },
+          embedding: { provider: "ollama" },
+          sleepCycle: { unknownKey: true },
+        }),
+      ).toThrow("unknown keys: unknownKey");
+    });
+  });
+
+  describe("extraction config section", () => {
+    it("should parse extraction config when provided", () => {
+      process.env.EXTRACTION_DUMMY = ""; // avoid env var issues
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        extraction: {
+          apiKey: "or-test-key",
+          model: "google/gemini-2.0-flash-001",
+          baseUrl: "https://openrouter.ai/api/v1",
+        },
+      });
+      expect(config.extraction).toBeDefined();
+      expect(config.extraction!.apiKey).toBe("or-test-key");
+      expect(config.extraction!.model).toBe("google/gemini-2.0-flash-001");
+    });
+
+    it("should not include extraction when section is empty", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        neo4j: { uri: "bolt://localhost:7687", password: "" },
+        embedding: { provider: "ollama" },
+        extraction: {},
+      });
+      expect(config.extraction).toBeUndefined();
+    });
+
+    it("should reject unknown keys in extraction section", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          neo4j: { uri: "bolt://localhost:7687", password: "" },
+          embedding: { provider: "ollama" },
+          extraction: { badKey: "value" },
+        }),
+      ).toThrow("unknown keys: badKey");
+    });
+  });
+});
+
+// ============================================================================
+// vectorDimsForModel()
+// ============================================================================
+
+describe("vectorDimsForModel", () => {
+  describe("known models", () => {
+    it("should return 1536 for text-embedding-3-small", () => {
+      expect(vectorDimsForModel("text-embedding-3-small")).toBe(1536);
+    });
+
+    it("should return 3072 for text-embedding-3-large", () => {
+      expect(vectorDimsForModel("text-embedding-3-large")).toBe(3072);
+    });
+
+    it("should return 1024 for mxbai-embed-large", () => {
+      expect(vectorDimsForModel("mxbai-embed-large")).toBe(1024);
+    });
+
+    it("should return 768 for nomic-embed-text", () => {
+      expect(vectorDimsForModel("nomic-embed-text")).toBe(768);
+    });
+
+    it("should return 384 for all-minilm", () => {
+      expect(vectorDimsForModel("all-minilm")).toBe(384);
+    });
+  });
+
+  describe("prefix matching", () => {
+    it("should match versioned model names via prefix", () => {
+      // mxbai-embed-large:latest should match mxbai-embed-large
+      expect(vectorDimsForModel("mxbai-embed-large:latest")).toBe(1024);
+    });
+
+    it("should match model with additional version suffix", () => {
+      expect(vectorDimsForModel("nomic-embed-text:v1.5")).toBe(768);
+    });
+  });
+
+  describe("unknown models", () => {
+    it("should return default 1024 for unknown model", () => {
+      expect(vectorDimsForModel("unknown-model")).toBe(1024);
+    });
+
+    it("should return default 1024 for empty string", () => {
+      expect(vectorDimsForModel("")).toBe(1024);
+    });
+
+    it("should return default 1024 for unrecognized prefix", () => {
+      expect(vectorDimsForModel("custom-embed-v2")).toBe(1024);
+    });
+  });
+});
+
+// ============================================================================
+// resolveExtractionConfig()
+// ============================================================================
+
+describe("resolveExtractionConfig", () => {
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("should return disabled config when no API key or explicit baseUrl", () => {
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    const config = resolveExtractionConfig();
+    expect(config.enabled).toBe(false);
+    expect(config.apiKey).toBe("");
+  });
+
+  it("should enable when OPENROUTER_API_KEY env var is set", () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.OPENROUTER_API_KEY = "or-env-key";
+    const config = resolveExtractionConfig();
+    expect(config.enabled).toBe(true);
+    expect(config.apiKey).toBe("or-env-key");
+  });
+
+  it("should enable when plugin config provides apiKey", () => {
+    delete process.env.OPENROUTER_API_KEY;
+    const config = resolveExtractionConfig({
+      apiKey: "or-plugin-key",
+      model: "custom-model",
+      baseUrl: "https://custom.ai/api",
+    });
+    expect(config.enabled).toBe(true);
+    expect(config.apiKey).toBe("or-plugin-key");
+    expect(config.model).toBe("custom-model");
+    expect(config.baseUrl).toBe("https://custom.ai/api");
+  });
+
+  it("should enable when baseUrl is explicitly set (local Ollama, no API key)", () => {
+    delete process.env.OPENROUTER_API_KEY;
+    const config = resolveExtractionConfig({
+      model: "llama3",
+      baseUrl: "http://localhost:11434/v1",
+    });
+    expect(config.enabled).toBe(true);
+    expect(config.apiKey).toBe("");
+    expect(config.baseUrl).toBe("http://localhost:11434/v1");
+  });
+
+  it("should use defaults for model and baseUrl", () => {
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.EXTRACTION_MODEL;
+    delete process.env.EXTRACTION_BASE_URL;
+    const config = resolveExtractionConfig();
+    expect(config.model).toBe("anthropic/claude-sonnet-4-6");
+    // No API keys available → falls back to OpenRouter baseUrl (disabled though)
+    expect(config.baseUrl).toBe("https://openrouter.ai/api/v1");
+  });
+
+  it("should use native Anthropic API when ANTHROPIC_API_KEY is set", () => {
+    delete process.env.OPENROUTER_API_KEY;
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test-key";
+    delete process.env.EXTRACTION_MODEL;
+    delete process.env.EXTRACTION_BASE_URL;
+    const config = resolveExtractionConfig();
+    expect(config.model).toBe("anthropic/claude-sonnet-4-6");
+    expect(config.baseUrl).toBe("https://api.anthropic.com");
+    expect(config.apiKey).toBe("sk-ant-test-key");
+  });
+
+  it("should route Anthropic models through OpenRouter when only OPENROUTER_API_KEY exists", () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.OPENROUTER_API_KEY = "or-key";
+    delete process.env.EXTRACTION_MODEL;
+    delete process.env.EXTRACTION_BASE_URL;
+    const config = resolveExtractionConfig();
+    expect(config.model).toBe("anthropic/claude-sonnet-4-6");
+    expect(config.baseUrl).toBe("https://openrouter.ai/api/v1");
+    expect(config.apiKey).toBe("or-key");
+  });
+
+  it("should prefer explicit baseUrl over model-name detection", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-key";
+    process.env.OPENROUTER_API_KEY = "or-key";
+    const config = resolveExtractionConfig({
+      model: "anthropic/claude-sonnet-4-6",
+      baseUrl: "https://openrouter.ai/api/v1",
+      apiKey: "or-explicit-key",
+    });
+    expect(config.baseUrl).toBe("https://openrouter.ai/api/v1");
+    expect(config.apiKey).toBe("or-explicit-key");
+  });
+
+  it("should use EXTRACTION_MODEL env var", () => {
+    delete process.env.OPENROUTER_API_KEY;
+    process.env.EXTRACTION_MODEL = "meta/llama-3-70b";
+    const config = resolveExtractionConfig();
+    expect(config.model).toBe("meta/llama-3-70b");
+  });
+
+  it("should use EXTRACTION_BASE_URL env var over model-name detection", () => {
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.EXTRACTION_BASE_URL = "https://my-proxy.ai/v1";
+    const config = resolveExtractionConfig();
+    expect(config.baseUrl).toBe("https://my-proxy.ai/v1");
+  });
+
+  it("should always set temperature to 0.0 and maxRetries to 2", () => {
+    const config = resolveExtractionConfig();
+    expect(config.temperature).toBe(0.0);
+    expect(config.maxRetries).toBe(2);
+  });
+});
+
+// ============================================================================
+// contextLengthForModel()
+// ============================================================================
+
+describe("contextLengthForModel", () => {
+  describe("exact match", () => {
+    it("should return 512 for mxbai-embed-large", () => {
+      expect(contextLengthForModel("mxbai-embed-large")).toBe(512);
+    });
+
+    it("should return 8191 for text-embedding-3-small (OpenAI)", () => {
+      expect(contextLengthForModel("text-embedding-3-small")).toBe(8191);
+    });
+
+    it("should return 8191 for text-embedding-3-large (OpenAI)", () => {
+      expect(contextLengthForModel("text-embedding-3-large")).toBe(8191);
+    });
+
+    it("should return 8192 for nomic-embed-text", () => {
+      expect(contextLengthForModel("nomic-embed-text")).toBe(8192);
+    });
+
+    it("should return 256 for all-minilm", () => {
+      expect(contextLengthForModel("all-minilm")).toBe(256);
+    });
+  });
+
+  describe("prefix match", () => {
+    it("should match mxbai-embed-large-8k:latest via prefix to 8192", () => {
+      expect(contextLengthForModel("mxbai-embed-large-8k:latest")).toBe(8192);
+    });
+
+    it("should match nomic-embed-text:v1.5 via prefix to 8192", () => {
+      expect(contextLengthForModel("nomic-embed-text:v1.5")).toBe(8192);
+    });
+  });
+
+  describe("unknown model fallback", () => {
+    it("should return DEFAULT_EMBEDDING_CONTEXT_LENGTH for unknown model", () => {
+      expect(contextLengthForModel("some-unknown-model")).toBe(DEFAULT_EMBEDDING_CONTEXT_LENGTH);
+    });
+
+    it("should return 512 as the default context length", () => {
+      // Verify the default value itself is 512
+      expect(DEFAULT_EMBEDDING_CONTEXT_LENGTH).toBe(512);
+      expect(contextLengthForModel("some-unknown-model")).toBe(512);
+    });
+
+    it("should return default for empty string", () => {
+      expect(contextLengthForModel("")).toBe(DEFAULT_EMBEDDING_CONTEXT_LENGTH);
+    });
+  });
+});

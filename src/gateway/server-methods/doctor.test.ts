@@ -302,6 +302,52 @@ describe("doctor.memory.status", () => {
     expectEmbeddingErrorResponse(respond, "memory search unavailable");
   });
 
+  it("returns ok when memory plugin is loaded and manager is null", async () => {
+    loadConfig.mockReturnValue({
+      plugins: { slots: { memory: "memory-neo4j" } },
+    } as unknown as OpenClawConfig);
+    getMemorySearchManager.mockResolvedValue({ manager: null, error: "unavailable" });
+    getActivePluginRegistry.mockReturnValue({
+      plugins: [{ id: "memory-neo4j", status: "loaded", enabled: true }],
+    });
+    const respond = vi.fn();
+
+    await invokeDoctorMemoryStatus(respond);
+
+    expect(respond).toHaveBeenCalledWith(
+      true,
+      {
+        agentId: "main",
+        provider: "memory-neo4j",
+        embedding: { ok: true },
+      },
+      undefined,
+    );
+  });
+
+  it("returns not-ok when memory plugin is configured but not loaded", async () => {
+    loadConfig.mockReturnValue({
+      plugins: { slots: { memory: "memory-neo4j" } },
+    } as unknown as OpenClawConfig);
+    getMemorySearchManager.mockResolvedValue({ manager: null, error: "unavailable" });
+    getActivePluginRegistry.mockReturnValue({
+      plugins: [{ id: "memory-neo4j", status: "error", enabled: true }],
+    });
+    const respond = vi.fn();
+
+    await invokeDoctorMemoryStatus(respond);
+
+    expect(respond).toHaveBeenCalledWith(
+      true,
+      {
+        agentId: "main",
+        provider: "memory-neo4j",
+        embedding: { ok: false, error: 'memory plugin "memory-neo4j" is not loaded' },
+      },
+      undefined,
+    );
+  });
+
   it("returns probe failure when manager probe throws", async () => {
     const close = vi.fn().mockResolvedValue(undefined);
     getMemorySearchManager.mockResolvedValue({

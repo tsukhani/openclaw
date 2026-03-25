@@ -29,6 +29,7 @@ export function startGatewayMaintenanceTimers(params: {
   refreshGatewayHealthSnapshot: (opts?: {
     probe?: boolean;
     includeSensitive?: boolean;
+    timeoutMs?: number;
   }) => Promise<HealthSummary>;
   logHealth: { error: (msg: string) => void };
   dedupe: Map<string, DedupeEntry>;
@@ -76,8 +77,10 @@ export function startGatewayMaintenanceTimers(params: {
   }, HEALTH_REFRESH_INTERVAL_MS);
 
   // Prime cache so first client gets a snapshot without waiting.
+  // Use a longer timeout for the initial probe — cold DNS/TLS after restart can
+  // cause channel probes (especially Telegram) to exceed the default 10 s budget.
   void params
-    .refreshGatewayHealthSnapshot({ probe: true })
+    .refreshGatewayHealthSnapshot({ probe: true, timeoutMs: 30_000 })
     .catch((err) => params.logHealth.error(`initial refresh failed: ${formatError(err)}`));
 
   // dedupe cache cleanup

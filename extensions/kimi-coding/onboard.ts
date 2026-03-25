@@ -12,7 +12,7 @@ export const KIMI_MODEL_REF = `kimi/${KIMI_CODING_DEFAULT_MODEL_ID}`;
 export const KIMI_CODING_MODEL_REF = KIMI_MODEL_REF;
 
 function resolveKimiCodingDefaultModel() {
-  return buildKimiCodingProvider().models[0];
+  return buildKimiCodingProvider().models?.[0];
 }
 
 const kimiCodingPresetAppliers = createDefaultModelPresetAppliers({

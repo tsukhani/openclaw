@@ -765,7 +765,9 @@ describe("memory cli", () => {
     const log = spyRuntimeLogs(defaultRuntime);
     await runMemoryCli(["status"]);
 
-    expect(log).toHaveBeenCalledWith("Memory search disabled.");
+    expect(log).toHaveBeenCalledWith(
+      expect.stringContaining("Memory Search: disabled for 1 agent"),
+    );
   });
 
   it("logs backend unsupported message when index has no sync", async () => {

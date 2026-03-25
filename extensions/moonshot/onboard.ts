@@ -13,7 +13,7 @@ export const MOONSHOT_DEFAULT_MODEL_REF = `moonshot/${MOONSHOT_DEFAULT_MODEL_ID}
 const moonshotPresetAppliers = createDefaultModelPresetAppliers<[string]>({
   primaryModelRef: MOONSHOT_DEFAULT_MODEL_REF,
   resolveParams: (_cfg: OpenClawConfig, baseUrl: string) => {
-    const defaultModel = buildMoonshotProvider().models[0];
+    const defaultModel = buildMoonshotProvider().models?.[0];
     if (!defaultModel) {
       return null;
     }

@@ -228,11 +228,11 @@ describe("resolveClientIp", () => {
       expected: undefined,
     },
     {
-      name: "fails closed when all X-Forwarded-For hops are trusted proxies",
+      name: "falls back to loopback when all X-Forwarded-For hops are trusted proxies",
       remoteAddr: "127.0.0.1",
       forwardedFor: "127.0.0.1, ::1",
       trustedProxies: ["127.0.0.1", "::1"],
-      expected: undefined,
+      expected: "127.0.0.1",
     },
     {
       name: "fails closed when all non-loopback X-Forwarded-For hops are trusted proxies",
@@ -242,23 +242,29 @@ describe("resolveClientIp", () => {
       expected: undefined,
     },
     {
-      name: "fails closed when trusted proxy omits forwarding headers",
+      name: "falls back to loopback when trusted proxy omits forwarding headers",
       remoteAddr: "127.0.0.1",
       trustedProxies: ["127.0.0.1"],
-      expected: undefined,
+      expected: "127.0.0.1",
     },
     {
-      name: "ignores invalid X-Forwarded-For entries",
+      name: "falls back to loopback when X-Forwarded-For entries are invalid",
       remoteAddr: "127.0.0.1",
       forwardedFor: "garbage, 10.0.0.999",
       trustedProxies: ["127.0.0.1"],
-      expected: undefined,
+      expected: "127.0.0.1",
     },
     {
-      name: "does not trust X-Real-IP by default",
+      name: "falls back to loopback even without X-Real-IP",
       remoteAddr: "127.0.0.1",
       realIp: "[2001:db8::5]",
       trustedProxies: ["127.0.0.1"],
+      expected: "127.0.0.1",
+    },
+    {
+      name: "fails closed when non-loopback trusted proxy omits forwarding headers",
+      remoteAddr: "10.0.0.1",
+      trustedProxies: ["10.0.0.1"],
       expected: undefined,
     },
     {

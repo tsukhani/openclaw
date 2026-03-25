@@ -358,6 +358,9 @@ export function createPluginRuntimeMock(overrides: DeepPartial<PluginRuntime> = 
         ) as unknown as PluginRuntime["agent"]["session"]["resolveSessionFilePath"],
       },
     },
+    llm: {
+      callModel: vi.fn() as unknown as PluginRuntime["llm"]["callModel"],
+    },
     system: {
       enqueueSystemEvent: vi.fn() as unknown as PluginRuntime["system"]["enqueueSystemEvent"],
       requestHeartbeatNow: vi.fn() as unknown as PluginRuntime["system"]["requestHeartbeatNow"],

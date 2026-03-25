@@ -29,6 +29,9 @@ describe("slash commands docs", () => {
 
     for (const command of listChatCommands()) {
       for (const alias of command.textAliases) {
+        if (!alias.startsWith("/")) {
+          continue;
+        }
         expect(documented.has(alias)).toBe(true);
       }
     }

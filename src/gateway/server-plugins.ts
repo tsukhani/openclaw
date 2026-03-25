@@ -601,6 +601,7 @@ export function loadGatewayPlugins(params: {
     }),
     runtimeOptions: {
       allowGatewaySubagentBinding: true,
+      cfg: params.cfg,
     },
     preferSetupRuntimeForChannelPlugins: params.preferSetupRuntimeForChannelPlugins,
     bundledRuntimeDepsInstaller: params.bundledRuntimeDepsInstaller,

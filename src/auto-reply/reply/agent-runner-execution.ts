@@ -1928,7 +1928,10 @@ export async function runAgentTurnWithFallback(params: {
         continue;
       }
 
-      defaultRuntime.error(`Embedded agent failed before reply: ${message}`);
+      const stack = err instanceof Error ? err.stack : undefined;
+      defaultRuntime.error(
+        `Embedded agent failed before reply: ${message}${stack ? `\n${stack}` : ""}`,
+      );
       // Only classify as rate-limit when we have concrete evidence from the
       // underlying error. FallbackSummaryError messages embed per-attempt
       // reason labels like `(rate_limit)`, so string-matching the summary text

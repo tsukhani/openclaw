@@ -73,6 +73,7 @@ export async function resolveCommandsSystemPromptBundle(
           }),
         },
         snapshotVersion: getSkillsSnapshotVersion(workspaceDir),
+        scopeToWorkspace: sandboxRuntime.sandboxed,
       });
     } catch {
       return { prompt: "", skills: [], resolvedSkills: [] };

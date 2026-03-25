@@ -2,7 +2,7 @@ import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { resolveProviderEndpoint } from "./provider-attribution.js";
 import { findNormalizedProviderValue } from "./provider-id.js";
 
-export const CONTEXT_WINDOW_HARD_MIN_TOKENS = 16_000;
+export const CONTEXT_WINDOW_HARD_MIN_TOKENS = 1_024;
 export const CONTEXT_WINDOW_WARN_BELOW_TOKENS = 32_000;
 
 export type ContextWindowSource = "model" | "modelsConfig" | "agentContextTokens" | "default";
@@ -147,7 +147,7 @@ export function evaluateContextWindowGuard(params: {
   return {
     ...params.info,
     tokens,
-    shouldWarn: tokens > 0 && tokens < warnBelow,
+    shouldWarn: tokens > 0 && tokens < warnBelow && params.info.source !== "modelsConfig",
     shouldBlock: tokens > 0 && tokens < hardMin,
   };
 }

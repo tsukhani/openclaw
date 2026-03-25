@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CallManagerContext } from "./context.js";
 
 const {
   addTranscriptEntryMock,
@@ -78,7 +79,7 @@ describe("voice-call outbound helpers", () => {
       providerCallIdMap: new Map(),
       config: {
         maxConcurrentCalls: 1,
-        outbound: { defaultMode: "conversation", notifyHangupDelaySec: 0 },
+        outbound: { defaultMode: "conversation" as const, notifyHangupDelaySec: 30 },
       },
       storePath: "/tmp/voice-call.json",
       webhookUrl: "https://example.com/webhook",
@@ -138,7 +139,7 @@ describe("voice-call outbound helpers", () => {
       provider: { name: "twilio", initiateCall: initiateProviderCall },
       config: {
         maxConcurrentCalls: 3,
-        outbound: { defaultMode: "conversation" },
+        outbound: { defaultMode: "conversation", notifyHangupDelaySec: 30 },
         fromNumber: "+14155550100",
         tts: { provider: "openai", providers: { openai: { voice: "nova" } } },
       },
@@ -181,7 +182,7 @@ describe("voice-call outbound helpers", () => {
       },
       config: {
         maxConcurrentCalls: 3,
-        outbound: { defaultMode: "conversation" },
+        outbound: { defaultMode: "conversation", notifyHangupDelaySec: 30 },
       },
       storePath: "/tmp/voice-call.json",
       webhookUrl: "https://example.com/webhook",

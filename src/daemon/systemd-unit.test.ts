@@ -18,7 +18,7 @@ describe("buildSystemdUnit", () => {
       programArguments: ["/usr/bin/openclaw", "gateway", "run"],
       environment: {},
     });
-    expect(unit).toContain("KillMode=control-group");
+    expect(unit).toContain("KillMode=mixed");
     expect(unit).toContain("TimeoutStopSec=30");
     expect(unit).toContain("TimeoutStartSec=30");
     expect(unit).toContain("SuccessExitStatus=0 143");

@@ -115,7 +115,7 @@ export type ModelDefinitionConfig = {
 };
 
 export type ModelProviderConfig = {
-  baseUrl: string;
+  baseUrl?: string;
   apiKey?: SecretInput;
   auth?: ModelProviderAuthMode;
   api?: ModelApi;
@@ -126,8 +126,7 @@ export type ModelProviderConfig = {
   injectNumCtxForOpenAICompat?: boolean;
   headers?: Record<string, SecretInput>;
   authHeader?: boolean;
-  request?: ConfiguredModelProviderRequest;
-  models: ModelDefinitionConfig[];
+  models?: ModelDefinitionConfig[];
 };
 
 export type BedrockDiscoveryConfig = {

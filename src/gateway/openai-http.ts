@@ -114,7 +114,11 @@ function resolveOpenAiChatCompletionsLimits(
 }
 
 function writeSse(res: ServerResponse, data: unknown) {
+  if (res.writableEnded || res.destroyed) {
+    return;
+  }
   res.write(`data: ${JSON.stringify(data)}\n\n`);
+  (res as unknown as { flush?: () => void }).flush?.();
 }
 
 function buildAgentCommandInput(params: {
@@ -591,7 +595,7 @@ export async function handleOpenAiHttpRequest(
     return true;
   }
 
-  const runId = `chatcmpl_${randomUUID()}`;
+  const runId = `chatcmpl-${randomUUID()}`;
   const deps = createDefaultDeps();
   const abortController = new AbortController();
   const commandInput = buildAgentCommandInput({
@@ -650,6 +654,7 @@ export async function handleOpenAiHttpRequest(
 
   setSseHeaders(res);
 
+  const created = Math.floor(Date.now() / 1000);
   let wroteRole = false;
   let wroteStopChunk = false;
   let sawAssistantDelta = false;
@@ -689,6 +694,22 @@ export async function handleOpenAiHttpRequest(
     finalizeRequested = true;
     maybeFinalize();
   };
+
+  /** Send a final chunk with finish_reason and then [DONE]. */
+  function finishStream(finishReason: string = "stop") {
+    if (res.writableEnded || res.destroyed) {
+      return;
+    }
+    writeSse(res, {
+      id: runId,
+      object: "chat.completion.chunk",
+      created,
+      model,
+      choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
+    });
+    writeDone(res);
+    res.end();
+  }
 
   const unsubscribe = onAgentEvent((evt) => {
     if (evt.runId !== runId) {

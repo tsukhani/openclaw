@@ -1,0 +1,1241 @@
+/**
+ * Tests for search.ts — Hybrid Search & RRF Fusion.
+ *
+ * Tests the exported pure logic: classifyQuery(), getAdaptiveWeights(), and fuseWithConfidenceRRF().
+ * hybridSearch() is tested with mocked Neo4j client and Embeddings.
+ */
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { Embeddings } from "./embeddings.js";
+import type { Neo4jMemoryClient } from "./neo4j-client.js";
+import type { MemoryCategory, SearchSignalResult } from "./schema.js";
+import { CATEGORY_TO_FACT_TYPE, FACT_TYPE_CATEGORIES } from "./schema.js";
+import {
+  classifyQuery,
+  getAdaptiveWeights,
+  fuseWithConfidenceRRF,
+  hybridSearch,
+  detectFactTypeIntent,
+  applyFactTypeBoost,
+} from "./search.js";
+
+// ============================================================================
+// classifyQuery()
+// ============================================================================
+
+describe("classifyQuery", () => {
+  describe("short queries (1-2 words)", () => {
+    it("should classify a single word as 'short'", () => {
+      expect(classifyQuery("dogs")).toBe("short");
+    });
+
+    it("should classify two words as 'short'", () => {
+      expect(classifyQuery("best coffee")).toBe("short");
+    });
+
+    it("should handle whitespace-padded short queries", () => {
+      expect(classifyQuery("  hello  ")).toBe("short");
+    });
+  });
+
+  describe("entity queries (proper nouns)", () => {
+    it("should classify a single capitalized word as 'entity' (proper noun detection)", () => {
+      expect(classifyQuery("TypeScript")).toBe("entity");
+    });
+    it("should classify short query with proper noun as 'entity'", () => {
+      // 4 words with no question pattern → entity gate doesn't fire → default
+      expect(classifyQuery("tell me about Tarun")).toBe("default");
+    });
+
+    it("should classify short query with organization name as 'entity'", () => {
+      // 3 words but "what about" doesn't match who/where/what + is/does pattern → default
+      expect(classifyQuery("what about Google")).toBe("default");
+    });
+
+    it("should classify question patterns targeting entities", () => {
+      expect(classifyQuery("who is the CEO")).toBe("entity");
+    });
+
+    it("should classify 'where is' patterns as entity", () => {
+      expect(classifyQuery("where is the office")).toBe("entity");
+    });
+
+    it("should classify 'what does' patterns as entity", () => {
+      expect(classifyQuery("what does she do")).toBe("entity");
+    });
+
+    it("should not treat common words (The, Is, etc.) as entity indicators", () => {
+      // "The" and "Is" are excluded from capitalized word detection
+      // 3 words, no proper nouns detected, no question pattern -> default
+      expect(classifyQuery("this is fine")).toBe("default");
+    });
+  });
+
+  describe("long queries (5+ words)", () => {
+    it("should classify a 5-word query as 'long'", () => {
+      expect(classifyQuery("what is the best framework")).toBe("long");
+    });
+
+    it("should classify a longer sentence as 'long'", () => {
+      expect(classifyQuery("tell me about the history of programming languages")).toBe("long");
+    });
+
+    it("should classify a verbose question as 'long'", () => {
+      expect(classifyQuery("how do i configure the database connection")).toBe("long");
+    });
+  });
+
+  describe("default queries (3-4 words, no entities)", () => {
+    it("should classify a 3-word lowercase query as 'default'", () => {
+      expect(classifyQuery("my favorite color")).toBe("default");
+    });
+
+    it("should classify a 4-word lowercase query as 'default'", () => {
+      expect(classifyQuery("best practices for testing")).toBe("default");
+    });
+  });
+
+  describe("possessive chain queries (multi-hop entity traversal)", () => {
+    it("should classify 2+ possessives as 'entity' regardless of word count", () => {
+      expect(classifyQuery("What is my wife's older son's phone number?")).toBe("entity");
+    });
+
+    it("should classify possessive chain without question prefix as 'entity'", () => {
+      expect(classifyQuery("Alice's manager's email address")).toBe("entity");
+    });
+
+    it("should classify WH-question with single possessive as 'entity'", () => {
+      expect(classifyQuery("What is my wife's phone number")).toBe("entity");
+    });
+
+    it("should not classify generic long query without possessives as 'entity'", () => {
+      expect(classifyQuery("what is the best framework for web")).toBe("long");
+    });
+  });
+
+  describe("CR-006: entity classification gated behind word count", () => {
+    it("'TypeScript' (1 word, capitalized) → entity", () => {
+      expect(classifyQuery("TypeScript")).toBe("entity");
+    });
+
+    it("'TypeScript best practices' (3 words) → default, not entity", () => {
+      expect(classifyQuery("TypeScript best practices")).toBe("default");
+    });
+
+    it("'how to use Redis effectively in production' (7 words) → long, not entity", () => {
+      expect(classifyQuery("how to use Redis effectively in production")).toBe("long");
+    });
+
+    it("'What is Docker' (3 words, question pattern) → entity", () => {
+      expect(classifyQuery("What is Docker")).toBe("entity");
+    });
+
+    it("'John' (1 word, proper noun) → entity", () => {
+      expect(classifyQuery("John")).toBe("entity");
+    });
+
+    it("'hello world' (2 words, no capitals) → short", () => {
+      expect(classifyQuery("hello world")).toBe("short");
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should handle empty string", () => {
+      // Empty string splits to [""], length 1 -> "short"
+      expect(classifyQuery("")).toBe("short");
+    });
+
+    it("should handle only whitespace", () => {
+      // "   ".trim() = "", splits to [""], length 1 -> "short"
+      expect(classifyQuery("   ")).toBe("short");
+    });
+  });
+});
+
+// ============================================================================
+// getAdaptiveWeights()
+// ============================================================================
+
+describe("getAdaptiveWeights", () => {
+  describe("with graph enabled", () => {
+    it("should boost BM25 for short queries", () => {
+      const [vector, bm25, graph, freshness] = getAdaptiveWeights("short", true);
+      expect(bm25).toBeGreaterThan(vector);
+      expect(vector).toBe(0.8);
+      expect(bm25).toBe(1.2);
+      expect(graph).toBeCloseTo(0.3);
+      expect(freshness).toBe(0.2);
+    });
+
+    it("should boost graph for entity queries", () => {
+      const [vector, bm25, graph, freshness] = getAdaptiveWeights("entity", true);
+      expect(vector).toBe(0.8);
+      expect(bm25).toBe(1.0);
+      expect(graph).toBeCloseTo(0.4);
+      expect(freshness).toBe(0.2);
+    });
+
+    it("should boost vector for long queries", () => {
+      const [vector, bm25, graph, freshness] = getAdaptiveWeights("long", true);
+      expect(vector).toBeGreaterThan(bm25);
+      expect(vector).toBeGreaterThan(graph);
+      expect(vector).toBe(1.2);
+      expect(bm25).toBe(0.7);
+      expect(graph).toBeCloseTo(0.3);
+      expect(freshness).toBe(0.2);
+    });
+
+    it("should return balanced weights for default queries", () => {
+      const [vector, bm25, graph, freshness] = getAdaptiveWeights("default", true);
+      expect(vector).toBe(1.0);
+      expect(bm25).toBe(1.0);
+      expect(graph).toBeCloseTo(0.3);
+      expect(freshness).toBe(0.2);
+    });
+  });
+
+  describe("with graph disabled", () => {
+    it("should zero-out graph weight for short queries", () => {
+      const [vector, bm25, graph] = getAdaptiveWeights("short", false);
+      expect(graph).toBe(0);
+      expect(vector).toBe(0.8);
+      expect(bm25).toBe(1.2);
+    });
+
+    it("should zero-out graph weight for entity queries", () => {
+      const [, , graph] = getAdaptiveWeights("entity", false);
+      expect(graph).toBe(0);
+    });
+
+    it("should zero-out graph weight for long queries", () => {
+      const [, , graph] = getAdaptiveWeights("long", false);
+      expect(graph).toBe(0);
+    });
+
+    it("should zero-out graph weight for default queries", () => {
+      const [, , graph] = getAdaptiveWeights("default", false);
+      expect(graph).toBe(0);
+    });
+  });
+});
+
+// ============================================================================
+// hybridSearch() — integration test with mocked dependencies
+// ============================================================================
+
+describe("hybridSearch", () => {
+  // Properly typed mocks matching the interfaces hybridSearch depends on.
+  // Using Pick<> to extract only the methods hybridSearch actually calls,
+  // so TypeScript will catch interface changes (e.g. renamed or removed methods).
+  type MockedDb = {
+    [K in keyof Pick<
+      Neo4jMemoryClient,
+      "vectorSearch" | "bm25Search" | "graphSearch" | "recordRetrievals"
+    >]: ReturnType<typeof vi.fn>;
+  };
+  type MockedEmbeddings = {
+    [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
+  };
+
+  const mockDb: MockedDb = {
+    vectorSearch: vi.fn(),
+    bm25Search: vi.fn(),
+    graphSearch: vi.fn(),
+    recordRetrievals: vi.fn(),
+  };
+
+  const mockEmbeddings: MockedEmbeddings = {
+    embed: vi.fn(),
+    embedBatch: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockEmbeddings.embed.mockResolvedValue([0.1, 0.2, 0.3]);
+    mockDb.recordRetrievals.mockResolvedValue(undefined);
+  });
+
+  function makeSignalResult(overrides: Partial<SearchSignalResult> = {}): SearchSignalResult {
+    return {
+      id: "mem-1",
+      text: "Test memory",
+      category: "fact",
+      importance: 0.7,
+      createdAt: "2025-01-01T00:00:00Z",
+      score: 0.9,
+      ...overrides,
+    };
+  }
+
+  it("should return empty array when no signals return results", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    expect(results).toEqual([]);
+    expect(mockDb.recordRetrievals).not.toHaveBeenCalled();
+  });
+
+  it("should fuse results from vector and BM25 signals", async () => {
+    const vectorResult = makeSignalResult({ id: "mem-1", score: 0.95, text: "Vector match" });
+    const bm25Result = makeSignalResult({ id: "mem-2", score: 0.8, text: "BM25 match" });
+
+    mockDb.vectorSearch.mockResolvedValue([vectorResult]);
+    mockDb.bm25Search.mockResolvedValue([bm25Result]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    expect(results.length).toBe(2);
+    // Results should have scores in 0-1 range (blended: 0.6×rrfNorm + 0.25×recency + 0.15×importance)
+    expect(results[0].score).toBeLessThanOrEqual(1);
+    expect(results[0].score).toBeGreaterThanOrEqual(0);
+    // First result should have the highest blended score
+    expect(results[0].score).toBeGreaterThan(results[1].score);
+  });
+
+  it("should deduplicate across signals (same memory in multiple signals)", async () => {
+    const sharedResult = makeSignalResult({ id: "mem-shared", score: 0.9 });
+
+    mockDb.vectorSearch.mockResolvedValue([sharedResult]);
+    mockDb.bm25Search.mockResolvedValue([{ ...sharedResult, score: 0.85 }]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    // Should only have one result (deduplicated by ID)
+    expect(results.length).toBe(1);
+    expect(results[0].id).toBe("mem-shared");
+    // Score should be in 0-1 range (blended: 0.6×rrfNorm + 0.25×recency + 0.15×importance)
+    expect(results[0].score).toBeLessThanOrEqual(1);
+    expect(results[0].score).toBeGreaterThan(0);
+  });
+
+  it("should include graph signal when graphEnabled is true", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([
+      makeSignalResult({ id: "mem-graph", score: 0.7, text: "Graph result" }),
+    ]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "tell me about Tarun",
+      5,
+      "agent-1",
+      true,
+    );
+
+    expect(mockDb.graphSearch).toHaveBeenCalled();
+    expect(results.length).toBe(1);
+    expect(results[0].id).toBe("mem-graph");
+  });
+
+  it("should not call graphSearch when graphEnabled is false", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    expect(mockDb.graphSearch).not.toHaveBeenCalled();
+  });
+
+  it("should limit results to the requested count", async () => {
+    const manyResults = Array.from({ length: 10 }, (_, i) =>
+      makeSignalResult({ id: `mem-${i}`, score: 0.9 - i * 0.05 }),
+    );
+
+    mockDb.vectorSearch.mockResolvedValue(manyResults);
+    mockDb.bm25Search.mockResolvedValue([]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      3,
+      "agent-1",
+      false,
+    );
+
+    expect(results.length).toBe(3);
+  });
+
+  it("should record retrieval events for returned results", async () => {
+    mockDb.vectorSearch.mockResolvedValue([
+      makeSignalResult({ id: "mem-1" }),
+      makeSignalResult({ id: "mem-2" }),
+    ]);
+    mockDb.bm25Search.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    expect(mockDb.recordRetrievals).toHaveBeenCalledWith(["mem-1", "mem-2"]);
+  });
+
+  it("should silently handle recordRetrievals failure", async () => {
+    mockDb.vectorSearch.mockResolvedValue([makeSignalResult({ id: "mem-1" })]);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.recordRetrievals.mockRejectedValue(new Error("DB connection lost"));
+
+    // Should not throw
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    expect(results.length).toBe(1);
+  });
+
+  it("should normalize scores to 0-1 range", async () => {
+    mockDb.vectorSearch.mockResolvedValue([
+      makeSignalResult({ id: "mem-1", score: 0.95 }),
+      makeSignalResult({ id: "mem-2", score: 0.5 }),
+    ]);
+    mockDb.bm25Search.mockResolvedValue([]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    for (const r of results) {
+      expect(r.score).toBeGreaterThanOrEqual(0);
+      expect(r.score).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("should use candidateMultiplier option", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { candidateMultiplier: 8 },
+    );
+
+    // limit=5, multiplier=8 => candidateLimit = 40
+    expect(mockDb.vectorSearch).toHaveBeenCalledWith(
+      expect.any(Array),
+      40,
+      0.1,
+      "agent-1",
+      false,
+      undefined,
+      undefined,
+      expect.any(AbortSignal),
+      undefined,
+      undefined,
+    );
+    expect(mockDb.bm25Search).toHaveBeenCalledWith(
+      "test query",
+      40,
+      "agent-1",
+      false,
+      undefined,
+      undefined,
+      expect.any(AbortSignal),
+      undefined,
+      undefined,
+    );
+  });
+
+  it("should pass default agentId when not specified", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+    );
+
+    expect(mockDb.vectorSearch).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Number),
+      0.1,
+      "default",
+      false,
+      undefined,
+      undefined,
+      expect.any(AbortSignal),
+      undefined,
+      undefined,
+    );
+  });
+
+  it("should pass includeExpired=false to all signals by default", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    expect(mockDb.vectorSearch).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Number),
+      0.1,
+      "agent-1",
+      false,
+      undefined,
+      undefined,
+      expect.any(AbortSignal),
+      undefined,
+      undefined,
+    );
+    expect(mockDb.bm25Search).toHaveBeenCalledWith(
+      "test query",
+      expect.any(Number),
+      "agent-1",
+      false,
+      undefined,
+      undefined,
+      expect.any(AbortSignal),
+      undefined,
+      undefined,
+    );
+  });
+
+  it("should pass includeExpired=true to all signals when option is set", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "tell me about Tarun",
+      5,
+      "agent-1",
+      true,
+      { includeExpired: true },
+    );
+
+    expect(mockDb.vectorSearch).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Number),
+      0.1,
+      "agent-1",
+      true,
+      undefined,
+      undefined,
+      expect.any(AbortSignal),
+      undefined,
+      undefined,
+    );
+    expect(mockDb.bm25Search).toHaveBeenCalledWith(
+      "tell me about Tarun",
+      expect.any(Number),
+      "agent-1",
+      true,
+      undefined,
+      undefined,
+      expect.any(AbortSignal),
+      undefined,
+      undefined,
+    );
+    expect(mockDb.graphSearch).toHaveBeenCalledWith(
+      "tell me about Tarun",
+      expect.any(Number),
+      expect.any(Number),
+      "agent-1",
+      expect.any(Number),
+      true,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      expect.any(String),
+      expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
+      undefined, // graphCausalRelTypes
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("should pass graphSeedCap to graphSearch when provided", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "who is Tarun",
+      5,
+      "agent-1",
+      true,
+      { graphSeedCap: 3 },
+    );
+
+    expect(mockDb.graphSearch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Number),
+      expect.any(Number),
+      "agent-1",
+      expect.any(Number),
+      false,
+      undefined,
+      3,
+      undefined,
+      undefined,
+      expect.any(String),
+      expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
+      undefined, // graphCausalRelTypes
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("should pass graphRelTypes to graphSearch when provided", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "who is Tarun",
+      5,
+      "agent-1",
+      true,
+      { graphRelTypes: ["WORKS_AT", "KNOWS"] },
+    );
+
+    expect(mockDb.graphSearch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Number),
+      expect.any(Number),
+      "agent-1",
+      expect.any(Number),
+      false,
+      undefined,
+      undefined,
+      ["WORKS_AT", "KNOWS"],
+      undefined,
+      expect.any(String),
+      expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
+      undefined, // graphCausalRelTypes
+      expect.any(AbortSignal),
+    );
+  });
+
+  it("should use default depth 2 when graphSearchDepth is not specified", async () => {
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "who is Tarun",
+      5,
+      "agent-1",
+      true,
+    );
+
+    expect(mockDb.graphSearch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Number),
+      expect.any(Number),
+      "agent-1",
+      2, // default depth — matches hybridSearch default (M25: reduced from 4 to 2)
+      false,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      expect.any(String),
+      expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
+      undefined, // graphCausalRelTypes
+      expect.any(AbortSignal),
+    );
+  });
+});
+
+// ============================================================================
+// OP-120: asOf point-in-time queries
+// ============================================================================
+
+describe("hybridSearch — asOf parameter (OP-120)", () => {
+  type MockedDb = {
+    [K in keyof Pick<
+      Neo4jMemoryClient,
+      "vectorSearch" | "bm25Search" | "graphSearch" | "recordRetrievals"
+    >]: ReturnType<typeof vi.fn>;
+  };
+  type MockedEmbeddings = {
+    [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
+  };
+
+  const mockDb: MockedDb = {
+    vectorSearch: vi.fn(),
+    bm25Search: vi.fn(),
+    graphSearch: vi.fn(),
+    recordRetrievals: vi.fn(),
+  };
+  const mockEmbeddings: MockedEmbeddings = {
+    embed: vi.fn(),
+    embedBatch: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockEmbeddings.embed.mockResolvedValue([0.1, 0.2, 0.3]);
+    mockDb.recordRetrievals.mockResolvedValue(undefined);
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([]);
+  });
+
+  it("should pass asOf to vectorSearch and bm25Search", async () => {
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { asOf: "2026-01-01" },
+    );
+
+    expect(mockDb.vectorSearch).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Number),
+      0.1,
+      "agent-1",
+      false,
+      "2026-01-01",
+      undefined,
+      expect.any(AbortSignal),
+      undefined,
+      undefined,
+    );
+    expect(mockDb.bm25Search).toHaveBeenCalledWith(
+      "test query",
+      expect.any(Number),
+      "agent-1",
+      false,
+      "2026-01-01",
+      undefined,
+      expect.any(AbortSignal),
+      undefined,
+      undefined,
+    );
+  });
+
+  it("should pass asOf to graphSearch when graphEnabled=true", async () => {
+    mockDb.graphSearch.mockResolvedValue([]);
+
+    await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "tell me about Tarun",
+      5,
+      "agent-1",
+      true,
+      { asOf: "2025-06-15T00:00:00Z" },
+    );
+
+    expect(mockDb.graphSearch).toHaveBeenCalledWith(
+      "tell me about Tarun",
+      expect.any(Number),
+      expect.any(Number),
+      "agent-1",
+      expect.any(Number),
+      false,
+      "2025-06-15T00:00:00Z",
+      undefined,
+      undefined,
+      undefined,
+      expect.any(String),
+      expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
+      undefined, // graphCausalRelTypes
+      expect.any(AbortSignal),
+    );
+  });
+});
+
+// ============================================================================
+// OP-121: Temporal recency as 4th RRF signal
+// ============================================================================
+
+describe("hybridSearch — recency signal (OP-121)", () => {
+  type MockedDb = {
+    [K in keyof Pick<
+      Neo4jMemoryClient,
+      "vectorSearch" | "bm25Search" | "graphSearch" | "recordRetrievals"
+    >]: ReturnType<typeof vi.fn>;
+  };
+  type MockedEmbeddings = {
+    [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
+  };
+
+  const mockDb: MockedDb = {
+    vectorSearch: vi.fn(),
+    bm25Search: vi.fn(),
+    graphSearch: vi.fn(),
+    recordRetrievals: vi.fn(),
+  };
+  const mockEmbeddings: MockedEmbeddings = {
+    embed: vi.fn(),
+    embedBatch: vi.fn(),
+  };
+
+  function makeResult(id: string, score: number, createdAt: string): SearchSignalResult {
+    return { id, text: `Memory ${id}`, category: "fact", importance: 0.7, createdAt, score };
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockEmbeddings.embed.mockResolvedValue([0.1, 0.2, 0.3]);
+    mockDb.recordRetrievals.mockResolvedValue(undefined);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+  });
+
+  it("should rank more recent memory higher than older with equal vector score", async () => {
+    const recentDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(); // 5 days ago
+    const oldDate = new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(); // 300 days ago
+
+    mockDb.vectorSearch.mockResolvedValue([
+      makeResult("old-mem", 0.9, oldDate),
+      makeResult("recent-mem", 0.9, recentDate),
+    ]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { recencyWeight: 0.5 }, // amplify recency effect for test clarity
+    );
+
+    expect(results.length).toBe(2);
+    // Recent memory should rank higher due to recency boost
+    expect(results[0].id).toBe("recent-mem");
+    expect(results[1].id).toBe("old-mem");
+  });
+
+  it("should include recency in signals output", async () => {
+    const recentDate = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    mockDb.vectorSearch.mockResolvedValue([makeResult("mem-1", 0.8, recentDate)]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+    );
+
+    expect(results[0].signals).toBeDefined();
+    expect(results[0].signals?.recency).toBeDefined();
+    expect(results[0].signals?.recency?.score).toBeGreaterThan(0);
+    expect(results[0].signals?.recency?.score).toBeLessThanOrEqual(1);
+  });
+
+  it("should return score <= 1 after recency boost and normalization", async () => {
+    const dates = [
+      new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
+    ];
+    mockDb.vectorSearch.mockResolvedValue(
+      dates.map((d, i) => makeResult(`mem-${i}`, 0.9 - i * 0.1, d)),
+    );
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { recencyWeight: 1.0 }, // max weight
+    );
+
+    for (const r of results) {
+      expect(r.score).toBeGreaterThanOrEqual(0);
+      expect(r.score).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("recencyWeight=0 should disable recency boost (pure RRF ordering)", async () => {
+    const recentDate = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString();
+    const oldDate = new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Old memory has slightly higher RRF score
+    mockDb.vectorSearch.mockResolvedValue([
+      makeResult("old-mem", 0.95, oldDate),
+      makeResult("recent-mem", 0.5, recentDate),
+    ]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { recencyWeight: 0 },
+    );
+
+    // With recencyWeight=0, old memory should still rank higher (better RRF score)
+    expect(results[0].id).toBe("old-mem");
+  });
+});
+
+// ============================================================================
+// fuseWithConfidenceRRF()
+// ============================================================================
+
+describe("fuseWithConfidenceRRF", () => {
+  function makeSignal(id: string, score: number, text = `Memory ${id}`): SearchSignalResult {
+    return {
+      id,
+      text,
+      category: "fact",
+      importance: 0.7,
+      createdAt: "2025-01-01T00:00:00Z",
+      score,
+    };
+  }
+
+  it("should return empty array when all signals are empty", () => {
+    const result = fuseWithConfidenceRRF([[], [], []], 60, [1.0, 1.0, 1.0]);
+    expect(result).toEqual([]);
+  });
+
+  it("should handle a single signal with results", () => {
+    const signal = [makeSignal("a", 0.9), makeSignal("b", 0.5)];
+    const result = fuseWithConfidenceRRF([signal, [], []], 60, [1.0, 1.0, 1.0]);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("a");
+    expect(result[1].id).toBe("b");
+    // First result should have higher RRF score than second
+    expect(result[0].rrfScore).toBeGreaterThan(result[1].rrfScore);
+  });
+
+  it("should boost candidates appearing in multiple signals", () => {
+    const vectorSignal = [makeSignal("shared", 0.9), makeSignal("vec-only", 0.8)];
+    const bm25Signal = [makeSignal("shared", 0.85)];
+
+    const result = fuseWithConfidenceRRF([vectorSignal, bm25Signal, []], 60, [1.0, 1.0, 1.0]);
+
+    // "shared" should rank higher than "vec-only" despite similar scores
+    // because it appears in two signals
+    expect(result[0].id).toBe("shared");
+    expect(result[1].id).toBe("vec-only");
+  });
+
+  it("should handle ties (same score, same rank) consistently", () => {
+    const signal = [makeSignal("a", 0.5), makeSignal("b", 0.5)];
+    const result = fuseWithConfidenceRRF([signal], 60, [1.0]);
+
+    expect(result).toHaveLength(2);
+    // With same score, first in signal should have higher RRF (rank 1 vs rank 2)
+    expect(result[0].id).toBe("a");
+    expect(result[1].id).toBe("b");
+  });
+
+  it("should respect different k values", () => {
+    const signal = [makeSignal("a", 0.9), makeSignal("b", 0.5)];
+
+    // Small k amplifies rank differences, large k smooths them
+    const resultSmallK = fuseWithConfidenceRRF([signal], 1, [1.0]);
+    const resultLargeK = fuseWithConfidenceRRF([signal], 1000, [1.0]);
+
+    // The ratio between first and second should be larger with smaller k
+    const ratioSmallK = resultSmallK[0].rrfScore / resultSmallK[1].rrfScore;
+    const ratioLargeK = resultLargeK[0].rrfScore / resultLargeK[1].rrfScore;
+    expect(ratioSmallK).toBeGreaterThan(ratioLargeK);
+  });
+
+  it("should handle zero-score entries", () => {
+    const signal = [makeSignal("a", 0.9), makeSignal("b", 0)];
+    const result = fuseWithConfidenceRRF([signal], 60, [1.0]);
+
+    expect(result).toHaveLength(2);
+    // Zero score entry should have zero RRF contribution
+    expect(result[1].rrfScore).toBe(0);
+    expect(result[0].rrfScore).toBeGreaterThan(0);
+  });
+
+  it("should apply signal weights correctly", () => {
+    // Same item appears in two signals with different weights
+    const signal1 = [makeSignal("a", 0.8)];
+    const signal2 = [makeSignal("a", 0.8)];
+
+    const resultEqual = fuseWithConfidenceRRF([signal1, signal2], 60, [1.0, 1.0]);
+    const resultWeighted = fuseWithConfidenceRRF([signal1, signal2], 60, [2.0, 0.5]);
+
+    // Both should have the same item, but weighted version uses different signal contributions
+    expect(resultEqual[0].id).toBe("a");
+    expect(resultWeighted[0].id).toBe("a");
+    // With unequal weights, overall score differs
+    expect(resultEqual[0].rrfScore).not.toBeCloseTo(resultWeighted[0].rrfScore);
+  });
+
+  it("should sort results by RRF score descending", () => {
+    const signal1 = [makeSignal("low", 0.3)];
+    const signal2 = [makeSignal("high", 0.95)];
+    const signal3 = [makeSignal("mid", 0.6)];
+
+    const result = fuseWithConfidenceRRF([signal1, signal2, signal3], 60, [1.0, 1.0, 1.0]);
+
+    expect(result[0].id).toBe("high");
+    expect(result[1].id).toBe("mid");
+    expect(result[2].id).toBe("low");
+  });
+
+  it("should deduplicate within a single signal (keep first occurrence)", () => {
+    const signal = [
+      makeSignal("dup", 0.9),
+      makeSignal("dup", 0.5), // duplicate — should be ignored
+      makeSignal("other", 0.7),
+    ];
+    const result = fuseWithConfidenceRRF([signal], 60, [1.0]);
+
+    // "dup" should appear once using its first occurrence (rank 1, score 0.9)
+    const dupEntry = result.find((r) => r.id === "dup");
+    expect(dupEntry).toBeDefined();
+    // Only 2 unique candidates
+    expect(result).toHaveLength(2);
+  });
+});
+
+// ============================================================================
+// Fact Type Separation (OP-185)
+// ============================================================================
+
+describe("FACT_TYPE_CATEGORIES / CATEGORY_TO_FACT_TYPE", () => {
+  it("should map every MemoryCategory to a FactType", () => {
+    const allCategories: MemoryCategory[] = [
+      "core",
+      "preference",
+      "fact",
+      "decision",
+      "entity",
+      "lesson",
+      "other",
+    ];
+    for (const cat of allCategories) {
+      expect(CATEGORY_TO_FACT_TYPE[cat]).toBeDefined();
+    }
+  });
+
+  it("should map fact/entity to world", () => {
+    expect(CATEGORY_TO_FACT_TYPE.fact).toBe("world");
+    expect(CATEGORY_TO_FACT_TYPE.entity).toBe("world");
+  });
+
+  it("should map lesson/decision to experience", () => {
+    expect(CATEGORY_TO_FACT_TYPE.lesson).toBe("experience");
+    expect(CATEGORY_TO_FACT_TYPE.decision).toBe("experience");
+  });
+
+  it("should map preference to opinion", () => {
+    expect(CATEGORY_TO_FACT_TYPE.preference).toBe("opinion");
+  });
+
+  it("should map core/other to observation", () => {
+    expect(CATEGORY_TO_FACT_TYPE.core).toBe("observation");
+    expect(CATEGORY_TO_FACT_TYPE.other).toBe("observation");
+  });
+
+  it("other fact type should have no memory categories", () => {
+    expect(FACT_TYPE_CATEGORIES.other).toHaveLength(0);
+  });
+});
+
+describe("detectFactTypeIntent", () => {
+  it("should detect opinion intent from preference keywords", () => {
+    expect(detectFactTypeIntent("what are my preferences")).toBe("opinion");
+    expect(detectFactTypeIntent("what does she like")).toBe("opinion");
+    expect(detectFactTypeIntent("favorite programming language")).toBe("opinion");
+    expect(detectFactTypeIntent("what do I dislike about Python")).toBe("opinion");
+  });
+
+  it("should detect opinion intent from think/love/hate keywords", () => {
+    expect(detectFactTypeIntent("what does he think about React")).toBe("opinion");
+    expect(detectFactTypeIntent("I love TypeScript")).toBe("opinion");
+    expect(detectFactTypeIntent("she hates meetings")).toBe("opinion");
+  });
+
+  it("should detect experience intent from lesson/decision keywords", () => {
+    expect(detectFactTypeIntent("what lessons did I learn")).toBe("experience");
+    expect(detectFactTypeIntent("what was the decision about the API")).toBe("experience");
+    expect(detectFactTypeIntent("key takeaways from the project")).toBe("experience");
+    expect(detectFactTypeIntent("what insights do we have")).toBe("experience");
+  });
+
+  it("should detect experience intent from try/attempt keywords", () => {
+    expect(detectFactTypeIntent("what did we try last sprint")).toBe("experience");
+    expect(detectFactTypeIntent("he attempted to fix the bug")).toBe("experience");
+  });
+
+  it("should detect world intent from fact/knowledge keywords", () => {
+    expect(detectFactTypeIntent("what is her phone number")).toBe("world");
+    expect(detectFactTypeIntent("give me the email address")).toBe("world");
+    expect(detectFactTypeIntent("what facts do we know about the company")).toBe("world");
+    expect(detectFactTypeIntent("what is the name of the CEO")).toBe("world");
+  });
+
+  it("should detect world intent from who/where/when patterns", () => {
+    expect(detectFactTypeIntent("who is the new CTO")).toBe("world");
+    expect(detectFactTypeIntent("where is the Berlin office")).toBe("world");
+    expect(detectFactTypeIntent("when was the company founded")).toBe("world");
+  });
+
+  it("should detect observation intent from profile/summary keywords", () => {
+    expect(detectFactTypeIntent("show me the observation about Alice")).toBe("observation");
+    expect(detectFactTypeIntent("what is the profile of the user")).toBe("observation");
+    expect(detectFactTypeIntent("give me a summary of the project")).toBe("observation");
+  });
+
+  it("should return null when no intent detected", () => {
+    expect(detectFactTypeIntent("hello")).toBeNull();
+    expect(detectFactTypeIntent("how is the weather")).toBeNull();
+    expect(detectFactTypeIntent("tell me about the project")).toBeNull();
+  });
+});
+
+describe("applyFactTypeBoost", () => {
+  function makeFusedCandidate(id: string, category: string, rrfScore: number) {
+    return {
+      id,
+      text: `text-${id}`,
+      category,
+      importance: 0.5,
+      createdAt: "2025-01-01",
+      rrfScore,
+      signals: {
+        vector: { rank: 0, score: 0 },
+        bm25: { rank: 0, score: 0 },
+        graph: { rank: 0, score: 0 },
+        freshness: { rank: 0, score: 0 },
+        community: { rank: 0, score: 0 },
+        mpfp: { rank: 0, score: 0 },
+        observation: { rank: 0, score: 0 },
+      },
+    };
+  }
+
+  it("should boost matching categories and re-sort", () => {
+    const candidates = [
+      makeFusedCandidate("pref", "preference", 0.8),
+      makeFusedCandidate("fact1", "fact", 0.9), // higher base score
+      makeFusedCandidate("fact2", "entity", 0.7),
+    ];
+    const result = applyFactTypeBoost(candidates, "opinion");
+
+    // preference candidate should be boosted (0.8 * 1.3 = 1.04)
+    // fact candidate stays at 0.9
+    expect(result[0].id).toBe("pref");
+    expect(result[0].rrfScore).toBeCloseTo(0.8 * 1.3);
+    expect(result[1].id).toBe("fact1");
+    expect(result[1].rrfScore).toBe(0.9); // unchanged
+  });
+
+  it("should boost world type categories (fact + entity)", () => {
+    const candidates = [
+      makeFusedCandidate("other1", "other", 0.9),
+      makeFusedCandidate("fact1", "fact", 0.85),
+      makeFusedCandidate("entity1", "entity", 0.8),
+    ];
+    const result = applyFactTypeBoost(candidates, "world");
+
+    // fact and entity should both be boosted
+    expect(result[0].id).toBe("fact1"); // 0.85 * 1.3 = 1.105
+    expect(result[1].id).toBe("entity1"); // 0.8 * 1.3 = 1.04
+    expect(result[2].id).toBe("other1"); // 0.9 unchanged
+  });
+
+  it("should not modify scores when no categories match intent", () => {
+    const candidates = [
+      makeFusedCandidate("fact1", "fact", 0.9),
+      makeFusedCandidate("fact2", "entity", 0.8),
+    ];
+    // "other" fact type maps to no memory categories
+    const result = applyFactTypeBoost(candidates, "other");
+
+    expect(result[0].rrfScore).toBe(0.9);
+    expect(result[1].rrfScore).toBe(0.8);
+  });
+
+  it("should boost observation intent categories (core + other)", () => {
+    const candidates = [
+      makeFusedCandidate("pref1", "preference", 0.9),
+      makeFusedCandidate("core1", "core", 0.85),
+      makeFusedCandidate("other1", "other", 0.8),
+    ];
+    const result = applyFactTypeBoost(candidates, "observation");
+
+    // core and other should both be boosted
+    expect(result[0].id).toBe("core1"); // 0.85 * 1.3 = 1.105
+    expect(result[1].id).toBe("other1"); // 0.8 * 1.3 = 1.04
+    expect(result[2].id).toBe("pref1"); // 0.9 unchanged
+  });
+
+  it("should preserve order when no boost applies", () => {
+    const candidates = [makeFusedCandidate("a", "core", 0.9), makeFusedCandidate("b", "core", 0.7)];
+    const result = applyFactTypeBoost(candidates, "opinion");
+    expect(result[0].id).toBe("a");
+    expect(result[1].id).toBe("b");
+  });
+});

@@ -42,6 +42,17 @@ const SCANNED_DIRECTORY_IGNORE_NAMES = new Set([
   "node_modules",
 ]);
 
+const CANONICAL_PACKAGE_ID_ALIASES: Record<string, string> = {
+  "elevenlabs-speech": "elevenlabs",
+  "github-copilot-provider": "github-copilot",
+  "microsoft-speech": "microsoft",
+  "ollama-provider": "ollama",
+  "openai-codex-provider": "openai-codex",
+  "openrouter-provider": "openrouter",
+  "sglang-provider": "sglang",
+  "vllm-provider": "vllm",
+};
+
 export type PluginCandidate = {
   idHint: string;
   source: string;
@@ -404,10 +415,11 @@ function deriveIdHint(params: {
   const unscoped = rawPackageName.includes("/")
     ? (rawPackageName.split("/").pop() ?? rawPackageName)
     : rawPackageName;
+  const canonicalPackageId = CANONICAL_PACKAGE_ID_ALIASES[unscoped] ?? unscoped;
   const normalizedPackageId =
-    unscoped.endsWith("-provider") && unscoped.length > "-provider".length
-      ? unscoped.slice(0, -"-provider".length)
-      : unscoped;
+    canonicalPackageId.endsWith("-provider") && canonicalPackageId.length > "-provider".length
+      ? canonicalPackageId.slice(0, -"-provider".length)
+      : canonicalPackageId;
 
   if (!params.hasMultipleExtensions) {
     return normalizedPackageId;

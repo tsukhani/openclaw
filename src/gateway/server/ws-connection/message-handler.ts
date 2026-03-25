@@ -125,7 +125,6 @@ import {
   evaluateMissingDeviceIdentity,
   isTrustedProxyControlUiOperatorAuth,
   resolveControlUiAuthPolicy,
-  shouldClearUnboundScopesForMissingDeviceIdentity,
   shouldSkipControlUiPairing,
 } from "./connect-policy.js";
 import {
@@ -655,11 +654,6 @@ export function attachGatewayWsMessageHandler(params: {
             authOk,
             authMethod,
           });
-          const preserveInsecureLocalControlUiScopes =
-            isControlUi &&
-            controlUiAuthPolicy.allowInsecureAuthConfigured &&
-            isLocalClient &&
-            (authMethod === "token" || authMethod === "password");
           const decision = evaluateMissingDeviceIdentity({
             hasDeviceIdentity: Boolean(device),
             role,

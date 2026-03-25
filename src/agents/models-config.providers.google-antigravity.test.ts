@@ -91,7 +91,7 @@ describe("google-antigravity provider normalization", () => {
     const normalized = normalizeProviderMap(providers);
 
     expect(normalized).not.toBe(providers);
-    expect(normalized?.["google-antigravity"]?.models.map((model) => model.id)).toEqual([
+    expect(normalized?.["google-antigravity"]?.models!.map((model) => model.id)).toEqual([
       "gemini-3-pro-low",
       "gemini-3.1-pro-low",
       "gemini-3-1-pro-low",
@@ -124,7 +124,7 @@ describe("google-vertex provider normalization", () => {
     const normalized = normalizeProviderMap(providers);
 
     expect(normalized).not.toBe(providers);
-    expect(normalized?.["google-vertex"]?.models.map((model) => model.id)).toEqual([
+    expect(normalized?.["google-vertex"]?.models!.map((model) => model.id)).toEqual([
       "gemini-3.1-flash-lite-preview",
       "gemini-3-flash-preview",
     ]);

@@ -22,6 +22,7 @@ function createGatewayAudit({
   serviceToken,
   extraEnvironment,
   environmentValueSources,
+  platform = "linux",
 }: {
   expectedGatewayToken?: string;
   expectedManagedServiceEnvKeys?: Iterable<string>;
@@ -29,10 +30,11 @@ function createGatewayAudit({
   serviceToken?: string;
   extraEnvironment?: Record<string, string>;
   environmentValueSources?: Record<string, GatewayServiceEnvironmentValueSource>;
+  platform?: NodeJS.Platform;
 } = {}) {
   return auditGatewayServiceConfig({
     env: { HOME: "/tmp" },
-    platform: "linux",
+    platform,
     expectedGatewayToken,
     expectedManagedServiceEnvKeys,
     command: {
@@ -212,20 +214,31 @@ describe("auditGatewayServiceConfig", () => {
     expect(hasIssue(audit, SERVICE_AUDIT_CODES.gatewayPortMismatch)).toBe(false);
   });
 
-  it("flags gateway token mismatch when service token is stale", async () => {
+  it("flags gateway token mismatch when service token is stale (macOS)", async () => {
     const audit = await createGatewayAudit({
       expectedGatewayToken: "new-token",
       serviceToken: "old-token",
+      platform: "darwin",
     });
     expectTokenAudit(audit, { embedded: true, mismatch: true });
   });
 
-  it("flags embedded service token even when it matches config token", async () => {
+  it("flags embedded service token even when it matches config token (macOS)", async () => {
     const audit = await createGatewayAudit({
       expectedGatewayToken: "new-token",
       serviceToken: "new-token",
+      platform: "darwin",
     });
     expectTokenAudit(audit, { embedded: true, mismatch: false });
+  });
+
+  it("does not flag embedded token on Linux where systemd always inlines", async () => {
+    const audit = await createGatewayAudit({
+      expectedGatewayToken: "new-token",
+      serviceToken: "old-token",
+      platform: "linux",
+    });
+    expectTokenAudit(audit, { embedded: false, mismatch: true });
   });
 
   it("does not flag token issues when service token is not embedded", async () => {
@@ -246,10 +259,11 @@ describe("auditGatewayServiceConfig", () => {
     expectTokenAudit(audit, { embedded: false, mismatch: false });
   });
 
-  it("treats tokens present inline and in EnvironmentFile as embedded", async () => {
+  it("treats tokens present inline and in EnvironmentFile as embedded (macOS)", async () => {
     const audit = await createGatewayAudit({
       expectedGatewayToken: "new-token",
       serviceToken: "old-token",
+      platform: "darwin",
       environmentValueSources: {
         OPENCLAW_GATEWAY_TOKEN: "inline-and-file",
       },

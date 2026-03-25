@@ -65,6 +65,7 @@ import { createFollowupRunner } from "./followup-runner.js";
 import { resolveOriginMessageProvider, resolveOriginMessageTo } from "./origin-routing.js";
 import { drainPendingToolTasks } from "./pending-tool-task-drain.js";
 import { readPostCompactionContext } from "./post-compaction-context.js";
+import { markNeedsPostCompactionRecovery } from "./post-compaction-recovery.js";
 import { resolveActiveRunQueueAction } from "./queue-policy.js";
 import {
   enqueueFollowupRun,
@@ -1658,9 +1659,56 @@ export async function runReplyAgent(params: {
           });
       }
 
-      if (verboseEnabled) {
-        const suffix = typeof count === "number" ? ` (count ${count})` : "";
-        verboseNotices.push({ text: `🧹 Auto-compaction complete${suffix}.` });
+      // P3: Mark session for post-compaction recovery on the next turn.
+      await markNeedsPostCompactionRecovery({
+        sessionEntry: activeSessionEntry,
+        sessionStore: activeSessionStore,
+        sessionKey,
+        storePath,
+      });
+
+      // Always notify the user when compaction completes — not just in verbose
+      // mode. The "🧹 Compacting context..." notice was already sent at start,
+      // so the completion message closes the loop for every user regardless of
+      // their verbose setting.
+      const suffix = typeof count === "number" ? ` (count ${count})` : "";
+      const completionText = verboseEnabled
+        ? `🧹 Auto-compaction complete${suffix}.`
+        : `✅ Context compacted${suffix}.`;
+
+      if (blockReplyPipeline && opts?.onBlockReply) {
+        // In block-streaming mode, send the completion notice via
+        // fire-and-forget *after* the pipeline has flushed (so it does not set
+        // didStream()=true and cause buildReplyPayloads to discard the real
+        // assistant reply).  Now that the count is known we can include it.
+        const currentMessageId = sessionCtx.MessageSidFull ?? sessionCtx.MessageSid;
+        const noticePayload = applyReplyToMode({
+          text: completionText,
+          replyToId: currentMessageId,
+          replyToCurrent: true,
+          isCompactionNotice: true,
+        });
+        void Promise.race([
+          opts.onBlockReply(noticePayload),
+          new Promise<void>((_, reject) =>
+            setTimeout(() => reject(new Error("compaction notice timeout")), blockReplyTimeoutMs),
+          ),
+        ]).catch(() => {
+          // Intentionally swallowed — the notice is informational only.
+        });
+      } else {
+        // Non-streaming: push into verboseNotices with full compaction metadata
+        // so threading exemptions apply and replyToMode=first does not thread
+        // the notice instead of the real assistant reply.
+        const currentMessageId = sessionCtx.MessageSidFull ?? sessionCtx.MessageSid;
+        verboseNotices.push(
+          applyReplyToMode({
+            text: completionText,
+            replyToId: currentMessageId,
+            replyToCurrent: true,
+            isCompactionNotice: true,
+          }),
+        );
       }
     }
     const prefixPayloads = [...verboseNotices];

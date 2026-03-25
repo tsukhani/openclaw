@@ -328,6 +328,34 @@ export async function noteMemorySearchHealth(
   const hasRemoteApiKey = hasConfiguredMemorySecretInput(resolved?.remote?.apiKey);
 
   if (!resolved) {
+    // Check if a memory plugin owns the slot — if so, it handles memory
+    // search independently and the core config returning null is expected.
+    const memoryPluginSlot = cfg.plugins?.slots?.memory;
+    if (memoryPluginSlot && memoryPluginSlot !== "none") {
+      if (opts?.gatewayMemoryProbe?.checked) {
+        if (opts.gatewayMemoryProbe.ready) {
+          // Plugin memory search is healthy — nothing to report.
+          return;
+        }
+        // Plugin is active but not healthy.
+        const detail = opts.gatewayMemoryProbe.error?.trim();
+        note(
+          [
+            `Memory search is provided by plugin "${memoryPluginSlot}".`,
+            detail
+              ? `Gateway probe reports the plugin is not ready: ${detail}`
+              : "Gateway probe reports the plugin is not ready.",
+            "",
+            `Verify: ${formatCliCommand(`openclaw memory ${memoryPluginSlot.replace("memory-", "")} search "test query"`)}`,
+          ].join("\n"),
+          "Memory search",
+        );
+        return;
+      }
+      // Gateway not probed — assume plugin is handling it.
+      return;
+    }
+    // No plugin — genuinely disabled.
     note("Memory search is explicitly disabled (enabled: false).", "Memory search");
     return;
   }

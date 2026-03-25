@@ -447,6 +447,7 @@ async function withMemoryManagerForAgent(params: {
   cfg: OpenClawConfig;
   agentId: string;
   purpose?: MemoryManagerPurpose;
+  onMissing?: (error?: string) => void;
   run: (manager: MemoryManager) => Promise<void>;
 }): Promise<void> {
   const managerParams: Parameters<typeof getMemorySearchManager>[0] = {
@@ -458,7 +459,8 @@ async function withMemoryManagerForAgent(params: {
   }
   await withManager<MemoryManager>({
     getManager: () => getMemorySearchManager(managerParams),
-    onMissing: (error) => defaultRuntime.log(error ?? "Memory search disabled."),
+    onMissing:
+      params.onMissing ?? ((error) => defaultRuntime.log(error ?? "Memory search disabled.")),
     onCloseError: (err) =>
       defaultRuntime.error(`Memory manager close failed: ${formatErrorMessage(err)}`),
     close: async (manager) => {
@@ -664,12 +666,16 @@ export async function runMemoryStatus(opts: MemoryCommandOptions) {
     dreamingRepair?: RepairDreamingArtifactsResult;
   }> = [];
 
+  const disabledAgentIds: string[] = [];
   for (const agentId of agentIds) {
     const managerPurpose = opts.index ? "cli" : "status";
     await withMemoryManagerForAgent({
       cfg,
       agentId,
       purpose: managerPurpose,
+      onMissing: () => {
+        disabledAgentIds.push(agentId);
+      },
       run: async (manager) => {
         const deep = Boolean(opts.deep || opts.index);
         let embeddingProbe: MemoryEmbeddingProbeResult | undefined;
@@ -777,7 +783,7 @@ export async function runMemoryStatus(opts: MemoryCommandOptions) {
   }
 
   if (opts.json) {
-    defaultRuntime.writeJson(allResults);
+    defaultRuntime.log(JSON.stringify(allResults, null, 2));
     return;
   }
 
@@ -790,6 +796,7 @@ export async function runMemoryStatus(opts: MemoryCommandOptions) {
   const accent = (text: string) => colorize(rich, theme.accent, text);
   const label = (text: string) => muted(`${text}:`);
 
+  const emptyAgentIds: string[] = [];
   for (const result of allResults) {
     const {
       agentId,
@@ -805,6 +812,15 @@ export async function runMemoryStatus(opts: MemoryCommandOptions) {
     const filesIndexed = status.files ?? 0;
     const chunksIndexed = status.chunks ?? 0;
     const totalFiles = scan?.totalFiles ?? null;
+
+    // Skip agents with no indexed content (0 files, 0 chunks, no source files, no errors).
+    // These agents aren't using the core memory search system — no need to show them.
+    const isEmpty =
+      filesIndexed === 0 && chunksIndexed === 0 && (totalFiles ?? 0) === 0 && !indexError;
+    if (isEmpty) {
+      emptyAgentIds.push(agentId);
+      continue;
+    }
     const indexedLabel =
       totalFiles === null
         ? `${filesIndexed}/? files · ${chunksIndexed} chunks`
@@ -995,6 +1011,28 @@ export async function runMemoryStatus(opts: MemoryCommandOptions) {
       }
     }
     defaultRuntime.log(lines.join("\n"));
+    defaultRuntime.log("");
+  }
+
+  // Show compact summary for agents with no indexed memory-search content
+  if (emptyAgentIds.length > 0) {
+    const agentList = emptyAgentIds.join(", ");
+    defaultRuntime.log(
+      muted(
+        `Memory Search: ${emptyAgentIds.length} agent${emptyAgentIds.length > 1 ? "s" : ""} with no indexed files (${agentList})`,
+      ),
+    );
+    defaultRuntime.log("");
+  }
+
+  // Show compact summary for agents with memory search disabled
+  if (disabledAgentIds.length > 0 && emptyAgentIds.length === 0) {
+    const agentList = disabledAgentIds.join(", ");
+    defaultRuntime.log(
+      muted(
+        `Memory Search: disabled for ${disabledAgentIds.length} agent${disabledAgentIds.length > 1 ? "s" : ""} (${agentList})`,
+      ),
+    );
     defaultRuntime.log("");
   }
 }

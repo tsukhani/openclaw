@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { resolveSessionAgentId } from "../../agents/agent-scope.js";
 import { canExecRequestNode } from "../../agents/exec-defaults.js";
+import { resolveSandboxRuntimeStatus } from "../../agents/sandbox/runtime-status.js";
 import { buildWorkspaceSkillSnapshot } from "../../agents/skills.js";
 import { matchesSkillFilter } from "../../agents/skills/filter.js";
 import {
@@ -137,6 +138,10 @@ export async function ensureSkillSnapshot(params: {
     skillFilter,
   } = params;
 
+  // Sandboxed agents should only see workspace skills — managed/bundled skill
+  // paths are outside the sandbox root and would be blocked by path assertions.
+  const sandboxed = sessionKey ? resolveSandboxRuntimeStatus({ cfg, sessionKey }).sandboxed : false;
+
   let nextEntry = sessionEntry;
   let systemSent = sessionEntry?.systemSent ?? false;
   const sessionAgentId = resolveSessionAgentId({ sessionKey, config: cfg });
@@ -161,6 +166,7 @@ export async function ensureSkillSnapshot(params: {
       skillFilter,
       eligibility: { remote: remoteEligibility },
       snapshotVersion,
+      scopeToWorkspace: sandboxed,
     });
 
   if (isFirstTurnInSession && sessionStore && sessionKey) {

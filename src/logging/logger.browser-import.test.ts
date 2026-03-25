@@ -42,15 +42,24 @@ async function importBrowserSafeLogger(params?: {
 }
 
 describe("logging/logger browser-safe import", () => {
+  let originalVitest: string | undefined;
+
   afterEach(() => {
     vi.doUnmock("../infra/tmp-openclaw-dir.js");
     Object.defineProperty(process, "getBuiltinModule", {
       configurable: true,
       value: originalGetBuiltinModule,
     });
+    // Restore VITEST env var after browser-safe tests.
+    if (originalVitest !== undefined) {
+      process.env.VITEST = originalVitest;
+    }
   });
 
   it("does not resolve the preferred temp dir at import time when node fs is unavailable", async () => {
+    // Unset VITEST so the browser-safe fallback path is exercised instead of the test-isolation shortcut.
+    originalVitest = process.env.VITEST;
+    delete process.env.VITEST;
     const { module, resolvePreferredOpenClawTmpDir } = await importBrowserSafeLogger();
 
     expect(resolvePreferredOpenClawTmpDir).not.toHaveBeenCalled();
@@ -59,6 +68,8 @@ describe("logging/logger browser-safe import", () => {
   });
 
   it("disables file logging when imported in a browser-like environment", async () => {
+    originalVitest = process.env.VITEST;
+    delete process.env.VITEST;
     const { module, resolvePreferredOpenClawTmpDir } = await importBrowserSafeLogger();
 
     expect(module.getResolvedLoggerSettings()).toMatchObject({

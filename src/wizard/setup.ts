@@ -182,7 +182,7 @@ export async function runSetupWizard(
   prompter: WizardPrompter,
 ) {
   const onboardHelpers = await import("../commands/onboard-helpers.js");
-  onboardHelpers.printWizardHeader(runtime);
+  await onboardHelpers.printWizardHeader(runtime);
   await prompter.intro("OpenClaw setup");
   await requireRiskAcknowledgement({ opts, prompter });
 

@@ -35,5 +35,5 @@ export function resolveConfiguredProviderFallback(params: {
     return null;
   }
   const [provider, providerCfg] = availableProvider;
-  return { provider, model: providerCfg.models[0].id };
+  return { provider, model: providerCfg.models![0].id };
 }

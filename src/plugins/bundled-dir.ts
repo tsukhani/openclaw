@@ -151,6 +151,31 @@ function runningSourceTypeScriptProcess(): boolean {
   return false;
 }
 
+/**
+ * Validate that a candidate `extensions/` directory actually contains bundled
+ * plugins (subdirs with `openclaw.plugin.json`) rather than being a
+ * declaration-only output (e.g. `dist/plugin-sdk/extensions/` which only holds
+ * `.d.ts` files emitted by the plugin-sdk tsconfig).
+ */
+function looksLikeBundledPluginsDir(dir: string): boolean {
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+      // A real bundled plugin directory contains openclaw.plugin.json in at
+      // least one immediate subdirectory.
+      if (fs.existsSync(path.join(dir, entry.name, "openclaw.plugin.json"))) {
+        return true;
+      }
+    }
+  } catch {
+    // Unreadable — skip.
+  }
+  return false;
+}
+
 function resolveBundledDirFromPackageRoot(
   packageRoot: string,
   preferSourceCheckout: boolean,
@@ -244,7 +269,7 @@ export function resolveBundledPluginsDir(env: NodeJS.ProcessEnv = process.env): 
       return siblingBuilt;
     }
     const sibling = path.join(execDir, "extensions");
-    if (fs.existsSync(sibling)) {
+    if (fs.existsSync(sibling) && looksLikeBundledPluginsDir(sibling)) {
       return sibling;
     }
   } catch {
@@ -256,7 +281,7 @@ export function resolveBundledPluginsDir(env: NodeJS.ProcessEnv = process.env): 
     let cursor = path.dirname(fileURLToPath(import.meta.url));
     for (let i = 0; i < 6; i += 1) {
       const candidate = path.join(cursor, "extensions");
-      if (fs.existsSync(candidate)) {
+      if (fs.existsSync(candidate) && looksLikeBundledPluginsDir(candidate)) {
         return candidate;
       }
       const parent = path.dirname(cursor);

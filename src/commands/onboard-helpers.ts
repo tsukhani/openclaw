@@ -96,7 +96,28 @@ export function validateGatewayPasswordInput(value: unknown): string | undefined
   return undefined;
 }
 
-export function printWizardHeader(runtime: RuntimeEnv) {
+async function resolveGitVersionLine(): Promise<string> {
+  try {
+    const [headResult, originResult] = await Promise.all([
+      runCommandWithTimeout(["git", "rev-parse", "--short", "HEAD"], { timeoutMs: 2000 }),
+      runCommandWithTimeout(["git", "rev-parse", "--short", "origin/main"], { timeoutMs: 2000 }),
+    ]);
+    const head = headResult.code === 0 ? headResult.stdout.trim() : null;
+    const origin = originResult.code === 0 ? originResult.stdout.trim() : null;
+    if (head && origin) {
+      return `  OpenClaw ${VERSION} — HEAD: ${head} | origin/main: ${origin}`;
+    }
+    if (head) {
+      return `  OpenClaw ${VERSION} — HEAD: ${head}`;
+    }
+  } catch {
+    // not a git repo or git not available
+  }
+  return `  OpenClaw ${VERSION}`;
+}
+
+export async function printWizardHeader(runtime: RuntimeEnv) {
+  const versionLine = await resolveGitVersionLine();
   const header = [
     "▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄",
     "██░▄▄▄░██░▄▄░██░▄▄▄██░▀██░██░▄▄▀██░████░▄▄▀██░███░██",
@@ -104,6 +125,7 @@ export function printWizardHeader(runtime: RuntimeEnv) {
     "██░▀▀▀░██░█████░▀▀▀██░██▄░██░▀▀▄██░▀▀░█░██░██▄▀▄▀▄██",
     "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀",
     "                  🦞 OPENCLAW 🦞                    ",
+    versionLine,
     " ",
   ].join("\n");
   runtime.log(header);

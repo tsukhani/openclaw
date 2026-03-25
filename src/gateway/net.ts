@@ -169,9 +169,7 @@ export function resolveClientIp(params: {
   if (!isTrustedProxyAddress(remote, params.trustedProxies)) {
     return remote;
   }
-  // Fail closed when traffic comes from a trusted proxy but client-origin headers
-  // are missing or invalid. Falling back to the proxy's own IP can accidentally
-  // treat unrelated requests as local/trusted.
+  // When the remote is a trusted proxy, prefer the forwarded client IP.
   const forwardedIp = resolveForwardedClientIp({
     forwardedFor: params.forwardedFor,
     trustedProxies: params.trustedProxies,
@@ -182,6 +180,14 @@ export function resolveClientIp(params: {
   if (params.allowRealIpFallback) {
     return parseRealIp(params.realIp);
   }
+  // A loopback trusted-proxy address without forwarding headers is a direct local
+  // connection, not a proxied request with missing origin headers. Return it as-is
+  // so callers (isLocalDirectRequest) correctly recognise it as local.
+  if (isLoopbackAddress(remote)) {
+    return remote;
+  }
+  // Fail closed for non-loopback trusted proxies: returning the proxy's own IP
+  // could accidentally treat external requests as local/trusted.
   return undefined;
 }
 

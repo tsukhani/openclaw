@@ -45,6 +45,9 @@ import type {
   PluginAgentTurnPrepareResult,
   PluginHeartbeatPromptContributionEvent,
   PluginHeartbeatPromptContributionResult,
+  PluginHookBootstrapContext,
+  PluginHookBootstrapEvent,
+  PluginHookBootstrapResult,
   PluginHookCronChangedEvent,
   PluginHookGatewayCronDeliveryStatus,
   PluginHookGatewayCronJobState,
@@ -103,6 +106,9 @@ export type {
   PluginHookLlmOutputEvent,
   PluginHookBeforeAgentFinalizeEvent,
   PluginHookBeforeAgentFinalizeResult,
+  PluginHookBootstrapContext,
+  PluginHookBootstrapEvent,
+  PluginHookBootstrapResult,
   PluginHookAgentEndEvent,
   PluginHookBeforeCompactionEvent,
   PluginHookBeforeResetEvent,
@@ -833,6 +839,27 @@ export function createHookRunner(
   }
 
   /**
+   * Run agent_bootstrap hook.
+   * Allows plugins to inject or replace bootstrap files (e.g. virtual MEMORY.md).
+   * Runs sequentially, merging file lists.
+   */
+  async function runAgentBootstrap(
+    event: PluginHookBootstrapEvent,
+    ctx: PluginHookBootstrapContext,
+  ): Promise<PluginHookBootstrapResult | undefined> {
+    return runModifyingHook<"agent_bootstrap", PluginHookBootstrapResult>(
+      "agent_bootstrap",
+      event,
+      ctx,
+      {
+        mergeResults: (acc, next) => ({
+          files: next.files ?? acc?.files,
+        }),
+      },
+    );
+  }
+
+  /**
    * Run before_compaction hook.
    */
   async function runBeforeCompaction(
@@ -1365,6 +1392,7 @@ export function createHookRunner(
     runLlmOutput,
     runBeforeAgentFinalize,
     runAgentEnd,
+    runAgentBootstrap,
     runBeforeCompaction,
     runAfterCompaction,
     runBeforeReset,

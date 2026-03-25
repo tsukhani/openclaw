@@ -275,6 +275,8 @@ export type SessionEntry = {
   contextTokens?: number;
   compactionCount?: number;
   compactionCheckpoints?: SessionCompactionCheckpoint[];
+  /** Set after auto-compaction; cleared after the next turn injects recovery instructions. */
+  needsPostCompactionRecovery?: boolean;
   memoryFlushAt?: number;
   memoryFlushCompactionCount?: number;
   memoryFlushContextHash?: string;

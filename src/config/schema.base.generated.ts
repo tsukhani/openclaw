@@ -3172,7 +3172,6 @@ export const GENERATED_BASE_CONFIG_SCHEMA: BaseConfigSchemaResponse = {
                     "Declared model list for a provider including identifiers, metadata, provider-specific params, and optional compatibility/cost hints. Keep IDs exact to provider catalog values so selection and fallback resolve correctly.",
                 },
               },
-              required: ["baseUrl", "models"],
               additionalProperties: false,
             },
             title: "Model Providers",
@@ -20303,6 +20302,12 @@ export const GENERATED_BASE_CONFIG_SCHEMA: BaseConfigSchemaResponse = {
             title: "Session Reset Triggers",
             description:
               "Lists message triggers that force a session reset when matched in inbound content. Use sparingly for explicit reset phrases so context is not dropped unexpectedly during normal conversation.",
+          },
+          compactTriggers: {
+            type: "array",
+            items: {
+              type: "string",
+            },
           },
           idleMinutes: {
             type: "integer",
