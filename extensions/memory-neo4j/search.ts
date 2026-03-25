@@ -154,23 +154,25 @@ export function getAdaptiveWeights(
 
   switch (queryType) {
     case "short":
-      return [0.8, 1.2, graphBase * 0.3, 0.2];
+      return [0.8, 1.2, graphBase * 0.4, 0.2];
     case "entity":
-      return [0.8, 1.0, graphBase * 0.4, 0.2];
+      // OP-192: Graph is the dominant signal for entity queries — multi-hop traversal
+      // is the primary mechanism to reach gold memories that lack query keywords.
+      return [0.8, 1.0, graphBase * 0.9, 0.2];
     case "long":
-      return [1.2, 0.7, graphBase * 0.3, 0.2];
+      return [1.2, 0.7, graphBase * 0.4, 0.2];
     case "updates":
       // Stronger freshness boost so newer validFrom memories outrank stale ones
       return [1.0, 1.0, graphBase * 0.3, 0.6];
     case "causal":
-      // Why/cause queries: graph helps with causal chains but must not override primary signals
-      return [0.9, 0.7, graphBase * 0.5, 0.1];
+      // OP-192: Stronger graph for causal chain traversal
+      return [0.9, 0.7, graphBase * 0.7, 0.1];
     case "extraction":
       // Factual precision: balanced vector+BM25, light graph, no freshness boost (OP-138)
       return [1.1, 1.1, graphBase * 0.3, 0.0];
     case "default":
     default:
-      return [1.0, 1.0, graphBase * 0.3, 0.2];
+      return [1.0, 1.0, graphBase * 0.4, 0.2];
   }
 }
 
@@ -890,7 +892,9 @@ export async function hybridSearch(
   // 4a-bis. MPFP meta-path traversal (OP-181): run after primary signals
   // to use seed Memory IDs from vector/BM25 hits as traversal starting points.
   const mpfpEnabled = graphEnabled && options.mpfpEnabled !== false;
-  const mpfpW = mpfpEnabled ? (options.mpfpSignalWeight ?? 0.2) : 0;
+  // OP-192: Boost MPFP for entity queries — meta-path traversal reinforces graph-discovered paths.
+  const mpfpDefault = queryType === "entity" ? 0.35 : 0.2;
+  const mpfpW = mpfpEnabled ? (options.mpfpSignalWeight ?? mpfpDefault) : 0;
   let mpfpResults: SearchSignalResult[] = [];
   if (mpfpEnabled) {
     const seedIds = [

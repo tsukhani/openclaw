@@ -163,15 +163,16 @@ describe("getAdaptiveWeights", () => {
       expect(bm25).toBeGreaterThan(vector);
       expect(vector).toBe(0.8);
       expect(bm25).toBe(1.2);
-      expect(graph).toBeCloseTo(0.3);
+      expect(graph).toBeCloseTo(0.4);
       expect(freshness).toBe(0.2);
     });
 
-    it("should boost graph for entity queries", () => {
+    it("should boost graph for entity queries (OP-192)", () => {
       const [vector, bm25, graph, freshness] = getAdaptiveWeights("entity", true);
       expect(vector).toBe(0.8);
       expect(bm25).toBe(1.0);
-      expect(graph).toBeCloseTo(0.4);
+      expect(graph).toBeCloseTo(0.9);
+      expect(graph).toBeGreaterThan(vector);
       expect(freshness).toBe(0.2);
     });
 
@@ -181,7 +182,7 @@ describe("getAdaptiveWeights", () => {
       expect(vector).toBeGreaterThan(graph);
       expect(vector).toBe(1.2);
       expect(bm25).toBe(0.7);
-      expect(graph).toBeCloseTo(0.3);
+      expect(graph).toBeCloseTo(0.4);
       expect(freshness).toBe(0.2);
     });
 
@@ -189,8 +190,16 @@ describe("getAdaptiveWeights", () => {
       const [vector, bm25, graph, freshness] = getAdaptiveWeights("default", true);
       expect(vector).toBe(1.0);
       expect(bm25).toBe(1.0);
-      expect(graph).toBeCloseTo(0.3);
+      expect(graph).toBeCloseTo(0.4);
       expect(freshness).toBe(0.2);
+    });
+
+    it("should boost graph for causal queries (OP-192)", () => {
+      const [vector, bm25, graph, freshness] = getAdaptiveWeights("causal", true);
+      expect(vector).toBe(0.9);
+      expect(bm25).toBe(0.7);
+      expect(graph).toBeCloseTo(0.7);
+      expect(freshness).toBe(0.1);
     });
   });
 
