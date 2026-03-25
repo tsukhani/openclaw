@@ -154,25 +154,23 @@ export function getAdaptiveWeights(
 
   switch (queryType) {
     case "short":
-      return [0.8, 1.2, graphBase * 0.4, 0.2];
+      return [0.8, 1.2, graphBase * 0.3, 0.2];
     case "entity":
-      // OP-192: Graph is the dominant signal for entity queries — multi-hop traversal
-      // is the primary mechanism to reach gold memories that lack query keywords.
-      return [0.8, 1.0, graphBase * 0.9, 0.2];
+      return [0.8, 1.0, graphBase * 0.4, 0.2];
     case "long":
-      return [1.2, 0.7, graphBase * 0.4, 0.2];
+      return [1.2, 0.7, graphBase * 0.3, 0.2];
     case "updates":
-      // Stronger freshness boost so newer validFrom memories outrank stale ones
-      return [1.0, 1.0, graphBase * 0.3, 0.6];
+      // OP-193: Dense freshness signal needs higher weight to surface temporally-current memories
+      return [1.0, 1.0, graphBase * 0.3, 1.5];
     case "causal":
-      // OP-192: Stronger graph for causal chain traversal
-      return [0.9, 0.7, graphBase * 0.7, 0.1];
+      // Why/cause queries: graph helps with causal chains but must not override primary signals
+      return [0.9, 0.7, graphBase * 0.5, 0.1];
     case "extraction":
       // Factual precision: balanced vector+BM25, light graph, no freshness boost (OP-138)
       return [1.1, 1.1, graphBase * 0.3, 0.0];
     case "default":
     default:
-      return [1.0, 1.0, graphBase * 0.4, 0.2];
+      return [1.0, 1.0, graphBase * 0.3, 0.2];
   }
 }
 
@@ -289,16 +287,14 @@ const RECENCY_DECAY_DAYS = 365;
 /**
  * Build a synthetic freshness signal from candidate validFrom dates.
  *
- * Only includes candidates where validFrom differs from createdAt by more than
- * 7 days — i.e. the memory was explicitly back-dated or represents an update
- * to an earlier fact. Sorted by freshness score descending to create ranks for RRF.
+ * For "updates" queries (OP-193): includes ALL candidates scored by validFrom
+ * recency — this creates a dense signal where every candidate gets a rank,
+ * allowing RRF to properly differentiate memories by temporal currency.
+ *
+ * For other query types: only includes candidates where validFrom differs from
+ * createdAt by more than 7 days (original OP-129 behavior).
  *
  * Freshness score: exp(-daysSince / 365) — decays over ~1 year.
- *
- * OP-194: For "updates" queries, falls back to createdAt-based freshness when
- * validFrom is not informative (validFrom === createdAt). This activates the 0.6
- * freshness weight in RRF so that recently created memories outrank stale versions
- * of the same fact.
  */
 function buildFreshnessSignal(
   candidates: SearchSignalResult[],
@@ -307,7 +303,7 @@ function buildFreshnessSignal(
 ): SearchSignalResult[] {
   const seen = new Set<string>();
   const withFreshness: SearchSignalResult[] = [];
-  const isUpdatesQuery = queryType === "updates";
+  const dense = queryType === "updates";
 
   for (const c of candidates) {
     if (seen.has(c.id)) {
@@ -316,30 +312,19 @@ function buildFreshnessSignal(
     seen.add(c.id);
 
     if (!c.validFrom) {
-      // OP-194: For updates queries, fall back to createdAt when validFrom is missing
-      if (isUpdatesQuery && c.createdAt) {
-        const createdAtMs = new Date(c.createdAt).getTime();
-        if (Number.isNaN(createdAtMs)) continue;
-        const daysSince = (now - createdAtMs) / (1000 * 60 * 60 * 24);
-        const freshnessScore = Math.min(1.0, Math.exp(-daysSince / FRESHNESS_DECAY_DAYS));
-        withFreshness.push({ ...c, score: freshnessScore });
-      }
       continue;
     }
     const validFromMs = new Date(c.validFrom).getTime();
     if (Number.isNaN(validFromMs)) continue; // M9: skip malformed date strings
-    const createdAtMs = c.createdAt ? new Date(c.createdAt).getTime() : NaN;
-    // M7: Skip when createdAt is missing/malformed — NaN comparison would bypass the 7-day guard
-    if (Number.isNaN(createdAtMs)) continue;
-    // Only apply freshness when validFrom was explicitly set to differ from createdAt
-    if (Math.abs(validFromMs - createdAtMs) <= SEVEN_DAYS_MS) {
-      // OP-194: For updates queries, use createdAt when validFrom is not informative
-      if (isUpdatesQuery) {
-        const daysSince = (now - createdAtMs) / (1000 * 60 * 60 * 24);
-        const freshnessScore = Math.min(1.0, Math.exp(-daysSince / FRESHNESS_DECAY_DAYS));
-        withFreshness.push({ ...c, score: freshnessScore });
+
+    if (!dense) {
+      const createdAtMs = c.createdAt ? new Date(c.createdAt).getTime() : NaN;
+      // M7: Skip when createdAt is missing/malformed — NaN comparison would bypass the 7-day guard
+      if (Number.isNaN(createdAtMs)) continue;
+      // Only apply freshness when validFrom was explicitly set to differ from createdAt
+      if (Math.abs(validFromMs - createdAtMs) <= SEVEN_DAYS_MS) {
+        continue;
       }
-      continue;
     }
 
     const daysSince = (now - validFromMs) / (1000 * 60 * 60 * 24);
@@ -368,7 +353,6 @@ type FusedCandidate = {
   importance: number;
   createdAt: string;
   validFrom?: string;
-  supersededBy?: string | null; // OP-194
   rrfScore: number;
   signals: {
     vector: SignalAttribution;
@@ -425,7 +409,7 @@ export function fuseWithConfidenceRRF(
       importance: number;
       createdAt: string;
       validFrom?: string;
-      supersededBy?: string | null; // OP-194
+      supersededBy?: string;
       trustScore?: number;
     }
   >();
@@ -475,7 +459,9 @@ export function fuseWithConfidenceRRF(
 
     // Apply trust score as multiplicative weight (default 1.0 = no change)
     const trustWeight = meta.trustScore ?? 1.0;
-    const weightedRrfScore = rrfScore * trustWeight;
+    // OP-193: Penalize superseded memories so replacements rank higher
+    const supersededPenalty = meta.supersededBy ? 0.3 : 1.0;
+    const weightedRrfScore = rrfScore * trustWeight * supersededPenalty;
 
     results.push({
       id,
@@ -484,7 +470,6 @@ export function fuseWithConfidenceRRF(
       importance: meta.importance,
       createdAt: meta.createdAt,
       validFrom: meta.validFrom,
-      supersededBy: meta.supersededBy,
       rrfScore: weightedRrfScore,
       signals,
     });
@@ -920,9 +905,7 @@ export async function hybridSearch(
   // 4a-bis. MPFP meta-path traversal (OP-181): run after primary signals
   // to use seed Memory IDs from vector/BM25 hits as traversal starting points.
   const mpfpEnabled = graphEnabled && options.mpfpEnabled !== false;
-  // OP-192: Boost MPFP for entity queries — meta-path traversal reinforces graph-discovered paths.
-  const mpfpDefault = queryType === "entity" ? 0.35 : 0.2;
-  const mpfpW = mpfpEnabled ? (options.mpfpSignalWeight ?? mpfpDefault) : 0;
+  const mpfpW = mpfpEnabled ? (options.mpfpSignalWeight ?? 0.2) : 0;
   let mpfpResults: SearchSignalResult[] = [];
   if (mpfpEnabled) {
     const seedIds = [
@@ -1030,8 +1013,8 @@ export async function hybridSearch(
   const normalizedOpinionResults = normalizeSignalScores(opinionResults);
 
   // 4b. Build temporal freshness signal from validFrom dates across all candidates (OP-129).
-  //     Only candidates where validFrom differs from createdAt by >7 days participate.
-  //     OP-194: For "updates" queries, falls back to createdAt-based freshness.
+  //     OP-193: For "updates" queries, all candidates participate (dense signal).
+  //     For other query types, only candidates with validFrom-createdAt gap >7 days.
   const now = Date.now();
   const freshnessSignal = buildFreshnessSignal(
     [
@@ -1086,18 +1069,6 @@ export async function hybridSearch(
     fused = applyFactTypeBoost(fused, factTypeIntent);
     logger?.info?.(`memory-neo4j: [fact-type] detected intent="${factTypeIntent}"`);
   }
-
-  // 5c. OP-194: Superseded memory demotion (defense-in-depth).
-  //     When includeExpired=true or asOf queries surface superseded memories,
-  //     demote them by halving their RRF score so the replacement ranks higher.
-  const supersededCount = fused.filter((c) => c.supersededBy).length;
-  if (supersededCount > 0) {
-    fused = fused
-      .map((c) => (c.supersededBy ? { ...c, rrfScore: c.rrfScore * 0.5 } : c))
-      .sort((a, b) => b.rrfScore - a.rrfScore);
-    logger?.info?.(`memory-neo4j: [superseded] demoted ${supersededCount} superseded memories`);
-  }
-
   const tFuse = performance.now();
 
   // 6. Apply recency as a multiplicative boost (OP-121).
@@ -1106,10 +1077,6 @@ export async function hybridSearch(
   //    Then normalize to 0-1 range.
   //    Apply to a larger window (limit*2) so recent memories ranked just outside
   //    the RRF top-N can still surface after the recency re-sort.
-  //    OP-194: Higher recency weight for "updates" queries (0.3 vs 0.1 default)
-  //    to further differentiate recently created memories from stale versions.
-  const effectiveRecencyWeight =
-    queryType === "updates" ? Math.max(recencyWeight, 0.3) : recencyWeight;
   const recencyWindow = Math.min(fused.length, limit * 2);
   const candidates = fused.slice(0, recencyWindow).map((r) => {
     const createdAtMs = r.createdAt ? new Date(r.createdAt).getTime() : NaN;
@@ -1117,7 +1084,7 @@ export async function hybridSearch(
       ? (now - createdAtMs) / (1000 * 60 * 60 * 24)
       : RECENCY_DECAY_DAYS; // default to 1 year if missing or malformed createdAt
     const recencyScore = Math.exp(-ageDays / RECENCY_DECAY_DAYS);
-    const boostedScore = r.rrfScore * (1 + effectiveRecencyWeight * recencyScore);
+    const boostedScore = r.rrfScore * (1 + recencyWeight * recencyScore);
     return { ...r, recencyScore, boostedScore };
   });
 
@@ -1206,20 +1173,12 @@ export async function hybridSearch(
       );
     } else if (temporal) {
       logger?.info(`memory-neo4j: [abstention] skipped — temporal query`);
-    } else {
-      const sorted = finalResults.map((r) => r.score).sort((a, b) => b - a);
-      const secondRatio = sorted.length >= 2 ? sorted[1] / sorted[0] : 0;
-      const willAbstain = shouldAbstain(finalResults, queryType, maxBoosted);
+    } else if (shouldAbstain(finalResults, queryType)) {
       logger?.info(
-        `memory-neo4j: [abstention/debug] queryType=${queryType} candidates=${finalResults.length} rawMax=${maxBoosted.toFixed(6)} secondRatio=${secondRatio.toFixed(3)} scores=[${sorted
-          .slice(0, 5)
-          .map((s) => s.toFixed(3))
-          .join(",")}] → ${willAbstain ? "ABSTAIN" : "PASS"}`,
+        `memory-neo4j: [abstention/classifier] abstaining — queryType=${queryType} candidates=${finalResults.length} maxScore=${finalResults[0].score.toFixed(3)}`,
       );
-      if (willAbstain) {
-        metricsCollector.increment("reranker.abstentions");
-        finalResults = [];
-      }
+      metricsCollector.increment("reranker.abstentions");
+      finalResults = [];
     }
   }
 

@@ -1257,3 +1257,61 @@ describe("applyFactTypeBoost", () => {
     expect(result[1].id).toBe("b");
   });
 });
+
+// ============================================================================
+// OP-193: Temporal Validity Filtering
+// ============================================================================
+
+describe("OP-193: getAdaptiveWeights updates freshness weight", () => {
+  it("should return freshness weight of 1.5 for updates queries", () => {
+    const [, , , freshnessW] = getAdaptiveWeights("updates", true);
+    expect(freshnessW).toBe(1.5);
+  });
+
+  it("should keep freshness weight at 0.2 for non-updates queries", () => {
+    for (const qt of ["short", "entity", "long", "default"] as const) {
+      const [, , , freshnessW] = getAdaptiveWeights(qt, true);
+      expect(freshnessW).toBe(0.2);
+    }
+  });
+});
+
+describe("OP-193: fuseWithConfidenceRRF supersededBy penalty", () => {
+  function makeSignal(
+    id: string,
+    score: number,
+    opts?: { supersededBy?: string },
+  ): SearchSignalResult {
+    return {
+      id,
+      text: `Memory ${id}`,
+      category: "fact",
+      importance: 0.7,
+      createdAt: "2025-01-01T00:00:00Z",
+      supersededBy: opts?.supersededBy,
+      score,
+    };
+  }
+
+  it("should penalize superseded memories by 0.3x", () => {
+    const signal = [makeSignal("old", 0.9, { supersededBy: "new" }), makeSignal("new", 0.9)];
+    const result = fuseWithConfidenceRRF([signal], 60, [1.0]);
+
+    const oldEntry = result.find((r) => r.id === "old")!;
+    const newEntry = result.find((r) => r.id === "new")!;
+    // "new" should rank above "old" despite same raw score
+    expect(newEntry.rrfScore).toBeGreaterThan(oldEntry.rrfScore);
+    // Superseded entry should be roughly 30% of what it would be without penalty
+    expect(oldEntry.rrfScore / newEntry.rrfScore).toBeLessThan(0.5);
+  });
+
+  it("should not penalize non-superseded memories", () => {
+    const signal = [makeSignal("a", 0.9), makeSignal("b", 0.9)];
+    const result = fuseWithConfidenceRRF([signal], 60, [1.0]);
+
+    // Both should have same trust weight (1.0) and no superseded penalty
+    // Only difference is rank (a=1, b=2)
+    expect(result[0].id).toBe("a");
+    expect(result[0].rrfScore).toBeGreaterThan(result[1].rrfScore);
+  });
+});

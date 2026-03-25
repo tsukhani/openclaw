@@ -136,7 +136,7 @@ export async function vectorSearch(
     importance: toJsNumber(r.get("importance")),
     createdAt: String(r.get("createdAt") ?? ""),
     validFrom: r.get("validFrom") != null ? String(r.get("validFrom")) : undefined,
-    supersededBy: r.get("supersededBy") != null ? String(r.get("supersededBy")) : null,
+    supersededBy: r.get("supersededBy") != null ? String(r.get("supersededBy")) : undefined,
     score: r.get("similarity") as number,
     trustScore: toJsNumber(r.get("trustScore")) || 1.0,
   }));
@@ -204,7 +204,7 @@ export async function bm25Search(
     importance: toJsNumber(r.get("importance")),
     createdAt: String(r.get("createdAt") ?? ""),
     validFrom: r.get("validFrom") != null ? String(r.get("validFrom")) : undefined,
-    supersededBy: r.get("supersededBy") != null ? String(r.get("supersededBy")) : null,
+    supersededBy: r.get("supersededBy") != null ? String(r.get("supersededBy")) : undefined,
     rawScore: r.get("bm25Score") as number,
     trustScore: toJsNumber(r.get("trustScore")) || 1.0,
   }));
