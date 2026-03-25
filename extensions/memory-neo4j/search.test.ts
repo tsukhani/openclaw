@@ -378,12 +378,17 @@ describe("hybridSearch", () => {
   });
 
   it("should limit results to the requested count", async () => {
-    const manyResults = Array.from({ length: 10 }, (_, i) =>
-      makeSignalResult({ id: `mem-${i}`, score: 0.9 - i * 0.05 }),
+    // Provide both vector + BM25 signals so fused RRF scores exceed
+    // the abstention soft-ceiling (0.04) and avoid clustering gate.
+    const vectorResults = Array.from({ length: 10 }, (_, i) =>
+      makeSignalResult({ id: `mem-${i}`, score: 0.95 - i * 0.08 }),
+    );
+    const bm25Results = Array.from({ length: 10 }, (_, i) =>
+      makeSignalResult({ id: `mem-${i}`, score: 0.9 - i * 0.08 }),
     );
 
-    mockDb.vectorSearch.mockResolvedValue(manyResults);
-    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.vectorSearch.mockResolvedValue(vectorResults);
+    mockDb.bm25Search.mockResolvedValue(bm25Results);
 
     const results = await hybridSearch(
       mockDb as unknown as Neo4jMemoryClient,
@@ -398,11 +403,15 @@ describe("hybridSearch", () => {
   });
 
   it("should record retrieval events for returned results", async () => {
+    // Provide both signals so fused scores clear the abstention threshold.
     mockDb.vectorSearch.mockResolvedValue([
-      makeSignalResult({ id: "mem-1" }),
-      makeSignalResult({ id: "mem-2" }),
+      makeSignalResult({ id: "mem-1", score: 0.95 }),
+      makeSignalResult({ id: "mem-2", score: 0.6 }),
     ]);
-    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.bm25Search.mockResolvedValue([
+      makeSignalResult({ id: "mem-1", score: 0.9 }),
+      makeSignalResult({ id: "mem-2", score: 0.55 }),
+    ]);
 
     await hybridSearch(
       mockDb as unknown as Neo4jMemoryClient,

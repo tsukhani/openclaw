@@ -1211,7 +1211,10 @@ export async function hybridSearch(
       const secondRatio = sorted.length >= 2 ? sorted[1] / sorted[0] : 0;
       const willAbstain = shouldAbstain(finalResults, queryType, maxBoosted);
       logger?.info(
-        `memory-neo4j: [abstention/debug] queryType=${queryType} candidates=${finalResults.length} rawMax=${maxBoosted.toFixed(6)} secondRatio=${secondRatio.toFixed(3)} scores=[${sorted.slice(0, 5).map((s) => s.toFixed(3)).join(",")}] → ${willAbstain ? "ABSTAIN" : "PASS"}`,
+        `memory-neo4j: [abstention/debug] queryType=${queryType} candidates=${finalResults.length} rawMax=${maxBoosted.toFixed(6)} secondRatio=${secondRatio.toFixed(3)} scores=[${sorted
+          .slice(0, 5)
+          .map((s) => s.toFixed(3))
+          .join(",")}] → ${willAbstain ? "ABSTAIN" : "PASS"}`,
       );
       if (willAbstain) {
         metricsCollector.increment("reranker.abstentions");
