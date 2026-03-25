@@ -19,7 +19,7 @@ import type { MetricsCollector } from "./metrics.js";
 import { NO_OP_METRICS } from "./metrics.js";
 import { getOpinionsForTopics } from "./neo4j-client-opinion.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
-import { extractTemporalConstraint } from "./query-analyzer.js";
+import { decomposeQuery, extractTemporalConstraint } from "./query-analyzer.js";
 import type {
   FactType,
   HybridSearchResult,
@@ -549,11 +549,54 @@ export async function hybridSearch(
     opinionEnabled?: boolean;
     /** Weight for opinion signal in RRF fusion. Default: 0.2. */
     opinionSignalWeight?: number;
+    /** @internal Guard against infinite recursion in compound query decomposition (OP-190). */
+    _skipDecomposition?: boolean;
   } = {},
 ): Promise<HybridSearchResult[]> {
   // Guard against empty queries
   if (!query.trim()) {
     return [];
+  }
+
+  // OP-190: Compound query decomposition — split multi-intent queries into sub-queries
+  // and run each independently, then merge results via round-robin interleaving.
+  // Guard: recursive calls set _skipDecomposition to prevent infinite recursion.
+  if (!options._skipDecomposition) {
+    const decomposition = decomposeQuery(query);
+    if (decomposition.isCompound && decomposition.subQueries.length >= 2) {
+      options.logger?.info?.(
+        `memory-neo4j: [decompose] compound query split into ${decomposition.subQueries.length} sub-queries`,
+      );
+
+      // Run hybridSearch for each sub-query independently (no further decomposition)
+      const subResults = await Promise.all(
+        decomposition.subQueries.map((sq) =>
+          hybridSearch(db, embeddings, sq, limit, agentId, graphEnabled, {
+            ...options,
+            _skipDecomposition: true,
+          }),
+        ),
+      );
+
+      // Round-robin interleave: take rank 1 from sub-query 1, rank 1 from sub-query 2, etc.
+      const merged: HybridSearchResult[] = [];
+      const seenIds = new Set<string>();
+      const maxLen = Math.max(...subResults.map((r) => r.length));
+      for (let rank = 0; rank < maxLen; rank++) {
+        for (const results of subResults) {
+          if (rank < results.length) {
+            const r = results[rank];
+            if (!seenIds.has(r.id)) {
+              seenIds.add(r.id);
+              merged.push({ ...r, decomposed: true });
+            }
+            // Dedup: if already seen, skip (first occurrence has higher rank = higher score)
+          }
+        }
+      }
+
+      return merged.slice(0, limit);
+    }
   }
 
   // OP-184: Extract temporal constraints from the query before retrieval.

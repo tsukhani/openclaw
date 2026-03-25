@@ -218,6 +218,8 @@ export type HybridSearchResult = {
   directAnswer?: boolean;
   /** Source opinion when result is a direct answer from the mental model (OP-188). */
   opinionSource?: { topic: string; belief: string; confidence: number };
+  /** True when results were produced via compound query decomposition (OP-190). */
+  decomposed?: boolean;
   signals?: {
     vector: SignalAttribution;
     bm25: SignalAttribution;

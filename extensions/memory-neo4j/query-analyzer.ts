@@ -502,6 +502,197 @@ const PATTERNS: PatternMatcher[] = [
  * @param query - The search query string
  * @param now - Reference date for resolving relative expressions (default: current time)
  */
+// ============================================================================
+// Compound Query Decomposition (OP-190)
+// ============================================================================
+
+export type QueryDecomposition = {
+  isCompound: boolean;
+  subQueries: string[];
+  originalQuery: string;
+};
+
+/**
+ * Extract named entities (capitalized multi-word phrases) from a query.
+ * Used to preserve entity context across sub-queries.
+ */
+function extractEntities(query: string): string[] {
+  // Match sequences of capitalized words (2+ chars each), allowing "'s" possessives
+  const entityRe = /\b([A-Z][a-zA-Z']*(?:\s+[A-Z][a-zA-Z']*)*)\b/g;
+  const entities: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = entityRe.exec(query)) !== null) {
+    const candidate = m[1];
+    // Filter out common question words that happen to be at sentence start
+    if (
+      !/^(What|Who|Where|When|How|Why|Which|Tell|Does|Did|Is|Are|Was|Were|Do|Has|Have|Can|Could|Should|Would|Will)$/i.test(
+        candidate,
+      )
+    ) {
+      entities.push(candidate);
+    }
+  }
+  return entities;
+}
+
+/**
+ * Count words in a string. Used to enforce minimum sub-query length.
+ */
+function wordCount(s: string): number {
+  const trimmed = s.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).length;
+}
+
+/**
+ * Check if a string has enough substance to be a meaningful sub-query.
+ * Requires 3+ words total, with at least one content word (3+ chars, not a stop word).
+ */
+function isMeaningfulSubQuery(s: string): boolean {
+  if (wordCount(s) < 3) return false;
+  const STOP_WORDS = new Set([
+    "and",
+    "the",
+    "for",
+    "with",
+    "that",
+    "this",
+    "from",
+    "also",
+    "well",
+    "is",
+    "it",
+    "he",
+    "she",
+    "we",
+    "a",
+    "an",
+    "to",
+    "of",
+    "in",
+    "on",
+  ]);
+  const contentWords = s
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !STOP_WORDS.has(w.toLowerCase()));
+  return contentWords.length >= 1;
+}
+
+/**
+ * Decompose a compound query into independent sub-queries.
+ *
+ * Detects compound queries using regex patterns:
+ * - Conjunctions splitting question intents: "X and Y", "X as well as Y", "X, also Y"
+ * - Multiple question words: "What... and how...", "Who... and where..."
+ * - Comma-separated intents: "What is X, how much does it cost"
+ *
+ * Each sub-query must have 3+ meaningful words. Entity context (e.g. "Abundent Academy")
+ * is preserved across all sub-queries.
+ */
+export function decomposeQuery(query: string): QueryDecomposition {
+  const result: QueryDecomposition = {
+    isCompound: false,
+    subQueries: [query],
+    originalQuery: query,
+  };
+
+  const trimmed = query.trim();
+  if (!trimmed) return result;
+
+  const entities = extractEntities(trimmed);
+
+  // Pattern 1: Multiple question words joined by conjunctions or commas
+  // "What does X teach and how much does it cost?"
+  // "Who is Alice and where does she work?"
+  // "What is X, how old is he, and where does he live?"
+  const questionWordRe = /\b(what|who|where|when|how|why|which)\b/gi;
+  const questionMatches = [...trimmed.matchAll(questionWordRe)];
+
+  let subQueries: string[] = [];
+
+  if (questionMatches.length >= 2) {
+    // Split at positions where a new question word starts after a conjunction/comma
+    // Pattern: ", and <qword>" or " and <qword>" or ", <qword>"
+    const splitRe =
+      /(?:,\s*(?:and\s+)?|\s+and\s+|\s+as\s+well\s+as\s+|,\s*also\s+)(?=(?:what|who|where|when|how|why|which)\b)/gi;
+    subQueries = trimmed.split(splitRe).map((s) => s.trim().replace(/[?]+$/, "").trim());
+  }
+
+  // Pattern 2: Single question with conjunction splitting distinct intents
+  // "What does X teach and what does it cost" — already handled above
+  // "What tool do we use for Y and who set it up?"
+  if (subQueries.length < 2) {
+    // Try splitting on " and " when both halves look like independent clauses
+    const andSplit = trimmed.split(/\s+and\s+/i);
+    if (andSplit.length >= 2) {
+      const cleaned = andSplit.map((s) => s.trim().replace(/[?]+$/, "").trim());
+      // Check if at least one part has a question word or verb phrase
+      const hasQuestionWord = (s: string) => /\b(what|who|where|when|how|why|which)\b/i.test(s);
+      const hasVerbPhrase = (s: string) =>
+        /\b(does|did|do|is|are|was|were|has|have|can|could)\b/i.test(s);
+      // Only split if both parts are meaningful (3+ words each)
+      if (
+        cleaned.every((s) => isMeaningfulSubQuery(s)) &&
+        (cleaned.some(hasQuestionWord) || cleaned.every(hasVerbPhrase))
+      ) {
+        subQueries = cleaned;
+      }
+    }
+  }
+
+  // Pattern 3: Comma-separated intents (without "and")
+  // "What is X, how much does it cost"
+  if (subQueries.length < 2) {
+    const commaSplit = trimmed.split(/,\s+/);
+    if (commaSplit.length >= 2) {
+      const cleaned = commaSplit.map((s) => s.trim().replace(/[?]+$/, "").trim());
+      if (cleaned.every((s) => isMeaningfulSubQuery(s))) {
+        subQueries = cleaned;
+      }
+    }
+  }
+
+  if (subQueries.length < 2) return result;
+
+  // Filter out sub-queries that are too short
+  subQueries = subQueries.filter((s) => isMeaningfulSubQuery(s));
+  if (subQueries.length < 2) return result;
+
+  // Preserve entity context: if an entity appears in one sub-query but not others,
+  // prepend it to the sub-queries that lack it.
+  if (entities.length > 0) {
+    subQueries = subQueries.map((sq) => {
+      for (const entity of entities) {
+        if (!sq.toLowerCase().includes(entity.toLowerCase())) {
+          // Prepend entity context to the sub-query
+          sq = `${entity}: ${sq}`;
+        }
+      }
+      return sq;
+    });
+  }
+
+  return {
+    isCompound: true,
+    subQueries,
+    originalQuery: query,
+  };
+}
+
+// ============================================================================
+// Main Extractor
+// ============================================================================
+
+/**
+ * Extract a temporal constraint from a natural language query.
+ *
+ * Returns the date range and a cleaned query with the temporal expression removed
+ * for better semantic search. Returns null if no temporal expression is found.
+ *
+ * @param query - The search query string
+ * @param now - Reference date for resolving relative expressions (default: current time)
+ */
 export function extractTemporalConstraint(query: string, now?: Date): TemporalConstraint | null {
   const refDate = now ?? new Date();
 
