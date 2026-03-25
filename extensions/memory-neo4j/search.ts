@@ -160,8 +160,8 @@ export function getAdaptiveWeights(
     case "long":
       return [1.2, 0.7, graphBase * 0.3, 0.2];
     case "updates":
-      // OP-193: Dense freshness signal needs higher weight to surface temporally-current memories
-      return [1.0, 1.0, graphBase * 0.3, 1.5];
+      // Stronger freshness boost so newer validFrom memories outrank stale ones
+      return [1.0, 1.0, graphBase * 0.3, 0.6];
     case "causal":
       // Why/cause queries: graph helps with causal chains but must not override primary signals
       return [0.9, 0.7, graphBase * 0.5, 0.1];
@@ -287,23 +287,15 @@ const RECENCY_DECAY_DAYS = 365;
 /**
  * Build a synthetic freshness signal from candidate validFrom dates.
  *
- * For "updates" queries (OP-193): includes ALL candidates scored by validFrom
- * recency — this creates a dense signal where every candidate gets a rank,
- * allowing RRF to properly differentiate memories by temporal currency.
- *
- * For other query types: only includes candidates where validFrom differs from
- * createdAt by more than 7 days (original OP-129 behavior).
+ * Only includes candidates where validFrom differs from createdAt by more than
+ * 7 days — i.e. the memory was explicitly back-dated or represents an update
+ * to an earlier fact. Sorted by freshness score descending to create ranks for RRF.
  *
  * Freshness score: exp(-daysSince / 365) — decays over ~1 year.
  */
-function buildFreshnessSignal(
-  candidates: SearchSignalResult[],
-  now: number,
-  queryType?: QueryType,
-): SearchSignalResult[] {
+function buildFreshnessSignal(candidates: SearchSignalResult[], now: number): SearchSignalResult[] {
   const seen = new Set<string>();
   const withFreshness: SearchSignalResult[] = [];
-  const dense = queryType === "updates";
 
   for (const c of candidates) {
     if (seen.has(c.id)) {
@@ -316,15 +308,12 @@ function buildFreshnessSignal(
     }
     const validFromMs = new Date(c.validFrom).getTime();
     if (Number.isNaN(validFromMs)) continue; // M9: skip malformed date strings
-
-    if (!dense) {
-      const createdAtMs = c.createdAt ? new Date(c.createdAt).getTime() : NaN;
-      // M7: Skip when createdAt is missing/malformed — NaN comparison would bypass the 7-day guard
-      if (Number.isNaN(createdAtMs)) continue;
-      // Only apply freshness when validFrom was explicitly set to differ from createdAt
-      if (Math.abs(validFromMs - createdAtMs) <= SEVEN_DAYS_MS) {
-        continue;
-      }
+    const createdAtMs = c.createdAt ? new Date(c.createdAt).getTime() : NaN;
+    // M7: Skip when createdAt is missing/malformed — NaN comparison would bypass the 7-day guard
+    if (Number.isNaN(createdAtMs)) continue;
+    // Only apply freshness when validFrom was explicitly set to differ from createdAt
+    if (Math.abs(validFromMs - createdAtMs) <= SEVEN_DAYS_MS) {
+      continue;
     }
 
     const daysSince = (now - validFromMs) / (1000 * 60 * 60 * 24);
@@ -459,9 +448,7 @@ export function fuseWithConfidenceRRF(
 
     // Apply trust score as multiplicative weight (default 1.0 = no change)
     const trustWeight = meta.trustScore ?? 1.0;
-    // OP-193: Penalize superseded memories so replacements rank higher
-    const supersededPenalty = meta.supersededBy ? 0.3 : 1.0;
-    const weightedRrfScore = rrfScore * trustWeight * supersededPenalty;
+    const weightedRrfScore = rrfScore * trustWeight;
 
     results.push({
       id,
@@ -1013,8 +1000,7 @@ export async function hybridSearch(
   const normalizedOpinionResults = normalizeSignalScores(opinionResults);
 
   // 4b. Build temporal freshness signal from validFrom dates across all candidates (OP-129).
-  //     OP-193: For "updates" queries, all candidates participate (dense signal).
-  //     For other query types, only candidates with validFrom-createdAt gap >7 days.
+  //     Only candidates where validFrom differs from createdAt by >7 days participate.
   const now = Date.now();
   const freshnessSignal = buildFreshnessSignal(
     [
@@ -1027,7 +1013,6 @@ export async function hybridSearch(
       ...normalizedOpinionResults,
     ],
     now,
-    queryType,
   );
 
   // 5. Fuse all signals with confidence-weighted RRF.
@@ -1069,11 +1054,6 @@ export async function hybridSearch(
     fused = applyFactTypeBoost(fused, factTypeIntent);
     logger?.info?.(`memory-neo4j: [fact-type] detected intent="${factTypeIntent}"`);
   }
-
-  // OP-191: Capture pre-normalization max RRF score for absolute confidence gate.
-  // This must be read after fact-type boost (which can reorder) but before recency
-  // normalization (which maps scores to 0-1 and erases absolute magnitude).
-  const rawMaxScore = fused.length > 0 ? fused[0].rrfScore : 0;
 
   const tFuse = performance.now();
 
@@ -1179,7 +1159,7 @@ export async function hybridSearch(
       );
     } else if (temporal) {
       logger?.info(`memory-neo4j: [abstention] skipped — temporal query`);
-    } else if (shouldAbstain(finalResults, queryType, rawMaxScore)) {
+    } else if (shouldAbstain(finalResults, queryType)) {
       logger?.info(
         `memory-neo4j: [abstention/classifier] abstaining — queryType=${queryType} candidates=${finalResults.length} maxScore=${finalResults[0].score.toFixed(3)}`,
       );
