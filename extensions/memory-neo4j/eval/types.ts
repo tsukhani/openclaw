@@ -113,6 +113,10 @@ export type CaseRetrievalMetrics = {
   reciprocalRank: number;
   /** Normalized Discounted Cumulative Gain at K. */
   ndcgAtK: number;
+  /** Precision computed over actual retrieved count instead of K (meaningful when results are truncated). */
+  precisionAtRetrieved: number;
+  /** F1 computed with precisionAtRetrieved instead of precisionAtK. */
+  f1AtRetrieved: number;
   /** True when goldIds is empty (abstention / LongMemEval) — retrieval metrics are vacuous. */
   emptyGoldSet: boolean;
   /** Wall-clock latency of the hybridSearch call in milliseconds (sub-ms precision). */
@@ -167,6 +171,10 @@ export type AbilityMetrics = {
   avgF1AtK: number;
   avgMRR: number;
   avgNDCG: number;
+  /** Average precision over actual retrieved count (truncation-aware). */
+  avgPrecisionAtRetrieved: number;
+  /** Average F1 using precisionAtRetrieved. */
+  avgF1AtRetrieved: number;
   /** Fraction of cases with at least one relevant result. */
   hitRate: number;
 };
@@ -211,6 +219,8 @@ export type EvalRunResult = {
     avgF1AtK: number;
     avgMRR: number;
     avgNDCG: number;
+    avgPrecisionAtRetrieved: number;
+    avgF1AtRetrieved: number;
     hitRate: number;
   };
   /** Context completeness (LLM judge, Tier 1). */

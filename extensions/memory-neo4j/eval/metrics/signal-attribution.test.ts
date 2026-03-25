@@ -16,6 +16,8 @@ function makeCase(retrieved: RetrievedMemory[], goldIds: string[]): CaseRetrieva
     firstRelevantRank: 0,
     reciprocalRank: 0,
     ndcgAtK: 0,
+    precisionAtRetrieved: 0,
+    f1AtRetrieved: 0,
     emptyGoldSet: goldIds.length === 0,
   };
 }

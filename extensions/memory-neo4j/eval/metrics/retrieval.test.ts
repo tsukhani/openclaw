@@ -114,6 +114,8 @@ describe("aggregateMetrics", () => {
         firstRelevantRank: 1,
         reciprocalRank: 1.0,
         ndcgAtK: 1.0,
+        precisionAtRetrieved: 0.5,
+        f1AtRetrieved: 0.67,
         emptyGoldSet: false,
       },
       {
@@ -129,6 +131,8 @@ describe("aggregateMetrics", () => {
         firstRelevantRank: 0,
         reciprocalRank: 0,
         ndcgAtK: 0,
+        precisionAtRetrieved: 0,
+        f1AtRetrieved: 0,
         emptyGoldSet: false,
       },
     ];
@@ -155,6 +159,8 @@ describe("aggregateMetrics", () => {
         firstRelevantRank: 1,
         reciprocalRank: 1.0,
         ndcgAtK: 1.0,
+        precisionAtRetrieved: 0.4,
+        f1AtRetrieved: 0.57,
         emptyGoldSet: false,
       },
       {
@@ -170,6 +176,8 @@ describe("aggregateMetrics", () => {
         firstRelevantRank: 0,
         reciprocalRank: 0,
         ndcgAtK: 0,
+        precisionAtRetrieved: 0,
+        f1AtRetrieved: 0,
         emptyGoldSet: true,
       },
     ];
@@ -198,6 +206,8 @@ describe("aggregateMetrics", () => {
         firstRelevantRank: 0,
         reciprocalRank: 0,
         ndcgAtK: 0,
+        precisionAtRetrieved: 0,
+        f1AtRetrieved: 0,
         emptyGoldSet: true,
       },
     ];

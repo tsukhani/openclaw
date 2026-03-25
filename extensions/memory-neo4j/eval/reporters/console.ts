@@ -37,15 +37,21 @@ export function reportConsole(result: EvalRunResult): void {
   console.log(`│  MRR:          ${pct(overall.avgMRR)}  ${bar(overall.avgMRR)}`);
   console.log(`│  NDCG@${result.k}:      ${pct(overall.avgNDCG)}  ${bar(overall.avgNDCG)}`);
   console.log(`│  Hit Rate:     ${pct(overall.hitRate)}  ${bar(overall.hitRate)}`);
+  console.log(
+    `│  P@Ret:        ${pct(overall.avgPrecisionAtRetrieved)}  ${bar(overall.avgPrecisionAtRetrieved)}`,
+  );
+  console.log(
+    `│  F1@Ret:       ${pct(overall.avgF1AtRetrieved)}  ${bar(overall.avgF1AtRetrieved)}`,
+  );
   console.log("└");
 
   // Per-ability breakdown
   if (abilityMetrics.length > 0) {
     console.log("\n┌─ Per-Ability Breakdown");
     console.log("│");
-    const header = `│  ${"Ability".padEnd(14)} ${"P@K".padStart(6)} ${"R@K".padStart(6)} ${"F1".padStart(6)} ${"MRR".padStart(6)} ${"NDCG".padStart(6)} ${"HitRate".padStart(8)} ${"N".padStart(4)}`;
+    const header = `│  ${"Ability".padEnd(14)} ${"P@K".padStart(6)} ${"R@K".padStart(6)} ${"F1".padStart(6)} ${"MRR".padStart(6)} ${"NDCG".padStart(6)} ${"HitRate".padStart(8)} ${"P@Ret".padStart(7)} ${"F1@Ret".padStart(7)} ${"N".padStart(4)}`;
     console.log(header);
-    console.log(`│  ${"─".repeat(60)}`);
+    console.log(`│  ${"─".repeat(74)}`);
 
     for (const m of abilityMetrics) {
       const row =
@@ -56,6 +62,8 @@ export function reportConsole(result: EvalRunResult): void {
         ` ${pctShort(m.avgMRR)}` +
         ` ${pctShort(m.avgNDCG)}` +
         `     ${pctShort(m.hitRate)}` +
+        ` ${pctShort(m.avgPrecisionAtRetrieved)}` +
+        ` ${pctShort(m.avgF1AtRetrieved)}` +
         `   ${String(m.caseCount).padStart(4)}`;
       console.log(row);
     }

@@ -69,6 +69,9 @@ const PAST_COMM_VERB_RE =
   /\b(said|mentioned|told|described|explained|stated|noted|reported|expressed|opined|thought|believed|felt|preferred|liked|wanted)\b/i;
 const WH_COMM_RE =
   /^(?:what|who|how)\s+(?:did|does|do|has)\s+\S.*\b(say|think|feel|prefer|like|want|believe|mention|describe|explain|state|note|report|express)\b/i;
+// Broad factual WH-question pattern — catches "What is X's Y?", "Where does X live?",
+// "When does X post?" etc. that are needle-in-haystack extraction even without comm verbs.
+const FACTUAL_WH_RE = /^(?:what|where|when|which|who)\b/i;
 
 export function classifyQuery(query: string): QueryType {
   const words = query.trim().split(/\s+/);
@@ -105,27 +108,44 @@ export function classifyQuery(query: string): QueryType {
     return "entity";
   }
 
-  // Question patterns targeting entities — WH-question with possessive chain or short length.
-  // Matches "What is my wife's phone?" (possessive) and "What is Alice?" (3-4 words).
-  // Without possessive, gate behind wordCount <= 4 to avoid generic long questions like
-  // "what is the best framework" from falsely triggering entity/graph boost.
-  if (WH_ENTITY_RE.test(query)) {
-    if (possessiveCount >= 1 || wordCount <= 4) {
-      return "entity";
-    }
-  }
-
   // Extraction queries: ask for specific facts stored in memory (OP-138).
   // Factual precision matters more than recency — route to local cross-encoder.
   //
   // Detection (requires ≥4 words to avoid short queries):
   //   1. Past-tense comm/cognition verb: said, mentioned, told, described, thought, felt...
   //   2. WH-question (what/who/how + did/does/do/has) + comm verb: what did Ada say about...
+  //   3. Factual WH-question with proper noun or possessive: "What is Tarun's phone number?"
   //
   // Excludes generic verbs (do, go, be) and imperative "tell me about" patterns.
   // The "updates" check (above) fires first so "new/current/latest" takes priority.
-  if (wordCount >= 4 && (PAST_COMM_VERB_RE.test(query) || WH_COMM_RE.test(query))) {
-    return "extraction";
+  // Fires before entity check so possessive factual queries ("What is X's Y?") get extraction
+  // weights (BM25 boost) rather than entity weights (graph boost).
+  if (wordCount >= 4) {
+    if (PAST_COMM_VERB_RE.test(query) || WH_COMM_RE.test(query)) {
+      return "extraction";
+    }
+    // Factual WH-questions with a named entity — "What is Tarun's phone number?",
+    // "What microphone does Tarun use?", "Where is Tarun's home address?" etc.
+    // Requires a proper noun (not all-caps acronyms like CEO/API) to target specific named
+    // entities. Generic queries ("what is the best framework") and relational queries
+    // ("what is my wife's phone") fall through to entity/long classification.
+    if (FACTUAL_WH_RE.test(query)) {
+      const hasProperNoun = capitalizedWords.some((w) => w !== w.toUpperCase());
+      if (hasProperNoun) {
+        return "extraction";
+      }
+    }
+  }
+
+  // Question patterns targeting entities — WH-question with possessive chain or short length.
+  // Matches "What is my wife's phone?" (possessive, no proper noun) and "What is Alice?" (3-4 words).
+  // Without possessive, gate behind wordCount <= 4 to avoid generic long questions like
+  // "what is the best framework" from falsely triggering entity/graph boost.
+  // Note: factual WH+proper-noun/possessive queries already matched as extraction above.
+  if (WH_ENTITY_RE.test(query)) {
+    if (possessiveCount >= 1 || wordCount <= 4) {
+      return "entity";
+    }
   }
 
   // Long queries: 5+ words → boost vector
@@ -166,8 +186,8 @@ export function getAdaptiveWeights(
       // Why/cause queries: graph helps with causal chains but must not override primary signals
       return [0.9, 0.7, graphBase * 0.5, 0.1];
     case "extraction":
-      // Factual precision: balanced vector+BM25, light graph, no freshness boost (OP-138)
-      return [1.1, 1.1, graphBase * 0.3, 0.0];
+      // Factual precision: boost BM25 for keyword specificity, no freshness (OP-138)
+      return [1.0, 1.3, graphBase * 0.2, 0.0];
     case "default":
     default:
       return [1.0, 1.0, graphBase * 0.3, 0.2];
@@ -1078,6 +1098,26 @@ export async function hybridSearch(
   // then take only `limit` results
   candidates.sort((a, b) => b.boostedScore - a.boostedScore);
   candidates.splice(limit);
+
+  // Score-gap truncation for extraction queries: if the score drops sharply between
+  // consecutive results, the tail is likely noise. Trimming improves precision without
+  // hurting recall (gold memories score well above distractors).
+  const SCORE_GAP_RATIO = 0.4; // >60% drop signals noise
+  if (queryType === "extraction" && candidates.length >= 2) {
+    let cutoff = candidates.length;
+    for (let i = 1; i < candidates.length; i++) {
+      if (candidates[i].boostedScore < candidates[i - 1].boostedScore * SCORE_GAP_RATIO) {
+        cutoff = i;
+        break;
+      }
+    }
+    if (cutoff < candidates.length) {
+      logger?.info?.(
+        `memory-neo4j: [score-gap] truncated extraction results from ${candidates.length} to ${cutoff}`,
+      );
+      candidates.splice(cutoff);
+    }
+  }
 
   // Normalize boosted scores to 0-1 range
   const maxBoosted = candidates.length > 0 ? candidates[0].boostedScore : 0;

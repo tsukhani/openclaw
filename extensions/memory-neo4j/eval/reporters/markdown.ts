@@ -35,6 +35,8 @@ export function formatMarkdown(result: EvalRunResult): string {
   lines.push(`| MRR | ${pct(result.overall.avgMRR)} | ≥ 70% |`);
   lines.push(`| NDCG@${result.k} | ${pct(result.overall.avgNDCG)} | ≥ 75% |`);
   lines.push(`| Hit Rate | ${pct(result.overall.hitRate)} | — |`);
+  lines.push(`| P@Retrieved | ${pct(result.overall.avgPrecisionAtRetrieved)} | ≥ 80% |`);
+  lines.push(`| F1@Retrieved | ${pct(result.overall.avgF1AtRetrieved)} | ≥ 80% |`);
   lines.push("");
 
   // Per-ability breakdown

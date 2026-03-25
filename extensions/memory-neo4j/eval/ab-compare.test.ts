@@ -20,6 +20,8 @@ describe("pairedBootstrapCI", () => {
       firstRelevantRank: 0,
       reciprocalRank: 0,
       ndcgAtK: 0,
+      precisionAtRetrieved: precisionAtK,
+      f1AtRetrieved: 0,
       emptyGoldSet: false,
     };
   }

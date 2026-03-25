@@ -52,6 +52,8 @@ export function computeCaseMetrics(
       firstRelevantRank: 0,
       reciprocalRank: 0,
       ndcgAtK: 0,
+      precisionAtRetrieved: 0,
+      f1AtRetrieved: 0,
       emptyGoldSet: true,
     };
   }
@@ -91,6 +93,14 @@ export function computeCaseMetrics(
 
   const ndcgAtK = idcg > 0 ? dcg / idcg : 0;
 
+  // Truncation-aware precision: denominator is actual retrieved count, not k.
+  // Meaningful when score-gap truncation returns fewer than k results.
+  const precisionAtRetrieved = topK.length > 0 ? hits / topK.length : 0;
+  const f1AtRetrieved =
+    precisionAtRetrieved + recallAtK > 0
+      ? (2 * precisionAtRetrieved * recallAtK) / (precisionAtRetrieved + recallAtK)
+      : 0;
+
   return {
     caseId,
     ability,
@@ -104,6 +114,8 @@ export function computeCaseMetrics(
     firstRelevantRank,
     reciprocalRank,
     ndcgAtK,
+    precisionAtRetrieved,
+    f1AtRetrieved,
     emptyGoldSet: false,
   };
 }
@@ -136,6 +148,8 @@ type AggregateNumerics = {
   avgF1AtK: number;
   avgMRR: number;
   avgNDCG: number;
+  avgPrecisionAtRetrieved: number;
+  avgF1AtRetrieved: number;
   hitRate: number;
 };
 
@@ -151,6 +165,8 @@ function computeAggregateNumerics(cases: CaseRetrievalMetrics[]): AggregateNumer
       avgF1AtK: 0,
       avgMRR: 0,
       avgNDCG: 0,
+      avgPrecisionAtRetrieved: 0,
+      avgF1AtRetrieved: 0,
       hitRate: 0,
     };
   }
@@ -171,6 +187,8 @@ function computeAggregateNumerics(cases: CaseRetrievalMetrics[]): AggregateNumer
     avgF1AtK: avg((c) => c.f1AtK),
     avgMRR: avg((c) => c.reciprocalRank),
     avgNDCG: avg((c) => c.ndcgAtK),
+    avgPrecisionAtRetrieved: avg((c) => c.precisionAtRetrieved),
+    avgF1AtRetrieved: avg((c) => c.f1AtRetrieved),
     hitRate: sn === 0 ? 0 : scorable.filter((c) => c.hitsAtK > 0).length / sn,
   };
 }
