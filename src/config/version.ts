@@ -106,17 +106,16 @@ export function shouldWarnOnTouchedVersion(
 ): boolean {
   const parsedCurrent = parseOpenClawVersion(current);
   const parsedTouched = parseOpenClawVersion(touched);
+  // Suppress warning when both versions share the same major.minor.patch base
+  // (e.g. beta.1 running against a config written by the stable release, or
+  // a revision running against the base — all are the "same version family").
   if (
     parsedCurrent &&
     parsedTouched &&
     parsedCurrent.major === parsedTouched.major &&
     parsedCurrent.minor === parsedTouched.minor &&
-    parsedCurrent.patch === parsedTouched.patch &&
-    parsedTouched.revision != null
+    parsedCurrent.patch === parsedTouched.patch
   ) {
-    return false;
-  }
-  if (isSameOpenClawStableFamily(current, touched)) {
     return false;
   }
   const cmp = compareOpenClawVersions(current, touched);
