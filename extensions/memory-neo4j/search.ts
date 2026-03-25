@@ -1069,6 +1069,12 @@ export async function hybridSearch(
     fused = applyFactTypeBoost(fused, factTypeIntent);
     logger?.info?.(`memory-neo4j: [fact-type] detected intent="${factTypeIntent}"`);
   }
+
+  // OP-191: Capture pre-normalization max RRF score for absolute confidence gate.
+  // This must be read after fact-type boost (which can reorder) but before recency
+  // normalization (which maps scores to 0-1 and erases absolute magnitude).
+  const rawMaxScore = fused.length > 0 ? fused[0].rrfScore : 0;
+
   const tFuse = performance.now();
 
   // 6. Apply recency as a multiplicative boost (OP-121).
@@ -1173,7 +1179,7 @@ export async function hybridSearch(
       );
     } else if (temporal) {
       logger?.info(`memory-neo4j: [abstention] skipped — temporal query`);
-    } else if (shouldAbstain(finalResults, queryType)) {
+    } else if (shouldAbstain(finalResults, queryType, rawMaxScore)) {
       logger?.info(
         `memory-neo4j: [abstention/classifier] abstaining — queryType=${queryType} candidates=${finalResults.length} maxScore=${finalResults[0].score.toFixed(3)}`,
       );
