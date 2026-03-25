@@ -1206,12 +1206,17 @@ export async function hybridSearch(
       );
     } else if (temporal) {
       logger?.info(`memory-neo4j: [abstention] skipped — temporal query`);
-    } else if (shouldAbstain(finalResults, queryType)) {
+    } else {
+      const sorted = finalResults.map((r) => r.score).sort((a, b) => b - a);
+      const secondRatio = sorted.length >= 2 ? sorted[1] / sorted[0] : 0;
+      const willAbstain = shouldAbstain(finalResults, queryType, maxBoosted);
       logger?.info(
-        `memory-neo4j: [abstention/classifier] abstaining — queryType=${queryType} candidates=${finalResults.length} maxScore=${finalResults[0].score.toFixed(3)}`,
+        `memory-neo4j: [abstention/debug] queryType=${queryType} candidates=${finalResults.length} rawMax=${maxBoosted.toFixed(6)} secondRatio=${secondRatio.toFixed(3)} scores=[${sorted.slice(0, 5).map((s) => s.toFixed(3)).join(",")}] → ${willAbstain ? "ABSTAIN" : "PASS"}`,
       );
-      metricsCollector.increment("reranker.abstentions");
-      finalResults = [];
+      if (willAbstain) {
+        metricsCollector.increment("reranker.abstentions");
+        finalResults = [];
+      }
     }
   }
 

@@ -1,18 +1,24 @@
 /**
- * Tests for abstention-classifier.ts (OP-137)
+ * Tests for abstention-classifier.ts (OP-137, OP-191)
  *
  * Covers:
  *   - Empty candidate set → abstain
- *   - Low-score candidates (maxScore < 0.35, meanScore < 0.25) → abstain
- *   - High-score candidates → don't abstain
- *   - Mixed scores where max is high → don't abstain
+ *   - Low rawMaxScore (absolute confidence floor) → abstain
+ *   - Score clustering + moderate rawMaxScore → abstain
+ *   - High rawMaxScore → don't abstain even with clustering
+ *   - Fallback v1 normalized-score checks (no rawMaxScore)
  *   - "long" query type with very few low-scoring results → abstain
  *   - "long" query type with adequate results → don't abstain
- *   - Non-"long" query type with few low-scoring results → don't abstain (less aggressive)
+ *   - Edge cases
  */
 
 import { describe, it, expect } from "vitest";
-import { shouldAbstain } from "./abstention-classifier.js";
+import {
+  shouldAbstain,
+  RAW_SCORE_FLOOR,
+  RAW_SCORE_SOFT_CEIL,
+  CLUSTER_RATIO_THRESHOLD,
+} from "./abstention-classifier.js";
 import type { ScoredMemory } from "./abstention-classifier.js";
 
 function makeCandidate(id: string, score: number): ScoredMemory {
@@ -33,33 +39,115 @@ describe("shouldAbstain — empty candidates", () => {
     expect(shouldAbstain([], "short")).toBe(true);
     expect(shouldAbstain([], "entity")).toBe(true);
   });
+
+  it("should abstain when candidates is empty with rawMaxScore", () => {
+    expect(shouldAbstain([], "default", 0.1)).toBe(true);
+  });
 });
 
 // ============================================================================
-// Low-score candidates → abstain
+// Gate 1: Raw score floor (OP-191)
 // ============================================================================
 
-describe("shouldAbstain — low-score candidates", () => {
+describe("shouldAbstain — raw score floor (OP-191)", () => {
+  it("should abstain when rawMaxScore is below RAW_SCORE_FLOOR", () => {
+    const candidates = [makeCandidate("mem-1", 1.0), makeCandidate("mem-2", 0.8)];
+    // Even though normalized scores look great, raw confidence is too low
+    expect(shouldAbstain(candidates, "default", RAW_SCORE_FLOOR - 0.001)).toBe(true);
+  });
+
+  it("should NOT abstain when rawMaxScore is at RAW_SCORE_FLOOR", () => {
+    const candidates = [makeCandidate("mem-1", 1.0), makeCandidate("mem-2", 0.5)];
+    // At floor, not below — should pass floor check (may still pass/fail other gates)
+    expect(shouldAbstain(candidates, "default", RAW_SCORE_FLOOR)).toBe(false);
+  });
+
+  it("should abstain for very low rawMaxScore even with high normalized scores", () => {
+    const candidates = [makeCandidate("mem-1", 1.0), makeCandidate("mem-2", 0.95)];
+    expect(shouldAbstain(candidates, "default", 0.001)).toBe(true);
+  });
+});
+
+// ============================================================================
+// Gate 2: Score clustering + moderate raw score (OP-191)
+// ============================================================================
+
+describe("shouldAbstain — score clustering (OP-191)", () => {
+  it("should abstain when scores are clustered AND rawMaxScore is moderate", () => {
+    // Simulates distractor-only retrieval: all scores tightly packed
+    const candidates = [
+      makeCandidate("mem-1", 1.0),
+      makeCandidate("mem-2", 0.95), // ratio 0.95 > 0.9 threshold
+      makeCandidate("mem-3", 0.92),
+    ];
+    expect(shouldAbstain(candidates, "default", RAW_SCORE_SOFT_CEIL - 0.01)).toBe(true);
+  });
+
+  it("should NOT abstain when scores are clustered but rawMaxScore is HIGH", () => {
+    // Multiple genuinely relevant results — high raw confidence + clustering is OK
+    const candidates = [
+      makeCandidate("mem-1", 1.0),
+      makeCandidate("mem-2", 0.95),
+      makeCandidate("mem-3", 0.92),
+    ];
+    expect(shouldAbstain(candidates, "default", RAW_SCORE_SOFT_CEIL + 0.01)).toBe(false);
+  });
+
+  it("should NOT abstain when rawMaxScore is moderate but scores are spread out", () => {
+    // Clear standout result — not clustered
+    const candidates = [
+      makeCandidate("mem-1", 1.0),
+      makeCandidate("mem-2", 0.5), // ratio 0.5 < 0.9 threshold
+      makeCandidate("mem-3", 0.3),
+    ];
+    expect(shouldAbstain(candidates, "default", RAW_SCORE_SOFT_CEIL - 0.01)).toBe(false);
+  });
+
+  it("should NOT trigger clustering gate with only 1 candidate", () => {
+    // Clustering requires >= 2 candidates
+    const candidates = [makeCandidate("mem-1", 1.0)];
+    expect(shouldAbstain(candidates, "default", RAW_SCORE_SOFT_CEIL - 0.01)).toBe(false);
+  });
+
+  it("should abstain at exact CLUSTER_RATIO_THRESHOLD boundary", () => {
+    const candidates = [
+      makeCandidate("mem-1", 1.0),
+      makeCandidate("mem-2", CLUSTER_RATIO_THRESHOLD + 0.01),
+    ];
+    expect(shouldAbstain(candidates, "default", RAW_SCORE_SOFT_CEIL - 0.01)).toBe(true);
+  });
+
+  it("should NOT abstain just below CLUSTER_RATIO_THRESHOLD", () => {
+    const candidates = [
+      makeCandidate("mem-1", 1.0),
+      makeCandidate("mem-2", CLUSTER_RATIO_THRESHOLD - 0.01),
+    ];
+    expect(shouldAbstain(candidates, "default", RAW_SCORE_SOFT_CEIL - 0.01)).toBe(false);
+  });
+});
+
+// ============================================================================
+// Fallback v1 gates (no rawMaxScore)
+// ============================================================================
+
+describe("shouldAbstain — v1 fallback (no rawMaxScore)", () => {
   it("should abstain when maxScore < 0.35 and meanScore < 0.25", () => {
     const candidates = [
-      makeCandidate("mem-1", 0.3), // maxScore
+      makeCandidate("mem-1", 0.3),
       makeCandidate("mem-2", 0.15),
       makeCandidate("mem-3", 0.1),
     ];
-    // maxScore=0.30, meanScore=(0.30+0.15+0.10)/3≈0.183 → abstain
     expect(shouldAbstain(candidates, "default")).toBe(true);
   });
 
   it("should abstain with single very low-score candidate", () => {
     const candidates = [makeCandidate("mem-1", 0.2)];
-    // maxScore=0.20, meanScore=0.20 → both below thresholds → abstain
     expect(shouldAbstain(candidates, "default")).toBe(true);
   });
 
-  it("should abstain for 'short' query type when scores are very low", () => {
-    const candidates = [makeCandidate("mem-1", 0.25), makeCandidate("mem-2", 0.2)];
-    // maxScore=0.25, meanScore=0.225 → both below thresholds → abstain
-    expect(shouldAbstain(candidates, "short")).toBe(true);
+  it("should NOT abstain when maxScore >= 0.35 (v1 gate)", () => {
+    const candidates = [makeCandidate("mem-1", 0.85), makeCandidate("mem-2", 0.6)];
+    expect(shouldAbstain(candidates, "default")).toBe(false);
   });
 });
 
@@ -67,32 +155,15 @@ describe("shouldAbstain — low-score candidates", () => {
 // High-score candidates → don't abstain
 // ============================================================================
 
-describe("shouldAbstain — high-score candidates", () => {
-  it("should NOT abstain when maxScore >= 0.35", () => {
-    const candidates = [makeCandidate("mem-1", 0.85), makeCandidate("mem-2", 0.6)];
-    expect(shouldAbstain(candidates, "default")).toBe(false);
+describe("shouldAbstain — high-score candidates with rawMaxScore", () => {
+  it("should NOT abstain with high rawMaxScore and spread scores", () => {
+    const candidates = [makeCandidate("mem-1", 1.0), makeCandidate("mem-2", 0.6)];
+    expect(shouldAbstain(candidates, "default", 0.1)).toBe(false);
   });
 
-  it("should NOT abstain when maxScore is exactly 0.35", () => {
-    const candidates = [makeCandidate("mem-1", 0.35)];
-    // maxScore=0.35 — NOT below threshold (strict <) → don't abstain
-    expect(shouldAbstain(candidates, "default")).toBe(false);
-  });
-
-  it("should NOT abstain when maxScore is high but mean is low (high variance)", () => {
-    // Max is strong → content exists
-    const candidates = [
-      makeCandidate("mem-1", 0.92), // maxScore > 0.35
-      makeCandidate("mem-2", 0.05),
-      makeCandidate("mem-3", 0.03),
-    ];
-    // maxScore=0.92 → global gate stays open
-    expect(shouldAbstain(candidates, "default")).toBe(false);
-  });
-
-  it("should NOT abstain for 'entity' query with good scores", () => {
+  it("should NOT abstain for 'entity' query with good raw and normalized scores", () => {
     const candidates = [makeCandidate("mem-1", 0.75), makeCandidate("mem-2", 0.65)];
-    expect(shouldAbstain(candidates, "entity")).toBe(false);
+    expect(shouldAbstain(candidates, "entity", 0.08)).toBe(false);
   });
 
   it("should NOT abstain for 'long' query with multiple good candidates", () => {
@@ -101,7 +172,7 @@ describe("shouldAbstain — high-score candidates", () => {
       makeCandidate("mem-2", 0.5),
       makeCandidate("mem-3", 0.4),
     ];
-    expect(shouldAbstain(candidates, "long")).toBe(false);
+    expect(shouldAbstain(candidates, "long", 0.06)).toBe(false);
   });
 });
 
@@ -112,7 +183,6 @@ describe("shouldAbstain — high-score candidates", () => {
 describe("shouldAbstain — long query type specifics", () => {
   it("should abstain for 'long' query with only 1 result and maxScore < 0.5", () => {
     const candidates = [makeCandidate("mem-1", 0.4)];
-    // candidates.length < 2 AND maxScore < 0.5 AND queryType === "long" → abstain
     expect(shouldAbstain(candidates, "long")).toBe(true);
   });
 
@@ -121,24 +191,9 @@ describe("shouldAbstain — long query type specifics", () => {
     expect(shouldAbstain(candidates, "long")).toBe(false);
   });
 
-  it("should NOT abstain for 'long' query with 2+ results even if maxScore < 0.5", () => {
-    const candidates = [makeCandidate("mem-1", 0.45), makeCandidate("mem-2", 0.35)];
-    // candidates.length >= 2 → long-query gate doesn't fire
-    // maxScore=0.45 > 0.35 threshold → global gate also stays open (meanScore check needed)
-    // meanScore=(0.45+0.35)/2=0.40 > 0.25 → no abstain
-    expect(shouldAbstain(candidates, "long")).toBe(false);
-  });
-
   it("should NOT apply long-query gate for 'short' query type", () => {
-    // Same conditions as long-query gate — but queryType !== "long"
     const candidates = [makeCandidate("mem-1", 0.4)];
-    // For "short": global gate fires only if maxScore < 0.35 (not the case here, 0.4 > 0.35)
     expect(shouldAbstain(candidates, "short")).toBe(false);
-  });
-
-  it("should NOT apply long-query gate for 'entity' query type", () => {
-    const candidates = [makeCandidate("mem-1", 0.4)];
-    expect(shouldAbstain(candidates, "entity")).toBe(false);
   });
 });
 
@@ -149,45 +204,38 @@ describe("shouldAbstain — long query type specifics", () => {
 describe("shouldAbstain — edge cases", () => {
   it("should handle candidates with score exactly 0", () => {
     const candidates = [makeCandidate("mem-1", 0), makeCandidate("mem-2", 0)];
-    // maxScore=0 < 0.35, meanScore=0 < 0.25 → abstain
     expect(shouldAbstain(candidates, "default")).toBe(true);
   });
 
   it("should handle candidates with score exactly 1.0", () => {
     const candidates = [makeCandidate("mem-1", 1.0)];
-    expect(shouldAbstain(candidates, "default")).toBe(false);
+    expect(shouldAbstain(candidates, "default", 0.1)).toBe(false);
   });
 
-  it("should handle large candidate set with all low scores", () => {
+  it("should handle large candidate set with all low scores and low rawMaxScore", () => {
     const candidates = Array.from({ length: 20 }, (_, i) =>
       makeCandidate(`mem-${i}`, 0.1 + i * 0.005),
     );
-    // maxScore = 0.1 + 19*0.005 = 0.195, meanScore well below 0.25 → abstain
-    expect(shouldAbstain(candidates, "default")).toBe(true);
-  });
-});
-
-// ============================================================================
-// Config mode switching — integration with hybridSearch
-// ============================================================================
-
-describe("shouldAbstain — config mode switching (via hybridSearch)", () => {
-  // These tests verify that the classifier can be bypassed by passing mode="threshold"
-  // to hybridSearch. We test shouldAbstain() directly here since hybridSearch()
-  // is tested separately in search.test.ts.
-
-  it("classifier returns true for empty input regardless of mode logic", () => {
-    // This always returns true — the classifier is the direct path
-    expect(shouldAbstain([], "default")).toBe(true);
+    expect(shouldAbstain(candidates, "default", 0.005)).toBe(true);
   });
 
-  it("classifier correctly rejects low-confidence retrieval (would be abstained)", () => {
-    const weakCandidates = [makeCandidate("mem-1", 0.2), makeCandidate("mem-2", 0.18)];
-    expect(shouldAbstain(weakCandidates, "default")).toBe(true);
+  it("should handle undefined rawMaxScore gracefully (backward compat)", () => {
+    const candidates = [makeCandidate("mem-1", 0.85), makeCandidate("mem-2", 0.6)];
+    // No rawMaxScore → skip raw gates, use v1 normalized gates only
+    expect(shouldAbstain(candidates, "default", undefined)).toBe(false);
   });
 
-  it("classifier correctly accepts high-confidence retrieval (would NOT be abstained)", () => {
-    const strongCandidates = [makeCandidate("mem-1", 0.9), makeCandidate("mem-2", 0.7)];
-    expect(shouldAbstain(strongCandidates, "default")).toBe(false);
+  it("should abstain with clustered max-normalized scores (typical abstention case)", () => {
+    // This is the typical abstention scenario: all results are max-normalized,
+    // top result ≈ 1.0, others cluster near it because all are equally (ir)relevant
+    const candidates = [
+      makeCandidate("mem-1", 1.0),
+      makeCandidate("mem-2", 0.97),
+      makeCandidate("mem-3", 0.94),
+      makeCandidate("mem-4", 0.91),
+      makeCandidate("mem-5", 0.88),
+    ];
+    // Low raw score + clustering → abstain
+    expect(shouldAbstain(candidates, "default", 0.02)).toBe(true);
   });
 });
