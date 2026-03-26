@@ -54,6 +54,10 @@ type LlmMessage = { role: string; content: string };
  */
 function useNativeRouting(config: ExtractionConfig): boolean {
   if (!_pluginLlm) return false;
+  // When the extraction config already has direct credentials (API key + base URL),
+  // skip native gateway routing — the HTTP path works without the gateway's model
+  // registry, avoiding redundant "returned null" fallback round-trips.
+  if (config.apiKey && config.baseUrl) return false;
   if (!config.baseUrl) return true;
   try {
     const hostname = new URL(config.baseUrl).hostname;
