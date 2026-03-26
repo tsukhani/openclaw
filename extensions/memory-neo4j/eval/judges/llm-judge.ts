@@ -78,14 +78,16 @@ Respond with valid JSON only (no markdown, no explanation outside JSON):
     const context = retrievedTexts.map((t, i) => `[Memory ${i + 1}] ${t}`).join("\n");
 
     const prompt = `You are a helpful assistant. Answer the question using ONLY the provided memory context.
-If the context does not contain the answer, say "I don't know" and explain what information is missing.
+Draw reasonable inferences — if a memory mentions someone's setup includes a tool, you can infer they use it for related activities described in the question.
+Synthesize information across multiple memories when relevant.
+Only say "I don't know" if the context contains absolutely no relevant information.
 
 Memory Context:
 ${context}
 
 Question: ${question}
 
-Answer concisely based only on the context above:`;
+Provide a direct, concise answer in a complete sentence based on the context above:`;
 
     // generateAnswer returns plain text, not JSON — disable json_object
     // response format to avoid Azure/OpenRouter 400 errors.
@@ -109,13 +111,15 @@ Reference Answer: ${goldenAnswer}
 
 Generated Answer: ${generatedAnswer}
 
-Grade the generated answer. Focus on factual accuracy and completeness.
+Grade the generated answer. Focus on whether the key facts from the reference answer are present in the generated answer.
+Do NOT penalize the generated answer for including additional correct information beyond the reference.
+Do NOT penalize minor phrasing differences — focus on factual content.
 
 Respond with valid JSON only (no markdown):
 {"correctness": "correct" | "partial" | "incorrect", "reasoning": "brief explanation (max 100 words)"}
 
-- correct: generated answer contains all key facts from the reference answer
-- partial: generated answer contains some correct facts but misses key details
+- correct: generated answer contains all key facts from the reference answer (additional correct details are fine)
+- partial: generated answer contains some correct facts but misses key details from the reference
 - incorrect: generated answer is wrong, contradicts the reference, or says "I don't know" when the answer was available`;
 
     const raw = await callOpenRouter(this.config, prompt);

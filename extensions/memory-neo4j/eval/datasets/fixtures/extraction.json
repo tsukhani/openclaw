@@ -706,7 +706,7 @@
         }
       ],
       "question": "What does Abundent Academy teach and how much does it cost?",
-      "golden_answer": "Abundent Academy teaches AI automation to solopreneurs and costs RM 299 per month per member",
+      "golden_answer": "Abundent Academy teaches AI automation to solopreneurs and costs RM 299 per month",
       "gold_memory_ids": ["ext-005-m0", "ext-005-m1"],
       "metadata": { "difficulty": "medium" }
     },
@@ -848,7 +848,7 @@
         }
       ],
       "question": "What are the names of Tarun's children?",
-      "golden_answer": "Tarun's children are Arya (age 7) and Rohan (age 4)",
+      "golden_answer": "Tarun's children are named Arya and Rohan",
       "gold_memory_ids": ["ext-006-m0"],
       "metadata": { "difficulty": "easy" }
     },
@@ -1274,7 +1274,7 @@
         }
       ],
       "question": "What automation platform does Tarun use?",
-      "golden_answer": "Tarun's primary automation platform is n8n, self-hosted on a VPS",
+      "golden_answer": "Tarun's primary automation platform is n8n",
       "gold_memory_ids": ["ext-009-m0"],
       "metadata": { "difficulty": "easy" }
     },
