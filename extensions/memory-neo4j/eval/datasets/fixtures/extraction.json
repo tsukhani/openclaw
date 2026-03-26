@@ -1142,7 +1142,7 @@
       "memories": [
         {
           "id": "ext-009-m0",
-          "text": "Tarun uses n8n self-hosted on a VPS for all workflow automation, not Zapier",
+          "text": "Tarun's primary automation platform is n8n, self-hosted on a VPS rather than cloud services like Zapier",
           "category": "decision",
           "importance": 0.8
         },
@@ -1274,7 +1274,7 @@
         }
       ],
       "question": "What automation platform does Tarun use?",
-      "golden_answer": "Tarun uses n8n self-hosted on a VPS for all workflow automation",
+      "golden_answer": "Tarun's primary automation platform is n8n, self-hosted on a VPS",
       "gold_memory_ids": ["ext-009-m0"],
       "metadata": { "difficulty": "easy" }
     },
