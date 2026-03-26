@@ -87,7 +87,9 @@ Question: ${question}
 
 Answer concisely based only on the context above:`;
 
-    const answer = await callOpenRouter(this.config, prompt);
+    // generateAnswer returns plain text, not JSON — disable json_object
+    // response format to avoid Azure/OpenRouter 400 errors.
+    const answer = await callOpenRouter(this.config, prompt, undefined, { jsonMode: false });
     return answer ?? "I don't know. Answer generation failed.";
   }
 

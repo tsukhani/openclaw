@@ -496,6 +496,7 @@ async function openAIRequest(
   abortSignal: AbortSignal | undefined,
   stream: boolean,
   parseFn: (response: Response, abortSignal?: AbortSignal) => Promise<string | null>,
+  jsonMode: boolean = true,
 ): Promise<string | null> {
   for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
     try {
@@ -515,7 +516,9 @@ async function openAIRequest(
           max_tokens: config.maxTokens,
           // Only send response_format for providers known to support it;
           // local providers (Ollama, LM Studio) return HTTP 400 on this param.
-          ...(supportsJsonMode(config.baseUrl) ? { response_format: { type: "json_object" } } : {}),
+          ...(jsonMode && supportsJsonMode(config.baseUrl)
+            ? { response_format: { type: "json_object" } }
+            : {}),
           ...(stream ? { stream: true } : {}),
         }),
         signal,
@@ -580,6 +583,7 @@ export async function callOpenRouter(
   config: ExtractionConfig,
   prompt: string | Array<{ role: string; content: string }>,
   abortSignal?: AbortSignal,
+  options?: { jsonMode?: boolean },
 ): Promise<string | null> {
   // H4: Reject empty API key early to avoid silent 401 retries
   if (!config.apiKey) {
@@ -587,11 +591,12 @@ export async function callOpenRouter(
   }
   warnIfInsecureTransport(config.baseUrl);
   const messages = typeof prompt === "string" ? [{ role: "user", content: prompt }] : prompt;
+  const jsonMode = options?.jsonMode !== false; // default true for backward compat
 
   if (isAnthropicNative(config)) {
     return anthropicRequest(config, messages, abortSignal);
   }
-  return openAIRequest(config, messages, abortSignal, false, parseNonStreaming);
+  return openAIRequest(config, messages, abortSignal, false, parseNonStreaming, jsonMode);
 }
 
 /**
