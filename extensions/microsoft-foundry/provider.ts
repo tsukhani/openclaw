@@ -26,7 +26,7 @@ export function buildMicrosoftFoundryProvider(): ProviderPlugin {
     auth: [entraIdAuthMethod, apiKeyAuthMethod],
     onModelSelected: async (ctx) => {
       const providerConfig = ctx.config.models?.providers?.[PROVIDER_ID];
-      if (!providerConfig || !ctx.model.startsWith(`${PROVIDER_ID}/`)) {
+      if (!providerConfig?.models || !ctx.model.startsWith(`${PROVIDER_ID}/`)) {
         return;
       }
       const selectedModelId = ctx.model.slice(`${PROVIDER_ID}/`.length);

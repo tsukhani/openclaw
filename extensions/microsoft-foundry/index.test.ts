@@ -412,7 +412,7 @@ describe("microsoft-foundry plugin", () => {
     });
 
     expect(
-      config.models?.providers?.["microsoft-foundry"]?.models.map((model) => model.id),
+      config.models?.providers?.["microsoft-foundry"]?.models?.map((model) => model.id),
     ).toEqual(["alias-one", "alias-two"]);
     expect(config.models?.providers?.["microsoft-foundry"]?.models[0]?.input).toEqual([
       "text",
@@ -544,7 +544,7 @@ describe("microsoft-foundry plugin", () => {
     });
 
     const provider = result.configPatch?.models?.providers?.["microsoft-foundry"];
-    expect(provider?.models[0]?.compat).toMatchObject({
+    expect(provider?.models?.[0]?.compat).toMatchObject({
       supportsStore: false,
       maxTokensField: "max_completion_tokens",
     });
@@ -597,7 +597,7 @@ describe("microsoft-foundry plugin", () => {
     expect(config.models?.providers?.["microsoft-foundry"]?.baseUrl).toBe(
       "https://example.services.ai.azure.com/openai/v1",
     );
-    expect(config.models?.providers?.["microsoft-foundry"]?.models[0]?.api).toBe(
+    expect(config.models?.providers?.["microsoft-foundry"]?.models?.[0]?.api).toBe(
       "openai-responses",
     );
   });
@@ -714,7 +714,7 @@ describe("microsoft-foundry plugin", () => {
     });
 
     const provider = result.configPatch?.models?.providers?.["microsoft-foundry"];
-    expect(provider?.models.map((model) => model.id)).toEqual([
+    expect(provider?.models?.map((model) => model.id)).toEqual([
       "deployment-gpt5",
       "deployment-gpt4o",
     ]);
