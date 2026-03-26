@@ -394,6 +394,19 @@ export async function runEval(
               const errMsg = err instanceof Error ? err.message : String(err);
               logger.warn(`Entity cleanup failed for agent ${agentId}: ${errMsg}`);
             });
+          // Clean up orphaned Tag nodes (Tags have no agentId — they are
+          // global MERGE-on-name nodes). After Memory DETACH DELETE removes
+          // the TAGGED edges, any Tag with zero remaining relationships is
+          // an eval artifact that should be purged.
+          await db
+            .runQuery(
+              `MATCH (t:Tag) WHERE NOT EXISTS { MATCH (:Memory)-[:TAGGED]->(t) } DETACH DELETE t`,
+              {},
+            )
+            .catch((err) => {
+              const errMsg = err instanceof Error ? err.message : String(err);
+              logger.warn(`Tag cleanup failed for agent ${agentId}: ${errMsg}`);
+            });
         }
       }
     }
@@ -427,6 +440,12 @@ export async function runEval(
         .runQuery("MATCH (e:Entity) WHERE e.agentId STARTS WITH $prefix DETACH DELETE e", {
           prefix: agentPrefix,
         })
+        .catch(() => {});
+      await db
+        .runQuery(
+          `MATCH (t:Tag) WHERE NOT EXISTS { MATCH (:Memory)-[:TAGGED]->(t) } DETACH DELETE t`,
+          {},
+        )
         .catch(() => {});
     }
     process.exitCode = 1;
