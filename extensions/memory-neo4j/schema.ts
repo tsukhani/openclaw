@@ -252,8 +252,11 @@ export interface RerankerConfig {
    * Reranker provider to use for extraction queries (OP-138).
    * - "local": always use the cross-encoder (fast, ~50ms, optimised for factual precision)
    * - "llm-temporal": use the LLM temporal reranker (slow, ~4–9s)
-   * - "auto": use the default provider routing (may hit LLM for temporal-looking queries)
-   * Default: "local" — the cross-encoder is significantly better suited for fact-lookup queries.
+   * - "auto": run cross-encoder first, then apply entity-ownership tiebreaker for possessive
+   *   queries. Penalizes candidates where the relationship is attributed to an intermediary
+   *   entity rather than the query subject (e.g. "X's colleague Y has children" when asking
+   *   about "X's children"). Keeps the common case fast with no LLM call.
+   * Default: "local".
    */
   extractionMode?: "local" | "llm-temporal" | "auto";
 }

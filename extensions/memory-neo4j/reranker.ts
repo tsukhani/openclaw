@@ -85,7 +85,63 @@ export async function rerankCandidates(
       (isExtractionQuery && extractionMode === "local");
     const forceLlm = isExtractionQuery && extractionMode === "llm-temporal";
 
-    if (!forceCrossEncoder && (forceLlm || config.provider === "llm" || temporal)) {
+    // "auto" mode for extraction queries: run cross-encoder first, then check if
+    // the top result has an entity-ownership mismatch with the query. If "X's Y" is asked
+    // but the top result attributes Y to a different entity, escalate to LLM reranker.
+    // Score-gap heuristics don't work (cross-encoder saturates at 0.999+ for personal data).
+    // Blanket possessive→LLM routing hurts MRR (LLM is inconsistent on most queries).
+    const autoEscalation = isExtractionQuery && extractionMode === "auto";
+
+    if (autoEscalation) {
+      const { localRerank } = await import("./reranker-local.js");
+      const documents = candidates.map((c) => c.text);
+      rerankResults = await localRerank(query, documents, model, signal);
+
+      // After cross-encoder, apply entity-ownership tiebreaker on possessive queries.
+      // When the query is "X's Y", boost candidates where X directly possesses Y
+      // (e.g. "X's wife...children") over candidates where X is mentioned but Y belongs
+      // to a different entity (e.g. "X's colleague Z has children").
+      // This is a lightweight post-rerank adjustment — no LLM call needed.
+      const possMatch = query.match(/(\w+)'s\s+(\w+)/i);
+      if (possMatch && rerankResults.length >= 2) {
+        const querySubject = possMatch[1].toLowerCase();
+        const sorted = [...rerankResults].sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+        // Only apply when top scores are near-identical (cross-encoder can't disambiguate)
+        if (sorted[0].relevanceScore - sorted[1].relevanceScore < 0.005) {
+          // Score each candidate on how directly the query subject owns the content.
+          // "X's wife...children" = direct (X is the possessive subject)
+          // "X's colleague Y has children" = indirect (Y is the actual subject)
+          const boosted = sorted.map((r) => {
+            const text = candidates[r.index].text.toLowerCase();
+            const subjectPos = text.indexOf(`${querySubject}'s`);
+            if (subjectPos < 0) return r;
+
+            // Check for an intermediary named entity between subject and the rest.
+            // Pattern: "subject's <role> <Name> <has/verb> <relationship>" indicates
+            // the relationship belongs to Name, not subject.
+            const afterPoss = candidates[r.index].text.slice(
+              subjectPos + querySubject.length + 2,
+              subjectPos + querySubject.length + 60,
+            );
+            const hasIntermediary =
+              /^\s*\w+\s+[A-Z][a-z]{2,}\s+(?:has|have|had|is|was|with)\b/.test(afterPoss);
+
+            // Penalize indirect attribution
+            if (hasIntermediary) {
+              return { ...r, relevanceScore: r.relevanceScore * 0.99 };
+            }
+            return r;
+          });
+
+          boosted.sort((a, b) => b.relevanceScore - a.relevanceScore);
+          rerankResults = boosted;
+          logger?.info(
+            `memory-neo4j: [reranker] auto — entity-ownership tiebreaker applied for possessive query`,
+          );
+        }
+      }
+    } else if (!forceCrossEncoder && (forceLlm || config.provider === "llm" || temporal)) {
       const { llmRerank } = await import("./reranker-llm.js");
       const candidatesWithDates = candidates.map((c) => ({
         text: c.text,
@@ -134,9 +190,9 @@ export async function rerankCandidates(
     metricsCollector.histogram("reranker.latency", latencyMs);
 
     // M3: Derive providerUsed from the same branching logic that selected the actual provider.
-    // The LLM path fires when !forceCrossEncoder && (forceLlm || provider==="llm" || temporal).
-    const providerUsed =
-      forceCrossEncoder || (!forceLlm && config.provider !== "llm" && !temporal)
+    const providerUsed = autoEscalation
+      ? "auto"
+      : forceCrossEncoder || (!forceLlm && config.provider !== "llm" && !temporal)
         ? "local"
         : "llm-temporal";
     logger?.info(

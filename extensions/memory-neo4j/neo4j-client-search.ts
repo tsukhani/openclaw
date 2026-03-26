@@ -610,7 +610,7 @@ export async function structuredGraphSearch(
           row.createdAt AS entityCreatedAt, max(row.score) AS entityScore
 
      MATCH (e:Entity) WHERE elementId(e) = entityEid
-     OPTIONAL MATCH (m:Memory)-[:EXTRACTED_FROM]->(e)
+     OPTIONAL MATCH (e)-[:EXTRACTED_FROM]->(m:Memory)
        WHERE true ${memExpiredFilter} ${memAgentFilter} ${memQuarantineFilter}
 
      // Collect resolved Memory nodes per entity. When none exist (legacy

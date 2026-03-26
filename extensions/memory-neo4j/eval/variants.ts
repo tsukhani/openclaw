@@ -72,6 +72,16 @@ export const EVAL_VARIANTS: Record<string, Partial<SearchConfig>> = {
       topJ: 5,
     },
   },
+  /** Auto reranker: cross-encoder + entity-ownership tiebreaker for possessive queries. */
+  "with-reranker-auto": {
+    reranker: {
+      enabled: true,
+      provider: "local" as const,
+      topK: 10,
+      topJ: 5,
+      extractionMode: "auto" as const,
+    },
+  },
 };
 
 /**
