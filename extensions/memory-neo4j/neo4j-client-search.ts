@@ -601,37 +601,65 @@ export async function structuredGraphSearch(
        score: hopScore
      }) AS hopResults
 
-     // OP-179: Combine seed + hop Entity results, then resolve to source
-     // Memories via EXTRACTED_FROM provenance edges. Entities without the
-     // edge (legacy / not yet linked) fall back to synthesized entity text.
-     UNWIND (seedResults + hopResults) AS row
-     WITH row WHERE row.id IS NOT NULL
-     WITH row.id AS entityEid, row.text AS entityText, row.category AS entityCategory,
-          row.createdAt AS entityCreatedAt, max(row.score) AS entityScore
+     // OP-179 (revised): Resolve hop neighbor entities to source Memories via
+     // EXTRACTED_FROM, so the graph score reflects relationship-path traversal.
+     // Seed entities return as synthesized text only — they connect to every memory
+     // that mentions them, which drowns out the hop-based structural signal.
+     // When no hop results exist, seed entities still provide a fallback result.
 
+     // Step 1: Resolve hop entities to memories
+     UNWIND (CASE WHEN size(hopResults) > 0 THEN hopResults ELSE [] END) AS hopRow
+     WITH seedResults, hopResults, hopRow WHERE hopRow.id IS NOT NULL
+     WITH seedResults, hopResults,
+          hopRow.id AS entityEid, hopRow.text AS entityText, hopRow.category AS entityCategory,
+          hopRow.createdAt AS entityCreatedAt, hopRow.score AS entityScore
      MATCH (e:Entity) WHERE elementId(e) = entityEid
      OPTIONAL MATCH (e)-[:EXTRACTED_FROM]->(m:Memory)
        WHERE true ${memExpiredFilter} ${memAgentFilter} ${memQuarantineFilter}
-
-     // Collect resolved Memory nodes per entity. When none exist (legacy
-     // entities without provenance links), fall back to synthesized text.
-     WITH entityEid, entityText, entityCategory, entityCreatedAt, entityScore,
+     WITH seedResults, hopResults, entityEid, entityText, entityCategory, entityCreatedAt, entityScore,
           collect(m) AS memories
-
-     WITH entityEid, entityText, entityCategory, entityCreatedAt, entityScore,
+     WITH seedResults, hopResults, entityEid, entityText, entityCategory, entityCreatedAt, entityScore,
           CASE WHEN size(memories) > 0 THEN memories ELSE [null] END AS mems
      UNWIND mems AS mem
+     WITH seedResults, hopResults, collect({
+       id: coalesce(mem.id, entityEid),
+       text: coalesce(mem.text, entityText),
+       category: coalesce(mem.category, entityCategory),
+       createdAt: coalesce(mem.createdAt, entityCreatedAt),
+       graphScore: entityScore,
+       validFrom: mem.validFrom,
+       importance: coalesce(mem.importance, 0.5),
+       trustScore: coalesce(mem.trustScore, 1.0),
+       memoryEmbedding: mem.embedding
+     }) AS hopMemoryRows
+
+     // Step 2: Seed entities as synthesized text fallback (no EXTRACTED_FROM resolution)
+     UNWIND seedResults AS seedRow
+     WITH hopResults, hopMemoryRows, collect({
+       id: seedRow.id,
+       text: seedRow.text,
+       category: seedRow.category,
+       createdAt: seedRow.createdAt,
+       graphScore: seedRow.score,
+       validFrom: null,
+       importance: 0.5,
+       trustScore: 1.0,
+       memoryEmbedding: null
+     }) AS seedMemoryRows
+
+     // Step 3: Combine — prefer hop results, use seed fallback when no hops found
+     UNWIND (CASE WHEN size(hopMemoryRows) > 0 THEN hopMemoryRows ELSE seedMemoryRows END) AS row
 
      RETURN
-       coalesce(mem.id, entityEid) AS id,
-       coalesce(mem.text, entityText) AS text,
-       coalesce(mem.category, entityCategory) AS category,
-       coalesce(mem.createdAt, entityCreatedAt) AS createdAt,
-       max(entityScore) AS graphScore,
-       mem.validFrom AS validFrom,
-       coalesce(mem.importance, 0.5) AS importance,
-       coalesce(mem.trustScore, 1.0) AS trustScore,
-       mem.embedding AS memoryEmbedding`,
+       row.id AS id,
+       row.text AS text,
+       row.category AS category,
+       row.createdAt AS createdAt,
+       row.graphScore AS graphScore,
+       row.validFrom AS validFrom,
+       row.importance AS importance,
+       row.trustScore AS trustScore,
+       row.memoryEmbedding AS memoryEmbedding`,
         {
           seedElementIds,
           seedScoreMap: Object.fromEntries(seedScoreMap),

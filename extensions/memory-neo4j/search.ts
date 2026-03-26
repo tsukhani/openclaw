@@ -186,8 +186,11 @@ export function getAdaptiveWeights(
       // Why/cause queries: graph helps with causal chains but must not override primary signals
       return [0.9, 0.7, graphBase * 0.5, 0.1];
     case "extraction":
-      // Factual precision: boost BM25 for keyword specificity, no freshness (OP-138)
-      return [1.0, 1.3, graphBase * 0.2, 0.0];
+      // Factual precision: boost BM25 for keyword specificity, no freshness (OP-138).
+      // Graph weight raised from 0.2 to 0.3 — hop-only EXTRACTED_FROM resolution
+      // produces discriminative entity-relationship scores that help disambiguate
+      // possessive queries (e.g. "X's children" vs "X's colleague's children").
+      return [1.0, 1.3, graphBase * 0.3, 0.0];
     case "default":
     default:
       return [1.0, 1.0, graphBase * 0.3, 0.2];
