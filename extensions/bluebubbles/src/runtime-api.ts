@@ -35,15 +35,17 @@ export {
   DM_GROUP_ACCESS_REASON,
   readStoreAllowFromForDmPolicy,
   resolveDmGroupAccessWithLists,
-} from "openclaw/plugin-sdk/channel-policy";
-export { readBooleanParam } from "openclaw/plugin-sdk/boolean-param";
-export { mapAllowFromEntries } from "openclaw/plugin-sdk/channel-config-helpers";
-export { createChannelPairingController } from "openclaw/plugin-sdk/channel-pairing";
-export { createChannelReplyPipeline } from "openclaw/plugin-sdk/channel-reply-pipeline";
-export { resolveRequestUrl } from "openclaw/plugin-sdk/request-url";
-export { buildProbeChannelStatusSummary } from "openclaw/plugin-sdk/channel-status";
-export { stripMarkdown } from "openclaw/plugin-sdk/text-runtime";
-export { extractToolSend } from "openclaw/plugin-sdk/tool-send";
+} from "openclaw/plugin-sdk/bluebubbles";
+export { readBooleanParam } from "openclaw/plugin-sdk/bluebubbles";
+export { mapAllowFromEntries } from "openclaw/plugin-sdk/bluebubbles";
+export { createChannelPairingController } from "openclaw/plugin-sdk/bluebubbles";
+export { createChannelReplyPipeline } from "openclaw/plugin-sdk/bluebubbles";
+export { resolveRequestUrl } from "openclaw/plugin-sdk/bluebubbles";
+export { buildProbeChannelStatusSummary } from "openclaw/plugin-sdk/bluebubbles";
+export { buildChannelConfigSchema } from "openclaw/plugin-sdk/channel-config-schema";
+export { buildComputedAccountStatusSnapshot } from "openclaw/plugin-sdk/status-helpers";
+export { stripMarkdown } from "openclaw/plugin-sdk/bluebubbles";
+export { extractToolSend } from "openclaw/plugin-sdk/bluebubbles";
 export {
   WEBHOOK_RATE_LIMIT_DEFAULTS,
   createFixedWindowRateLimiter,
