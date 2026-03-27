@@ -5,6 +5,7 @@
  * and context completeness rates.
  */
 
+import { bar } from "../format-utils.js";
 import type { EvalRunResult } from "../types.js";
 
 /**
@@ -56,14 +57,14 @@ export function reportConsole(result: EvalRunResult): void {
     for (const m of abilityMetrics) {
       const row =
         `│  ${m.ability.padEnd(14)}` +
-        ` ${pctShort(m.avgPrecisionAtK)}` +
-        ` ${pctShort(m.avgRecallAtK)}` +
-        ` ${pctShort(m.avgF1AtK)}` +
-        ` ${pctShort(m.avgMRR)}` +
-        ` ${pctShort(m.avgNDCG)}` +
-        `     ${pctShort(m.hitRate)}` +
-        ` ${pctShort(m.avgPrecisionAtRetrieved)}` +
-        ` ${pctShort(m.avgF1AtRetrieved)}` +
+        ` ${pct(m.avgPrecisionAtK)}` +
+        ` ${pct(m.avgRecallAtK)}` +
+        ` ${pct(m.avgF1AtK)}` +
+        ` ${pct(m.avgMRR)}` +
+        ` ${pct(m.avgNDCG)}` +
+        `     ${pct(m.hitRate)}` +
+        ` ${pct(m.avgPrecisionAtRetrieved)}` +
+        ` ${pct(m.avgF1AtRetrieved)}` +
         `   ${String(m.caseCount).padStart(4)}`;
       console.log(row);
     }
@@ -174,19 +175,7 @@ export function reportConsole(result: EvalRunResult): void {
 
 // ── Formatting helpers ──────────────────────────────────────────────────────
 
-const BAR_WIDTH = 16;
-
-function bar(ratio: number): string {
-  const clamped = Math.min(1, Math.max(0, ratio));
-  const filled = Math.round(clamped * BAR_WIDTH);
-  return "█".repeat(filled) + "░".repeat(BAR_WIDTH - filled);
-}
-
 function pct(ratio: number): string {
-  return `${(ratio * 100).toFixed(1)}%`.padStart(6);
-}
-
-function pctShort(ratio: number): string {
   return `${(ratio * 100).toFixed(1)}%`.padStart(6);
 }
 

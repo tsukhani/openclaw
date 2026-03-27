@@ -505,29 +505,3 @@ export async function fetchMemoriesForCredentialScan(
     createdAt: r.get("createdAt") as string,
   }));
 }
-
-/**
- * @deprecated Use fetchMemoriesForCredentialScan with pagination instead.
- * Fetch memories (id + text) for a given agent, or all agents.
- * H5: Safety LIMIT of 10000 to prevent OOM on large graphs.
- */
-const FETCH_ALL_SAFETY_LIMIT = 10_000;
-
-export async function fetchAllMemoriesForScan(
-  session: Session,
-  agentId?: string,
-): Promise<Array<{ id: string; text: string }>> {
-  const result = await session.executeRead((tx) =>
-    tx.run(
-      `MATCH (m:Memory)
-     WHERE ($agentId IS NULL OR m.agentId = $agentId)
-     RETURN m.id AS id, m.text AS text
-     LIMIT $limit`,
-      { agentId: agentId ?? null, limit: neo4j.int(FETCH_ALL_SAFETY_LIMIT) },
-    ),
-  );
-  return result.records.map((r) => ({
-    id: r.get("id") as string,
-    text: r.get("text") as string,
-  }));
-}

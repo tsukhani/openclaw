@@ -97,21 +97,17 @@ export async function callLlm(
       // Null means the call failed silently (model not found, auth error, etc.) —
       // fall through to HTTP so the direct-API path gets a chance.
       if (nativeResult !== null) return nativeResult;
-      if (typeof globalThis.console?.debug === "function") {
-        globalThis.console.debug(
-          "memory-neo4j: native LLM call returned null, falling back to HTTP",
-        );
-      }
+      globalThis.console?.debug?.(
+        "memory-neo4j: native LLM call returned null, falling back to HTTP",
+      );
     } catch (err) {
       // H3: Re-throw AbortError — deliberate cancellation should not fall through to HTTP
       if (err instanceof Error && err.name === "AbortError") throw err;
       // Log and fall through to direct HTTP as fallback
       const msg = err instanceof Error ? err.message : String(err);
-      if (typeof globalThis.console?.debug === "function") {
-        globalThis.console.debug(
-          `memory-neo4j: native LLM call failed, falling back to HTTP: ${msg}`,
-        );
-      }
+      globalThis.console?.debug?.(
+        `memory-neo4j: native LLM call failed, falling back to HTTP: ${msg}`,
+      );
     }
   }
 
@@ -139,21 +135,17 @@ export async function callLlmStream(
         { abortSignal },
       );
       if (nativeResult !== null) return nativeResult;
-      if (typeof globalThis.console?.debug === "function") {
-        globalThis.console.debug(
-          "memory-neo4j: native LLM call returned null, falling back to HTTP",
-        );
-      }
+      globalThis.console?.debug?.(
+        "memory-neo4j: native LLM call returned null, falling back to HTTP",
+      );
     } catch (err) {
       // H3: Re-throw AbortError — deliberate cancellation should not fall through to HTTP
       if (err instanceof Error && err.name === "AbortError") throw err;
       // Log and fall through to direct HTTP as fallback
       const msg = err instanceof Error ? err.message : String(err);
-      if (typeof globalThis.console?.debug === "function") {
-        globalThis.console.debug(
-          `memory-neo4j: native LLM call failed, falling back to HTTP: ${msg}`,
-        );
-      }
+      globalThis.console?.debug?.(
+        `memory-neo4j: native LLM call failed, falling back to HTTP: ${msg}`,
+      );
     }
   }
 
@@ -260,11 +252,9 @@ function warnIfInsecureTransport(baseUrl: string): void {
     if (host === "localhost" || host === "127.0.0.1" || host === "::1") return;
     if (_httpsWarned.has(baseUrl)) return;
     _httpsWarned.add(baseUrl);
-    if (typeof globalThis.console?.warn === "function") {
-      globalThis.console.warn(
-        `memory-neo4j: LLM baseUrl "${baseUrl}" uses plain HTTP — API key will be sent unencrypted. Use HTTPS for non-localhost endpoints.`,
-      );
-    }
+    globalThis.console?.warn?.(
+      `memory-neo4j: LLM baseUrl "${baseUrl}" uses plain HTTP — API key will be sent unencrypted. Use HTTPS for non-localhost endpoints.`,
+    );
   } catch {
     // Malformed URL — other code will handle this
   }

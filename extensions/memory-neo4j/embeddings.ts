@@ -72,11 +72,8 @@ class EmbeddingCache {
     if (this.map.has(key)) {
       this.map.delete(key);
     } else if (this.map.size >= this.maxSize) {
-      // Evict oldest (first) entry
-      const oldest = this.map.keys().next().value;
-      if (oldest !== undefined) {
-        this.map.delete(oldest);
-      }
+      // Evict oldest (first) entry — map guaranteed non-empty by size check
+      this.map.delete(this.map.keys().next().value!);
     }
     this.map.set(key, embedding);
   }

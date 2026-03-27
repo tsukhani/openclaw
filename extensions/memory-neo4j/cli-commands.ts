@@ -10,6 +10,7 @@ import { passesAttentionGate } from "./attention-gate.js";
 import type { CliDeps } from "./cli.js";
 import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
+import { bar } from "./eval/format-utils.js";
 import { reportAbComparison, runAbComparison, runEval } from "./eval/index.js";
 import type { EvalOutputFormat, MemoryAbility } from "./eval/types.js";
 import { EVAL_VARIANTS } from "./eval/variants.js";
@@ -28,11 +29,6 @@ function iterMax(arr: number[]): number {
 }
 
 /** Render a bar chart segment. Shared by all CLI command handlers. */
-function bar(ratio: number, width: number = 20): string {
-  const clamped = Math.min(1, Math.max(0, ratio));
-  const filled = Math.round(clamped * width);
-  return "\u2588".repeat(filled) + "\u2591".repeat(width - filled);
-}
 
 // ── list ────────────────────────────────────────────────────────────────────
 

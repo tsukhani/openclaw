@@ -1129,13 +1129,6 @@ export class Neo4jMemoryClient {
       Sleep.fetchMemoriesForCredentialScan(s, cursorTs, cursorId, limit, agentId),
     );
   }
-  /** @deprecated Use fetchMemoriesForCredentialScan with pagination instead. */
-  async fetchAllMemoriesForScan(agentId?: string): Promise<Array<{ id: string; text: string }>> {
-    this.logger.warn(
-      "memory-neo4j: fetchAllMemoriesForScan is deprecated — use fetchMemoriesForCredentialScan with pagination instead",
-    );
-    return this.withSession((s) => Sleep.fetchAllMemoriesForScan(s, agentId));
-  }
   /** Fetch non-core memories older than minAgeDays for temporal staleness checking. Only returns memories with date-like patterns. */
   async fetchMemoriesForTemporalCheck(
     minAgeDays: number = 3,

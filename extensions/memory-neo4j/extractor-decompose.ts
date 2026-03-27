@@ -64,11 +64,9 @@ export async function decomposeIntoAtomicFacts(
       .map((f) => f.trim())
       .filter((f) => f.length > 0);
     if (facts.length > MAX_DECOMPOSED_FACTS) {
-      if (typeof globalThis.console?.debug === "function") {
-        globalThis.console.debug(
-          `memory-neo4j: decomposition produced ${facts.length} facts, capping at ${MAX_DECOMPOSED_FACTS}`,
-        );
-      }
+      globalThis.console?.debug?.(
+        `memory-neo4j: decomposition produced ${facts.length} facts, capping at ${MAX_DECOMPOSED_FACTS}`,
+      );
       return facts.slice(0, MAX_DECOMPOSED_FACTS);
     }
     return facts.length > 0 ? facts : null;

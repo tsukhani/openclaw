@@ -41,13 +41,10 @@ const INTERNAL_ENTITY_FIELDS = new Set([
  */
 function truncateEntityName(name: string): string {
   if (name.length <= MAX_ENTITY_NAME_LENGTH) return name;
-  // Use debug-level console output — callers don't inject a logger here,
-  // and truncation is a normal occurrence for LLM-extracted entity names
-  if (typeof globalThis.console?.debug === "function") {
-    globalThis.console.debug(
-      `memory-neo4j: truncated entity name from ${name.length} to ${MAX_ENTITY_NAME_LENGTH} chars`,
-    );
-  }
+  // Debug-level — callers don't inject a logger here, and truncation is normal for LLM output
+  globalThis.console?.debug?.(
+    `memory-neo4j: truncated entity name from ${name.length} to ${MAX_ENTITY_NAME_LENGTH} chars`,
+  );
   // M12: Use Array.from for safe truncation that doesn't split multi-byte characters
   // (e.g. emoji or CJK characters represented as surrogate pairs in UTF-16)
   const chars = Array.from(name);
