@@ -490,6 +490,10 @@
       "types": "./dist/plugin-sdk/acp-binding-resolve-runtime.d.ts",
       "default": "./dist/plugin-sdk/acp-binding-resolve-runtime.js"
     },
+    "./plugin-sdk/memory-neo4j": {
+      "types": "./dist/plugin-sdk/memory-neo4j.d.ts",
+      "default": "./dist/plugin-sdk/memory-neo4j.js"
+    },
     "./plugin-sdk/lazy-runtime": {
       "types": "./dist/plugin-sdk/lazy-runtime.d.ts",
       "default": "./dist/plugin-sdk/lazy-runtime.js"
