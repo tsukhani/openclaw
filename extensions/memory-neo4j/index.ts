@@ -119,6 +119,50 @@ const memoryNeo4jPlugin = {
     registerMemoryTools(api, db, embeddings, cfg, extractionConfig, api.logger, metrics);
 
     // ========================================================================
+    // Memory Runtime (doctor probe + status visibility)
+    // ========================================================================
+
+    api.registerMemoryRuntime({
+      async getMemorySearchManager({ purpose }) {
+        const manager = {
+          status() {
+            return {
+              backend: "builtin" as const,
+              provider: cfg.embedding.provider,
+              model: cfg.embedding.model,
+              custom: { neo4jUri: cfg.neo4j.uri },
+            };
+          },
+          async probeEmbeddingAvailability() {
+            try {
+              await embeddings.embed("probe");
+              return { ok: true };
+            } catch (err) {
+              return { ok: false, error: String(err) };
+            }
+          },
+          async probeVectorAvailability() {
+            return db.verifyConnection();
+          },
+          async close() {
+            // Don't close shared db/embeddings — owned by the service lifecycle
+          },
+        };
+        // For status probes, verify Neo4j is reachable first
+        if (purpose === "status") {
+          const connected = await db.verifyConnection();
+          if (!connected) {
+            return { manager: null, error: "Neo4j connection failed" };
+          }
+        }
+        return { manager };
+      },
+      resolveMemoryBackendConfig() {
+        return { backend: "builtin" as const };
+      },
+    });
+
+    // ========================================================================
     // CLI Commands (delegated to cli.ts)
     // ========================================================================
 
