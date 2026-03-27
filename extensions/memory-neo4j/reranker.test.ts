@@ -155,7 +155,8 @@ describe("rerankCandidates", () => {
 
       // rrfScore should be the original score from before reranking
       expect(result[0].rrfScore).toBeCloseTo(CANDIDATES[0].score); // a had score 0.9
-      expect(result[0].score).toBeCloseTo(0.88); // new score = rerankScore
+      // score = alpha * rrfScore + (1-alpha) * rerankScore = 0.4 * 0.9 + 0.6 * 0.88 = 0.888
+      expect(result[0].score).toBeCloseTo(0.888, 2);
     });
 
     it("applies sigmoid correctly: logit 2.0 → score ~0.88", () => {

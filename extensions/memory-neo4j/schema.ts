@@ -252,13 +252,17 @@ export interface RerankerConfig {
    * Reranker provider to use for extraction queries (OP-138).
    * - "local": always use the cross-encoder (fast, ~50ms, optimised for factual precision)
    * - "llm-temporal": use the LLM temporal reranker (slow, ~4–9s)
-   * - "auto": run cross-encoder first, then apply entity-ownership tiebreaker for possessive
-   *   queries. Penalizes candidates where the relationship is attributed to an intermediary
-   *   entity rather than the query subject (e.g. "X's colleague Y has children" when asking
-   *   about "X's children"). Keeps the common case fast with no LLM call.
+   * - "auto": same as "local" (kept for backward compatibility)
    * Default: "local".
    */
   extractionMode?: "local" | "llm-temporal" | "auto";
+  /**
+   * Weight for RRF score in the interpolated final score (0–1).
+   * `finalScore = alpha * rrfScore + (1 - alpha) * rerankScore`
+   * Higher values preserve more of the multi-signal RRF ranking;
+   * lower values trust the reranker more. Default: 0.4.
+   */
+  rrfWeight?: number;
 }
 
 // ============================================================================

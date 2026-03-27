@@ -62,24 +62,15 @@ export const EVAL_VARIANTS: Record<string, Partial<SearchConfig>> = {
   "no-temporal": { temporalRecencyEnabled: false },
   /** Double the recency boost weight. */
   "high-temporal": { temporalRecencyBoost: 2.0 },
-  /** Local ONNX cross-encoder reranker enabled (OP-130). Fetches topK=10, returns topJ=5.
-   *  Abstention handled by unified classifier (OP-137) in search.ts after reranking. */
+  /** Local ONNX cross-encoder reranker with weighted interpolation (OP-130).
+   *  Fetches topK=10, returns topJ=5. Uses default rrfWeight=0.4 to blend
+   *  RRF composite with cross-encoder scores. */
   "with-reranker-local": {
     reranker: {
       enabled: true,
       provider: "local" as const,
       topK: 10,
       topJ: 5,
-    },
-  },
-  /** Auto reranker: cross-encoder + entity-ownership tiebreaker for possessive queries. */
-  "with-reranker-auto": {
-    reranker: {
-      enabled: true,
-      provider: "local" as const,
-      topK: 10,
-      topJ: 5,
-      extractionMode: "auto" as const,
     },
   },
 };

@@ -438,6 +438,7 @@ const SUB_SCHEMAS: Record<string, ReturnType<typeof allowedKeys>> = {
     "topJ",
     "minScore",
     "extractionMode",
+    "rrfWeight",
   ),
   cache: allowedKeys("enabled", "ttlMs", "maxSize"),
   trustScoring: allowedKeys("enabled", "sourceDefaults"),
@@ -829,6 +830,12 @@ export const memoryNeo4jConfigSchema = {
             ? rerankerRaw.minScore
             : undefined,
         extractionMode: em === "llm-temporal" ? "llm-temporal" : em === "auto" ? "auto" : "local",
+        rrfWeight:
+          typeof rerankerRaw.rrfWeight === "number" &&
+          rerankerRaw.rrfWeight >= 0 &&
+          rerankerRaw.rrfWeight <= 1
+            ? rerankerRaw.rrfWeight
+            : undefined,
       };
     }
 

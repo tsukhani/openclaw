@@ -381,7 +381,8 @@ describe("rerankCandidates: extraction query routing (OP-138)", () => {
     );
 
     expect(result[0].rerankScore).toBeCloseTo(0.92);
-    expect(result[0].score).toBeCloseTo(0.92);
+    // score = alpha * rrfScore + (1-alpha) * rerankScore = 0.4 * 0.9 + 0.6 * 0.92 = 0.912
+    expect(result[0].score).toBeCloseTo(0.912, 2);
     expect(result[0].rrfScore).toBeCloseTo(CANDIDATES[0].score);
   });
 });
