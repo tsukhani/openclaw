@@ -258,6 +258,7 @@ export async function probeGateway(opts: {
     // On loopback, identify as the gateway's own backend client so the handshake
     // recognises it as a trusted local process and preserves operator.read scope
     // without requiring a paired device identity (OP-143).
+    const disableDeviceIdentity = !deviceIdentity;
     const clientName = disableDeviceIdentity
       ? GATEWAY_CLIENT_NAMES.GATEWAY_CLIENT
       : GATEWAY_CLIENT_NAMES.CLI;
