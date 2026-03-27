@@ -9,7 +9,7 @@ import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { sanitizeForLog } from "../terminal/ansi.js";
 import { hasAnyAuthProfileStoreSource } from "./auth-profiles/source-check.js";
 import type { AuthProfileStore } from "./auth-profiles/types.js";
-import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "./defaults.js";
+import { resolveDefaultsFromConfig } from "./defaults.js";
 import {
   FailoverError,
   coerceToFailoverError,
@@ -485,15 +485,16 @@ function resolveFallbackCandidates(params: {
   /** Optional explicit fallbacks list; when provided (even empty), replaces agents.defaults.model.fallbacks. */
   fallbacksOverride?: string[];
 }): ModelCandidate[] {
+  const cfgDefaults = resolveDefaultsFromConfig(params.cfg?.agents);
   const primary = params.cfg
     ? resolveConfiguredModelRef({
         cfg: params.cfg,
-        defaultProvider: DEFAULT_PROVIDER,
-        defaultModel: DEFAULT_MODEL,
+        defaultProvider: cfgDefaults.provider,
+        defaultModel: cfgDefaults.model,
       })
     : null;
-  const defaultProvider = primary?.provider ?? DEFAULT_PROVIDER;
-  const defaultModel = primary?.model ?? DEFAULT_MODEL;
+  const defaultProvider = primary?.provider ?? cfgDefaults.provider;
+  const defaultModel = primary?.model ?? cfgDefaults.model;
   const providerRaw = normalizeOptionalString(params.provider) || defaultProvider;
   const modelRaw = normalizeOptionalString(params.model) || defaultModel;
   const normalizedPrimary = normalizeModelRef(providerRaw, modelRaw);

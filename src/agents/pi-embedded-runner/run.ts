@@ -36,7 +36,7 @@ import {
   resolveSessionKeyForRequest,
   resolveStoredSessionKeyForSessionId,
 } from "../command/session.js";
-import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../defaults.js";
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, resolveDefaultsFromConfig } from "../defaults.js";
 import { isStrictAgenticExecutionContractActive } from "../execution-contract.js";
 import {
   coerceToFailoverError,
@@ -400,8 +400,9 @@ export async function runEmbeddedPiAgent(
       });
       startupStages.mark("runtime-plugins");
 
-      let provider = (params.provider ?? DEFAULT_PROVIDER).trim() || DEFAULT_PROVIDER;
-      let modelId = (params.model ?? DEFAULT_MODEL).trim() || DEFAULT_MODEL;
+      const configDefaults = resolveDefaultsFromConfig(params.config?.agents);
+      let provider = (params.provider ?? configDefaults.provider).trim() || configDefaults.provider;
+      let modelId = (params.model ?? configDefaults.model).trim() || configDefaults.model;
       const agentDir = params.agentDir ?? resolveOpenClawAgentDir();
       const normalizedSessionKey = params.sessionKey?.trim();
       const fallbackConfigured = hasConfiguredModelFallbacks({

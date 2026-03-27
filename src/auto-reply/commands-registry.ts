@@ -1,4 +1,4 @@
-import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../agents/defaults.js";
+import { resolveDefaultsFromConfig } from "../agents/defaults.js";
 import {
   buildConfiguredModelCatalog,
   resolveConfiguredModelRef,
@@ -242,14 +242,15 @@ function resolveDefaultCommandContext(cfg?: OpenClawConfig): {
   provider: string;
   model: string;
 } {
+  const configDefaults = resolveDefaultsFromConfig(cfg?.agents);
   const resolved = resolveConfiguredModelRef({
     cfg: cfg ?? ({} as OpenClawConfig),
-    defaultProvider: DEFAULT_PROVIDER,
-    defaultModel: DEFAULT_MODEL,
+    defaultProvider: configDefaults.provider,
+    defaultModel: configDefaults.model,
   });
   return {
-    provider: resolved.provider ?? DEFAULT_PROVIDER,
-    model: resolved.model ?? DEFAULT_MODEL,
+    provider: resolved.provider ?? configDefaults.provider,
+    model: resolved.model ?? configDefaults.model,
   };
 }
 
