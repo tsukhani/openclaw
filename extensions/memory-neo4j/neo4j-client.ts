@@ -160,7 +160,29 @@ export class Neo4jMemoryClient {
     return this.driver!.session();
   }
   async verifyConnection(): Promise<boolean> {
-    if (!this.driver) return false;
+    // If the driver is already initialized, use it directly.
+    // Otherwise, create a temporary driver for a lightweight reachability check
+    // to avoid the heavyweight ensureInitialized() (indexes + migrations).
+    if (!this.driver) {
+      let tempDriver: import("neo4j-driver").Driver | null = null;
+      try {
+        tempDriver = neo4j.driver(this.uri, neo4j.auth.basic(this.username, this.password), {
+          maxConnectionPoolSize: 1,
+          connectionAcquisitionTimeout: 5000,
+        });
+        const session = tempDriver.session();
+        try {
+          await session.run("RETURN 1");
+          return true;
+        } finally {
+          await session.close();
+        }
+      } catch {
+        return false;
+      } finally {
+        await tempDriver?.close();
+      }
+    }
     const session = this.driver.session();
     try {
       await session.run("RETURN 1");
