@@ -159,6 +159,55 @@ export class Neo4jMemoryClient {
     await this.ensureInitialized();
     return this.driver!.session();
   }
+  /**
+   * Lightweight status probe that verifies connectivity and fetches summary counts
+   * without triggering the full ensureInitialized() (indexes + migrations).
+   * Returns null if the connection fails.
+   */
+  async probeStatusCounts(): Promise<{
+    memories: number;
+    entities: number;
+  } | null> {
+    const runProbe = async (
+      session: import("neo4j-driver").Session,
+    ): Promise<{ memories: number; entities: number }> => {
+      const result = await session.run(
+        "OPTIONAL MATCH (m:Memory) WITH count(m) AS memories OPTIONAL MATCH (e:Entity) RETURN memories, count(e) AS entities",
+      );
+      const row = result.records[0];
+      return {
+        memories: row?.get("memories") ?? 0,
+        entities: row?.get("entities") ?? 0,
+      };
+    };
+    if (this.driver) {
+      const session = this.driver.session();
+      try {
+        return await runProbe(session);
+      } catch {
+        return null;
+      } finally {
+        await session.close();
+      }
+    }
+    let tempDriver: import("neo4j-driver").Driver | null = null;
+    try {
+      tempDriver = neo4j.driver(this.uri, neo4j.auth.basic(this.username, this.password), {
+        maxConnectionPoolSize: 1,
+        connectionAcquisitionTimeout: 5000,
+      });
+      const session = tempDriver.session();
+      try {
+        return await runProbe(session);
+      } finally {
+        await session.close();
+      }
+    } catch {
+      return null;
+    } finally {
+      await tempDriver?.close();
+    }
+  }
   async verifyConnection(): Promise<boolean> {
     // If the driver is already initialized, use it directly.
     // Otherwise, create a temporary driver for a lightweight reachability check

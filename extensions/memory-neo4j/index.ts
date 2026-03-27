@@ -124,12 +124,26 @@ const memoryNeo4jPlugin = {
 
     api.registerMemoryRuntime({
       async getMemorySearchManager({ purpose }) {
+        // For status probes, verify Neo4j is reachable and fetch summary counts
+        // in a single lightweight query (avoids full driver initialization).
+        let memoriesCount: number | undefined;
+        let entitiesCount: number | undefined;
+        if (purpose === "status") {
+          const counts = await db.probeStatusCounts();
+          if (!counts) {
+            return { manager: null, error: "Neo4j connection failed" };
+          }
+          memoriesCount = counts.memories;
+          entitiesCount = counts.entities;
+        }
         const manager = {
           status() {
             return {
               backend: "builtin" as const,
               provider: cfg.embedding.provider,
               model: cfg.embedding.model,
+              files: memoriesCount,
+              chunks: entitiesCount,
               custom: { neo4jUri: cfg.neo4j.uri },
             };
           },
@@ -148,13 +162,6 @@ const memoryNeo4jPlugin = {
             // Don't close shared db/embeddings — owned by the service lifecycle
           },
         };
-        // For status probes, verify Neo4j is reachable first
-        if (purpose === "status") {
-          const connected = await db.verifyConnection();
-          if (!connected) {
-            return { manager: null, error: "Neo4j connection failed" };
-          }
-        }
         return { manager };
       },
       resolveMemoryBackendConfig() {
