@@ -24,6 +24,9 @@ ui/test-results/
 packages/dashboard-next/.next/
 packages/dashboard-next/out/
 
+# OpenSpec archived changes
+openspec/changes/archive/
+
 # Mise configuration files
 mise.toml
 
