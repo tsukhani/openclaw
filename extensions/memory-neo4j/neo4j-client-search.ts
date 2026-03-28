@@ -590,7 +590,11 @@ export async function structuredGraphSearch(
           nTypeLabel,
           coalesce(neighbor.createdAt, '') AS nCreatedAt,
           // Confidence decay: 0.7 per hop — filtered by threshold to prune weak connections
-          reduce(s = 1.0, r IN rels | s * 0.7) AS hopScore
+          reduce(s = 1.0, r IN rels | s * CASE
+            WHEN r.qualifier IN ['primary', 'default', 'preferred'] THEN 1.0
+            WHEN r.qualifier IN ['secondary', 'backup', 'alternative', 'former', 'temporary'] THEN 0.4
+            ELSE 0.7
+          END) AS hopScore
      WHERE hopScore >= $hopDecayThreshold
 
      WITH seedResults, collect({
@@ -820,7 +824,11 @@ export async function causalChainSearch(
               coalesce(startNode(r).name, '?') + ' --' + type(r) + '--> ' + coalesce(endNode(r).name, '?')
             )
           ELSE null END AS causeChainText,
-          CASE WHEN cause IS NOT NULL THEN reduce(s = 1.0, r IN relationships(causePath) | s * 0.7) ELSE 0 END AS causeScore
+          CASE WHEN cause IS NOT NULL THEN reduce(s = 1.0, r IN relationships(causePath) | s * CASE
+            WHEN r.qualifier IN ['primary', 'default', 'preferred'] THEN 1.0
+            WHEN r.qualifier IN ['secondary', 'backup', 'alternative', 'former', 'temporary'] THEN 0.4
+            ELSE 0.7
+          END) ELSE 0 END AS causeScore
      WHERE causeScore >= $hopDecayThreshold
 
      WITH seedResults, node, collect(
@@ -844,7 +852,11 @@ export async function causalChainSearch(
               coalesce(startNode(r).name, '?') + ' --' + type(r) + '--> ' + coalesce(endNode(r).name, '?')
             )
           ELSE null END AS effectChainText,
-          CASE WHEN effect IS NOT NULL THEN reduce(s = 1.0, r IN relationships(effectPath) | s * 0.7) ELSE 0 END AS effectScore
+          CASE WHEN effect IS NOT NULL THEN reduce(s = 1.0, r IN relationships(effectPath) | s * CASE
+            WHEN r.qualifier IN ['primary', 'default', 'preferred'] THEN 1.0
+            WHEN r.qualifier IN ['secondary', 'backup', 'alternative', 'former', 'temporary'] THEN 0.4
+            ELSE 0.7
+          END) ELSE 0 END AS effectScore
      WHERE effectScore >= $hopDecayThreshold
 
      WITH seedResults, causeResults, collect(

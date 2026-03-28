@@ -127,6 +127,7 @@ export async function batchEntityOperations(
     target: string;
     type: string;
     confidence: number;
+    qualifier?: string;
   }>,
   tags: Array<{ name: string; category: string }>,
   category?: string,
@@ -232,15 +233,18 @@ export async function batchEntityOperations(
            MATCH (e2:Entity {name: r.target, agentId: mem.agentId})
            MERGE (e1)-[rel:${safeType}]->(e2)
            ON CREATE SET rel.confidence = r.confidence, rel.createdAt = $now,
-                         rel.validFrom = $now, rel.validUntil = null
+                         rel.validFrom = $now, rel.validUntil = null,
+                         rel.qualifier = r.qualifier
            ON MATCH SET rel.confidence = CASE WHEN r.confidence > rel.confidence THEN r.confidence ELSE rel.confidence END,
-                        rel.lastSeen = $now, rel.updatedAt = $now`,
+                        rel.lastSeen = $now, rel.updatedAt = $now,
+                        rel.qualifier = CASE WHEN r.qualifier IS NOT NULL THEN r.qualifier ELSE rel.qualifier END`,
           {
             memoryId,
             rels: rels.map((r) => ({
               source: r.source.trim().toLowerCase(),
               target: r.target.trim().toLowerCase(),
               confidence: r.confidence,
+              qualifier: r.qualifier ?? null,
             })),
             now,
           },

@@ -188,6 +188,7 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
           "--ability <name>",
           "Filter to a specific ability: extraction|temporal|updates|multi-session|abstention",
         )
+        .option("--case <id>", "Run specific case ID(s), comma-separated (e.g. ext-009)")
         .option("--limit <n>", "Max test cases to load (useful for quick smoke tests)")
         .option("--k <n>", "Retrieval cutoff K (default: 5)", "5")
         .option(

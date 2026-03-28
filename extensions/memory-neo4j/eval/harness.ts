@@ -97,14 +97,20 @@ export async function runEval(
   await db.ensureInitialized();
 
   // Load dataset
-  const testCases = await loadDataset(options.dataset, {
+  let testCases = await loadDataset(options.dataset, {
     ability: options.ability,
     limit: options.limit,
   });
 
+  // Filter by case ID if specified (supports comma-separated list)
+  if (options.caseId) {
+    const ids = new Set(options.caseId.split(",").map((s) => s.trim()));
+    testCases = testCases.filter((tc) => ids.has(tc.id));
+  }
+
   if (testCases.length === 0) {
     throw new Error(
-      `No test cases found for dataset "${options.dataset}"${options.ability ? ` ability "${options.ability}"` : ""}`,
+      `No test cases found for dataset "${options.dataset}"${options.ability ? ` ability "${options.ability}"` : ""}${options.caseId ? ` case "${options.caseId}"` : ""}`,
     );
   }
 

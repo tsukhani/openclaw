@@ -111,19 +111,47 @@ export async function rerankCandidates(
     //   finalScore = alpha * rrfScore + (1 - alpha) * rerankScore
     // This preserves multi-signal RRF ranking information when the cross-encoder
     // produces saturated scores (0.999+) that destroy discrimination.
-    const alpha = Math.max(0, Math.min(1, config.rrfWeight ?? 0.4));
-    const reranked: HybridSearchResult[] = rerankResults
-      .filter(({ index }) => index >= 0 && index < candidates.length)
-      .map(({ index, relevanceScore }) => {
-        const candidate = candidates[index];
-        const blended = alpha * candidate.score + (1 - alpha) * relevanceScore;
-        return {
-          ...candidate,
-          rerankScore: relevanceScore,
-          rrfScore: candidate.score,
-          score: blended,
-        };
-      });
+    //
+    // Score saturation fix: when all reranker scores are compressed into a narrow
+    // range (e.g. 0.995-0.999), the tiny differences get washed out by the RRF
+    // component. Re-normalize reranker scores via min-max scaling within the batch
+    // so the cross-encoder's relative ordering is preserved during blending.
+    const alpha = Math.max(0, Math.min(1, config.rrfWeight ?? 0.2));
+    const validResults = rerankResults.filter(
+      ({ index }) => index >= 0 && index < candidates.length,
+    );
+
+    // Score saturation fix: ms-marco cross-encoders often produce scores compressed
+    // near 1.0 for related documents (e.g. 0.995-0.999). Min-max re-normalization
+    // spreads these to [0,1] so the cross-encoder's relative ordering survives blending.
+    //
+    // Always re-normalize: the cross-encoder's absolute scores are model-dependent
+    // and not calibrated for interpolation with RRF scores. Min-max normalization
+    // ensures the reranker component has full [0,1] dynamic range regardless of
+    // whether scores are saturated or spread out.
+    const rerankScores = validResults.map((r) => r.relevanceScore);
+    const rerankMin = Math.min(...rerankScores);
+    const rerankMax = Math.max(...rerankScores);
+    const rerankRange = rerankMax - rerankMin;
+
+    // Adaptive alpha: when the cross-encoder shows clear differentiation (wide score
+    // spread), trust it more by capping alpha low. When scores are compressed
+    // (ambiguous), lean on RRF with the configured alpha. This prevents a large RRF
+    // gap from overriding a clear cross-encoder preference while preserving RRF
+    // as a safety net when the cross-encoder is uncertain.
+    const effectiveAlpha = rerankRange > 0.05 ? Math.min(alpha, 0.01) : alpha;
+
+    const reranked: HybridSearchResult[] = validResults.map(({ index, relevanceScore }) => {
+      const candidate = candidates[index];
+      const normalizedRerank = rerankRange > 0 ? (relevanceScore - rerankMin) / rerankRange : 0.5;
+      const blended = effectiveAlpha * candidate.score + (1 - effectiveAlpha) * normalizedRerank;
+      return {
+        ...candidate,
+        rerankScore: relevanceScore,
+        rrfScore: candidate.score,
+        score: blended,
+      };
+    });
 
     reranked.sort((a, b) => b.score - a.score);
 

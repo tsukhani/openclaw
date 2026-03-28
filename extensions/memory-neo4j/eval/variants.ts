@@ -71,6 +71,7 @@ export const EVAL_VARIANTS: Record<string, Partial<SearchConfig>> = {
       provider: "local" as const,
       topK: 10,
       topJ: 5,
+      rrfWeight: 0.2,
     },
   },
 };

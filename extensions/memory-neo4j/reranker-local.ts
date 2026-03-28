@@ -2,7 +2,7 @@
  * Local cross-encoder reranker via HTTP microservice (OP-130).
  *
  * Calls the Python reranker service running at http://localhost:4124.
- * Service uses sentence-transformers CrossEncoder with cross-encoder/ms-marco-MiniLM-L-6-v2.
+ * Service uses sentence-transformers CrossEncoder with BAAI/bge-reranker-v2-m3.
  *
  * Start service: systemctl --user start reranker.service
  * Health check: curl http://localhost:4124/health

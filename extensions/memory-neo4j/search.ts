@@ -53,6 +53,99 @@ export type QueryType =
  * - updates: Query asks about changed/current state — boost temporal freshness signal
  * - default: balanced weights
  */
+import { porterStem } from "./porter-stemmer.js";
+
+// BM25 query expansion: stop words to exclude (too generic, noise-only).
+const BM25_STOP_WORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "is",
+  "are",
+  "was",
+  "were",
+  "what",
+  "who",
+  "where",
+  "when",
+  "how",
+  "why",
+  "do",
+  "does",
+  "did",
+  "for",
+  "of",
+  "to",
+  "in",
+  "on",
+  "at",
+  "by",
+  "and",
+  "or",
+  "my",
+  "his",
+  "her",
+  "its",
+  "our",
+  "their",
+  "me",
+  "him",
+  "them",
+  "us",
+]);
+
+/**
+ * Generate morphological variants of a word using Porter stemming.
+ * Returns the original word plus the stem and stem+s (the two most useful
+ * variants for BM25 matching). Conservative: only adds stem-based variants
+ * to avoid noise from non-word inflections.
+ */
+function morphVariants(word: string): string[] {
+  const lower = word.toLowerCase();
+  const stem = porterStem(lower);
+  const variants = new Set([word]);
+
+  if (stem !== lower && stem.length >= 3) {
+    variants.add(stem);
+    variants.add(stem + "s");
+  }
+
+  // Also add simple -s removal for direct plurals (meetings → meeting)
+  if (lower.endsWith("s") && !lower.endsWith("ss") && lower.length > 4) {
+    variants.add(lower.slice(0, -1));
+  }
+
+  return [...variants];
+}
+
+/**
+ * Expand a BM25 query with morphological variants using Lucene OR groups.
+ * "preferred timezone meetings" → "(preferred OR prefer OR prefers) timezone (meetings OR meeting)"
+ * Only applied to extraction queries where keyword precision matters.
+ */
+function expandBm25Query(query: string): string {
+  return query
+    .split(/\s+/)
+    .map((word) => {
+      const clean = word.replace(/[?.!,;:]+$/, "");
+      const suffix = word.slice(clean.length);
+      if (
+        clean.length <= 3 ||
+        BM25_STOP_WORDS.has(clean.toLowerCase()) ||
+        /[~*?"\\()]/.test(clean) ||
+        /^[A-Z]+$/.test(clean)
+      ) {
+        return word;
+      }
+      // Possessives: don't expand (proper nouns)
+      if (clean.endsWith("'s")) return word;
+      const variants = morphVariants(clean);
+      if (variants.length <= 1) return word;
+      return `(${variants.join(" OR ")})${suffix}`;
+    })
+    .join(" ");
+}
+
 // M8: Hoist regex constants to module level to avoid recompilation on every classifyQuery() call.
 const UPDATES_RE = /\b(current|latest|now|changed|update|updated|newest|recent|recently)\b/i;
 const CAUSAL_RE =
@@ -186,11 +279,12 @@ export function getAdaptiveWeights(
       // Why/cause queries: graph helps with causal chains but must not override primary signals
       return [0.9, 0.7, graphBase * 0.5, 0.1];
     case "extraction":
-      // Factual precision: boost BM25 for keyword specificity, no freshness (OP-138).
-      // Graph weight raised from 0.2 to 0.3 — hop-only EXTRACTED_FROM resolution
-      // produces discriminative entity-relationship scores that help disambiguate
-      // possessive queries (e.g. "X's children" vs "X's colleague's children").
-      return [1.0, 1.3, graphBase * 0.3, 0.0];
+      // Factual precision: vector-led with BM25 assist, no freshness (OP-138).
+      // Gold memories match semantically (vector/graph) while distractors often
+      // win on keyword overlap (BM25). Keep vector dominant so semantic relevance
+      // wins over surface-level keyword matches. Graph at 0.4 to leverage
+      // hop-only EXTRACTED_FROM resolution for possessive disambiguation.
+      return [1.2, 0.8, graphBase * 0.4, 0.0];
     case "default":
     default:
       return [1.0, 1.0, graphBase * 0.3, 0.2];
@@ -797,6 +891,12 @@ export async function hybridSearch(
   const queryType = classifyQuery(query);
   const [vW, bW, gW, freshnessW] = weightOverride ?? getAdaptiveWeights(queryType, graphEnabled);
 
+  // BM25 query expansion for extraction queries: append Lucene fuzzy modifier (~1)
+  // to content words so BM25 matches morphological variants without changing the
+  // fulltext index analyzer. "preferred" matches "prefers", "meetings" matches "meeting".
+  // Only vector/graph use the original query; BM25 gets the expanded version.
+  const bm25Query = queryType === "extraction" ? expandBm25Query(semanticQuery) : semanticQuery;
+
   // Detect fact type intent early — needed by opinion signal (OP-186) and post-fusion boost (OP-185).
   const factTypeIntent = detectFactTypeIntent(query);
 
@@ -851,7 +951,7 @@ export async function hybridSearch(
     withAbortableTimeout(
       (signal) =>
         db.bm25Search(
-          semanticQuery,
+          bm25Query,
           candidateLimit,
           agentId,
           includeExpired,
@@ -1105,7 +1205,7 @@ export async function hybridSearch(
   // Score-gap truncation for extraction queries: if the score drops sharply between
   // consecutive results, the tail is likely noise. Trimming improves precision without
   // hurting recall (gold memories score well above distractors).
-  const SCORE_GAP_RATIO = 0.4; // >60% drop signals noise
+  const SCORE_GAP_RATIO = 0.6; // >40% drop signals noise — tighter to prune competitive distractors
   if (queryType === "extraction" && candidates.length >= 2) {
     let cutoff = candidates.length;
     for (let i = 1; i < candidates.length; i++) {

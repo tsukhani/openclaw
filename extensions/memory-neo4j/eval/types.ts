@@ -414,6 +414,8 @@ export type EvalRunOptions = {
   dataset: string;
   /** Only run cases for this ability. */
   ability?: MemoryAbility;
+  /** Only run specific case IDs (comma-separated or single ID, e.g. "ext-009"). */
+  caseId?: string;
   /** Max test cases to load (useful for quick smoke tests). */
   limit?: number;
   /** Number of results to retrieve per query. */

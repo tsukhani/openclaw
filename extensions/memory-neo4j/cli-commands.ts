@@ -1107,6 +1107,7 @@ export async function handleEval(
   opts: {
     dataset: string;
     ability?: string;
+    case?: string;
     limit?: string;
     k: string;
     format: string;
@@ -1216,6 +1217,7 @@ export async function handleEval(
     const runOptions = {
       dataset: opts.dataset,
       ability: opts.ability as MemoryAbility | undefined,
+      caseId: opts.case,
       limit,
       k,
       format: opts.format as EvalOutputFormat,

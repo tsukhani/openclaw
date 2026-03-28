@@ -133,6 +133,7 @@ export type EntityRelationship = {
   updatedAt?: string; // ISO-8601 — set on every subsequent merge
   validFrom: string; // ISO-8601 — when this relationship was first observed
   validUntil?: string; // ISO-8601 — when this relationship was closed (null = still active)
+  qualifier?: string; // Role/priority: "primary", "secondary", "backup", "former", etc.
 };
 
 // ============================================================================
@@ -153,6 +154,8 @@ export type ExtractedRelationship = {
   target: string;
   type: string;
   confidence: number;
+  /** Role/priority qualifier for the relationship. Only set when explicitly stated. */
+  qualifier?: string;
 };
 
 export type ExtractedTag = {

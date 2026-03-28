@@ -706,7 +706,13 @@ export class Neo4jMemoryClient {
       description?: string;
       properties?: Record<string, string>;
     }>,
-    relationships: Array<{ source: string; target: string; type: string; confidence: number }>,
+    relationships: Array<{
+      source: string;
+      target: string;
+      type: string;
+      confidence: number;
+      qualifier?: string;
+    }>,
     tags: Array<{ name: string; category: string }>,
     category?: string,
   ): Promise<void> {

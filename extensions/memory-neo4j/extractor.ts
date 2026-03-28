@@ -44,7 +44,7 @@ Return JSON:
     {"name": "alice", "type": "person", "aliases": ["manager"], "description": "brief description", "properties": {"phone": "012-345-6789", "email": "alice@example.com"}}
   ],
   "relationships": [
-    {"source": "alice", "target": "acme corp", "type": "WORKS_AT", "confidence": 0.95}
+    {"source": "alice", "target": "acme corp", "type": "WORKS_AT", "confidence": 0.95, "qualifier": "primary"}
   ],
   "tags": [
     {"name": "neo4j", "category": "technology"}
@@ -65,6 +65,7 @@ Rules:
   - For decisions with rationale: extract the decision entity, the reason, and a CAUSED_BY relationship
   - Only extract causal relationships when causation is explicitly stated or strongly implied — do not infer causation from mere co-occurrence
 - Confidence: 0.0-1.0
+- Qualifier (optional): describes the role or priority of the relationship when explicitly stated. Use ONLY one of: "primary", "default", "preferred", "secondary", "backup", "alternative", "former", "temporary". Omit when not applicable — most relationships have no qualifier. Only set when the text explicitly indicates priority/role (e.g. "primary bank", "backup platform", "preferred editor", "former employer").
 - ALWAYS extract the SUBJECT of each statement as an entity. If the text says "Tarun's wife is Renu", BOTH "tarun" AND "renu" must be extracted as person entities. Never omit subjects just because they seem obvious or are possessive owners.
 - Only extract SPECIFIC named entities: real people, companies, products, tools, places, events
 - Do NOT extract generic technology terms (python, javascript, docker, linux, api, sql, html, css, json, etc.)
@@ -502,6 +503,25 @@ function validateExtractionResult(
         // Sanitize to UPPER_SNAKE_CASE for safe Cypher interpolation
         type: sanitizeRelationshipType(String(r.type))!,
         confidence: typeof r.confidence === "number" ? Math.min(1, Math.max(0, r.confidence)) : 0.7,
+        qualifier: (() => {
+          const q =
+            typeof (r as Record<string, unknown>).qualifier === "string"
+              ? String((r as Record<string, unknown>).qualifier)
+                  .trim()
+                  .toLowerCase()
+              : undefined;
+          const ALLOWED_QUALIFIERS = new Set([
+            "primary",
+            "default",
+            "preferred",
+            "secondary",
+            "backup",
+            "alternative",
+            "former",
+            "temporary",
+          ]);
+          return q && ALLOWED_QUALIFIERS.has(q) ? q : undefined;
+        })(),
       }))
       // Filter out relationships referencing blocklisted entities to prevent dangling refs
       .filter(
@@ -692,7 +712,13 @@ export async function runBackgroundExtraction(
     logger.info(
       `memory-neo4j: extraction complete for ${memoryId.slice(0, 8)} — ` +
         `${result.entities.length} entities, ${result.relationships.length} rels, ${result.tags.length} tags` +
-        (result.category ? `, category=${result.category}` : ""),
+        (result.category ? `, category=${result.category}` : "") +
+        (result.relationships.some((r) => r.qualifier)
+          ? `, qualifiers=[${result.relationships
+              .filter((r) => r.qualifier)
+              .map((r) => `${r.source}->${r.target}:${r.qualifier}`)
+              .join(", ")}]`
+          : ""),
     );
 
     return { success: true, memoryId };
