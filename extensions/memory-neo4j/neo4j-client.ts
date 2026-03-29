@@ -81,7 +81,7 @@ export class Neo4jMemoryClient {
     }
     this.driver = neo4j.driver(this.uri, neo4j.auth.basic(this.username, this.password), {
       disableLosslessIntegers: true,
-      maxConnectionPoolSize: 200,
+      maxConnectionPoolSize: 20, // Reduced from 200 - appropriate for single-instance Neo4j
       connectionAcquisitionTimeout: 60000,
       maxTransactionRetryTime: 30000,
     });
