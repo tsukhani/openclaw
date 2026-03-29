@@ -478,35 +478,6 @@ async function runProviderCatalogWithTimeout(
   }
 }
 
-async function mergeCoreImplicitProviders(params: {
-  config?: OpenClawConfig;
-  explicitProviders?: Record<string, ProviderConfig> | null;
-  env: NodeJS.ProcessEnv;
-  providers: Record<string, ProviderConfig>;
-}): Promise<void> {
-  const configuredProviders = params.config?.models?.providers;
-  for (const provider of CORE_IMPLICIT_PROVIDER_RESOLVERS) {
-    if (!isProviderConfiguredForDiscovery(provider, configuredProviders)) {
-      continue;
-    }
-    const implicit = await provider.resolve({ config: params.config, env: params.env });
-    if (!implicit) {
-      continue;
-    }
-    const merge = PROVIDER_IMPLICIT_MERGERS[provider.id];
-    params.providers[provider.id] = (merge ?? mergeImplicitProviderConfig)({
-      providerId: provider.id,
-      existing:
-        params.providers[provider.id] ??
-        resolveConfiguredImplicitProvider({
-          configuredProviders: params.explicitProviders ?? params.config?.models?.providers,
-          providerIds: [provider.id],
-        }),
-      implicit,
-    });
-  }
-}
-
 export async function resolveImplicitProviders(
   params: ImplicitProviderParams,
 ): Promise<NonNullable<OpenClawConfig["models"]>["providers"]> {
