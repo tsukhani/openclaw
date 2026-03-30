@@ -20,7 +20,7 @@ import { queryEpisodes } from "./neo4j-client-episode.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import { resolveSelfEntityName } from "./plugin-hooks.js";
 import type { Logger, MemoryCategory, MemorySource } from "./schema.js";
-import { hybridSearch } from "./search.js";
+import { buildSearchOptions, hybridSearch } from "./search.js";
 
 /**
  * Shared wrapper for tool operations that may fail due to Neo4j connection errors.
@@ -115,6 +115,11 @@ export function registerMemoryTools(
             "recall",
             async () => {
               const t0Recall = performance.now();
+              // C6: Config selfEntityName takes priority; fall back to USER.md resolution
+              const selfEntityName =
+                cfg.selfEntityName ??
+                (ctx.workspaceDir ? await resolveSelfEntityName(ctx.workspaceDir) : undefined);
+
               const r = await hybridSearch(
                 db,
                 embeddings,
@@ -122,27 +127,16 @@ export function registerMemoryTools(
                 limit,
                 agentId,
                 extractionConfig.enabled,
-                {
-                  graphSearchDepth: cfg.graphSearchDepth,
-                  graphSeedCap: cfg.graphSeedCap,
-                  graphRelTypes: cfg.graphRelTypes,
-                  graphCausalRelTypes: cfg.graphCausalRelTypes,
-                  // C6: Config selfEntityName takes priority; fall back to USER.md resolution
-                  selfEntityName:
-                    cfg.selfEntityName ??
-                    (ctx.workspaceDir ? await resolveSelfEntityName(ctx.workspaceDir) : undefined),
-                  communityDetectionEnabled: cfg.communityDetection?.enabled,
-                  communitySignalWeight: cfg.communityDetection?.signalWeight,
+                buildSearchOptions({
+                  cfg,
+                  extractionConfig,
+                  db,
                   logger,
+                  selfEntityName,
                   includeExpired,
                   asOf: validatedAsOf,
                   includeQuarantined,
-                  recencyWeight: cfg.recencyWeight,
-                  searchCache: db.searchCache,
-                  ...(cfg.reranker?.enabled
-                    ? { rerankerConfig: cfg.reranker, extractionConfig }
-                    : {}),
-                },
+                }),
               );
               metrics.histogram("auto_recall.latency_ms", performance.now() - t0Recall);
               metrics.increment("memories.recalled", r.length);

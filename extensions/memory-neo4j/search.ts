@@ -13,7 +13,7 @@
  */
 
 import { shouldAbstain } from "./abstention-classifier.js";
-import type { ExtractionConfig } from "./config.js";
+import type { ExtractionConfig, MemoryNeo4jConfig } from "./config.js";
 import type { Embeddings } from "./embeddings.js";
 import type { MetricsCollector } from "./metrics.js";
 import { NO_OP_METRICS } from "./metrics.js";
@@ -1373,4 +1373,48 @@ export async function hybridSearch(
   }
 
   return finalResults;
+}
+
+// ============================================================================
+// Shared Search Options Builder
+// ============================================================================
+
+/**
+ * Build the options object for `hybridSearch()` from plugin config, DB, and
+ * caller-supplied overrides. Extracts the duplicated config-to-options mapping
+ * that was previously inlined in both plugin-hooks (auto-recall) and
+ * plugin-tools (memory_recall).
+ *
+ * `selfEntityName` must be resolved by the caller before invoking this function
+ * (e.g. via `resolveSelfEntityName`), keeping the builder synchronous and free
+ * of filesystem imports.
+ */
+export function buildSearchOptions(params: {
+  cfg: MemoryNeo4jConfig;
+  extractionConfig: ExtractionConfig;
+  db: Neo4jMemoryClient;
+  logger: Logger;
+  selfEntityName?: string | null;
+  // Optional overrides for tool-specific params
+  includeExpired?: boolean;
+  asOf?: string;
+  includeQuarantined?: boolean;
+}): Parameters<typeof hybridSearch>[6] {
+  const { cfg, extractionConfig, db, logger } = params;
+  return {
+    graphSearchDepth: cfg.graphSearchDepth,
+    graphSeedCap: cfg.graphSeedCap,
+    graphRelTypes: cfg.graphRelTypes,
+    graphCausalRelTypes: cfg.graphCausalRelTypes,
+    selfEntityName: params.selfEntityName,
+    communityDetectionEnabled: cfg.communityDetection?.enabled,
+    communitySignalWeight: cfg.communityDetection?.signalWeight,
+    recencyWeight: cfg.recencyWeight,
+    logger,
+    searchCache: db.searchCache,
+    includeExpired: params.includeExpired,
+    asOf: params.asOf,
+    includeQuarantined: params.includeQuarantined,
+    ...(cfg.reranker?.enabled ? { rerankerConfig: cfg.reranker, extractionConfig } : {}),
+  };
 }

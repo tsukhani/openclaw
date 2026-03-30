@@ -18,7 +18,7 @@ import { NO_OP_METRICS } from "./metrics.js";
 import { mergeEpisode } from "./neo4j-client-episode.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import type { Logger } from "./schema.js";
-import { hybridSearch } from "./search.js";
+import { buildSearchOptions, hybridSearch } from "./search.js";
 
 /**
  * Detect system-generated prompts that should skip auto-recall.
@@ -388,6 +388,11 @@ export function registerMemoryHooks(
 
             try {
               const t0 = performance.now();
+              // C6: Config selfEntityName takes priority; fall back to USER.md resolution
+              const selfEntityName =
+                cfg.selfEntityName ??
+                (ctx.workspaceDir ? await resolveSelfEntityName(ctx.workspaceDir) : undefined);
+
               let results = await hybridSearch(
                 db,
                 embeddings,
@@ -395,21 +400,7 @@ export function registerMemoryHooks(
                 3,
                 agentId,
                 extractionConfig.enabled,
-                {
-                  graphSearchDepth: cfg.graphSearchDepth,
-                  graphSeedCap: cfg.graphSeedCap,
-                  graphRelTypes: cfg.graphRelTypes,
-                  graphCausalRelTypes: cfg.graphCausalRelTypes,
-                  // C6: Config selfEntityName takes priority; fall back to USER.md resolution
-                  selfEntityName:
-                    cfg.selfEntityName ??
-                    (ctx.workspaceDir ? await resolveSelfEntityName(ctx.workspaceDir) : undefined),
-                  logger,
-                  searchCache: db.searchCache,
-                  ...(cfg.reranker?.enabled
-                    ? { rerankerConfig: cfg.reranker, extractionConfig }
-                    : {}),
-                },
+                buildSearchOptions({ cfg, extractionConfig, db, logger, selfEntityName }),
               );
               const tSearch = performance.now();
 
