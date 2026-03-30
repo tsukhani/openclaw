@@ -1,0 +1,35 @@
+# Neo4j for memory-neo4j plugin
+#
+# Usage:
+#   docker compose up -d
+#   docker compose down
+#
+# Default credentials: neo4j / memory-neo4j
+# Bolt:  bolt://localhost:7687
+# HTTP:  http://localhost:7474 (browser)
+
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: memory-neo4j
+    restart: unless-stopped
+    environment:
+      - NEO4J_AUTH=neo4j/memory-neo4j
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_server_memory_heap_initial__size=512m
+      - NEO4J_server_memory_heap_max__size=1G
+      - NEO4J_server_memory_pagecache_size=512m
+    volumes:
+      - neo4j-data:/data
+    ports:
+      - '127.0.0.1:7474:7474'
+      - '127.0.0.1:7687:7687'
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+volumes:
+  neo4j-data:
