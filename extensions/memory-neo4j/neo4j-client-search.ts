@@ -267,7 +267,7 @@ export async function communitySearch(
        // H3: Filter short entity names (< 3 chars) to avoid substring false positives
        // (e.g. "AI" matching "SAID", "WAIT").
        WHERE size(entity.name) >= 3
-       MATCH (mem:Memory)-[:EXTRACTED_FROM]->(entity)
+       MATCH (mem:Memory)<-[:EXTRACTED_FROM]-(entity)
        WHERE true ${expiredFilter} ${agentFilter} ${quarantineFilter}
        WITH DISTINCT mem, max(communityScore) AS bestCommunityScore
        RETURN mem.id AS id, mem.text AS text, mem.category AS category,

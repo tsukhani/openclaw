@@ -44,7 +44,7 @@ export async function getStaleEntities(
 ): Promise<string[]> {
   const result = await session.executeRead((tx) =>
     tx.run(
-      `MATCH (e:Entity {agentId: $agentId})<-[:EXTRACTED_FROM]-(m:Memory)
+      `MATCH (e:Entity {agentId: $agentId})-[:EXTRACTED_FROM]->(m:Memory)
        WITH e, count(m) AS memCount, max(m.createdAt) AS newestMemory
        WHERE memCount >= 3
        OPTIONAL MATCH (e)<-[:OBSERVES]-(o:Observation {agentId: $agentId})
@@ -113,7 +113,7 @@ export async function getObservationsForEntities(
     tx.run(
       `UNWIND $entityNames AS name
        MATCH (o:Observation {agentId: $agentId, entityName: name})-[:OBSERVES]->(e:Entity)
-       OPTIONAL MATCH (e)<-[:EXTRACTED_FROM]-(m:Memory)
+       OPTIONAL MATCH (e)-[:EXTRACTED_FROM]->(m:Memory)
        WITH o, e, collect(DISTINCT m.id) AS memoryIds
        RETURN o.entityName AS entityName, o.summary AS summary, memoryIds`,
       { agentId, entityNames },
@@ -138,7 +138,7 @@ export async function getEntityMemoryTexts(
 ): Promise<Array<{ id: string; text: string }>> {
   const result = await session.executeRead((tx) =>
     tx.run(
-      `MATCH (e:Entity {agentId: $agentId, name: $entityName})<-[:EXTRACTED_FROM]-(m:Memory)
+      `MATCH (e:Entity {agentId: $agentId, name: $entityName})-[:EXTRACTED_FROM]->(m:Memory)
        RETURN m.id AS id, m.text AS text
        ORDER BY m.createdAt DESC
        LIMIT $limit`,

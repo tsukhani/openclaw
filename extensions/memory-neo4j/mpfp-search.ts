@@ -178,7 +178,7 @@ async function bridgeEntitiesToMemories(
 
   const result = await session.executeRead((tx) =>
     tx.run(
-      `MATCH (m:Memory)-[:EXTRACTED_FROM]->(e:Entity)
+      `MATCH (m:Memory)<-[:EXTRACTED_FROM]-(e:Entity)
        WHERE e.id IN $entityIds
          AND e.agentId = $agentId
          AND m.agentId = $agentId

@@ -88,7 +88,7 @@ describe("mpfpSearch", () => {
       const mockTx = {
         run: vi.fn().mockImplementation((query: string) => {
           capturedQuery = query;
-          if (query.includes("EXTRACTED_FROM]->(e:Entity)")) {
+          if (query.includes("EXTRACTED_FROM]-(e:Entity)")) {
             // Bridge query: return Memory nodes for entities
             return Promise.resolve({
               records: [

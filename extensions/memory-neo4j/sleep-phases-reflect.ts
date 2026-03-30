@@ -195,7 +195,7 @@ async function getReflectionCandidates(
 ): Promise<Array<{ entityName: string; observationSummary: string | null }>> {
   const result = await session.executeRead((tx) =>
     tx.run(
-      `MATCH (e:Entity {agentId: $agentId})<-[:EXTRACTED_FROM]-(m:Memory)
+      `MATCH (e:Entity {agentId: $agentId})-[:EXTRACTED_FROM]->(m:Memory)
        WITH e, count(m) AS memCount
        WHERE memCount >= $minMemories
        OPTIONAL MATCH (o:Observation {agentId: $agentId, entityName: e.name})-[:OBSERVES]->(e)
