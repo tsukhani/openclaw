@@ -34,7 +34,7 @@ export const FRESHNESS_DECAY_DAYS = 365;
 /** L3: Default RRF k parameter (rank smoothing constant). */
 export const DEFAULT_RRF_K = 60;
 /** L3: Default candidate multiplier for non-reranker path. */
-export const DEFAULT_CANDIDATE_MULTIPLIER = 4;
+export const DEFAULT_CANDIDATE_MULTIPLIER = 3;
 /** L3: Recency decay period in days — same scale as freshness for consistency. */
 export const RECENCY_DECAY_DAYS = 365;
 

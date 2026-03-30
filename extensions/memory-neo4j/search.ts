@@ -367,10 +367,10 @@ export async function hybridSearch(
   // Each signal gets an AbortController so that when the timeout fires, zombie retries
   // are stopped and the Neo4j session is closed — preventing connection pool exhaustion
   // during high-throughput workloads like the eval harness.
-  // M22: Reduced from 15s to 5s. M25: Reduced to 3s — graph traversal timeout
-  // is now 2s (down from 5s) and typical queries complete in <100ms. The 3s
-  // outer timeout covers network/session overhead for edge cases.
-  const SIGNAL_TIMEOUT_MS = 3_000;
+  // M22: Reduced from 15s to 5s. M25: Reduced to 3s. M27: Reduced to 2s —
+  // graph traversal timeout is now 1s (down from 2s) and typical queries
+  // complete in <100ms. The 2s outer timeout covers network/session overhead.
+  const SIGNAL_TIMEOUT_MS = 2_000;
   // M15: Clear timer when the promise resolves to prevent timer accumulation
   const withAbortableTimeout = <T>(
     fn: (signal: AbortSignal) => Promise<T>,

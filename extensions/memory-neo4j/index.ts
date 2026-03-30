@@ -29,6 +29,7 @@ import { Neo4jMemoryClient } from "./neo4j-client.js";
 import { cleanupSelfEntityWatchers, registerMemoryHooks } from "./plugin-hooks.js";
 import { registerMemoryTools } from "./plugin-tools.js";
 import { QueryResultCache } from "./search-cache.js";
+import { hybridSearch } from "./search.js";
 import { runSleepCycle } from "./sleep-cycle.js";
 
 // ============================================================================
@@ -231,6 +232,15 @@ const memoryNeo4jPlugin = {
               api.logger.debug?.(
                 `memory-neo4j: embedding cache pre-warm failed — ${String(prewarmErr)}`,
               );
+            }
+
+            // M27: Warm up Neo4j query plan cache and HNSW index pages so the
+            // first real user query doesn't eat the cold-start penalty.
+            try {
+              await hybridSearch(db, embeddings, "warmup", 1, "default", false, {});
+              api.logger.debug?.("memory-neo4j: search warm-up complete");
+            } catch {
+              // Best-effort — don't block startup
             }
           }
         } catch (err) {

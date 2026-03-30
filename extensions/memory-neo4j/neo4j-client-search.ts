@@ -11,10 +11,10 @@ import { escapeLucene, sanitizeRelationshipType, toJsNumber } from "./schema.js"
 const BM25_NORMALIZATION_FLOOR = 0.3;
 
 /** M21: Timeout on N-hop traversal to prevent runaway queries.
- * M25: Reduced from 5s to 2s — with max hop depth capped at 3 (down from 4),
- * traversal completes in <100ms for typical graphs. The 2s budget covers edge
- * cases (large fan-out, cold caches) without dominating search latency. */
-const GRAPH_TRAVERSAL_TIMEOUT_MS = 2000;
+ * M25: Reduced from 5s to 2s. M27: Reduced to 1s — typical traversal completes
+ * in <100ms; 1s still gives 10x headroom for cold caches / large fan-out while
+ * halving worst-case latency contribution to hybrid search. */
+const GRAPH_TRAVERSAL_TIMEOUT_MS = 1000;
 
 /**
  * Build a temporal filter clause for Cypher queries.
@@ -119,7 +119,7 @@ export async function vectorSearch(
      LIMIT $requestedLimit`,
       {
         embedding,
-        limit: neo4j.int(Math.floor(agentId ? Math.min(limit * 3, 200) : limit)),
+        limit: neo4j.int(Math.floor(agentId ? Math.min(limit * 2, 200) : limit)),
         requestedLimit: neo4j.int(limit),
         minScore,
         ...(agentId ? { agentId } : {}),
