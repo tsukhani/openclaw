@@ -13,34 +13,34 @@ import type { ExtractionConfig } from "./config.js";
 import { isNeo4jConnectionError } from "./errors.js";
 import { mpfpSearch, type MpfpMode, type MpfpOptions } from "./mpfp-search.js";
 import * as Entity from "./neo4j-client-entity.js";
+import * as Health from "./neo4j-client-health.js";
 import * as Indexes from "./neo4j-client-indexes.js";
 import * as Memory from "./neo4j-client-memory.js";
 import * as Observation from "./neo4j-client-observation.js";
 import * as Opinion from "./neo4j-client-opinion.js";
+import {
+  createRetrievalBufferState,
+  flushRetrievalBuffer,
+  recordRetrievals as recordRetrievalsImpl,
+  type RetrievalBufferState,
+} from "./neo4j-client-retrieval.js";
 import * as Search from "./neo4j-client-search.js";
+import {
+  retryOnTransient as retryOnTransientImpl,
+  TRANSIENT_RETRY_ATTEMPTS,
+  TRANSIENT_RETRY_BASE_DELAY_MS,
+  withSearchFallback as withSearchFallbackImpl,
+  withSession as withSessionImpl,
+} from "./neo4j-client-session.js";
 import * as Sleep from "./neo4j-client-sleep.js";
-import { isTransientNeo4jError, retryWithBackoff } from "./retry.js";
 import type { ExtractionStatus, Logger, SearchSignalResult, StoreMemoryInput } from "./schema.js";
 import { detectCredential } from "./sleep-cycle-types.js";
-
-// Retry configuration for transient Neo4j errors (deadlocks, etc.)
-const TRANSIENT_RETRY_ATTEMPTS = 3;
-const TRANSIENT_RETRY_BASE_DELAY_MS = 500;
 
 export class Neo4jMemoryClient {
   private driver: Driver | null = null;
   private initPromise: Promise<void> | null = null;
   private indexesReady = false;
-  private retrievalBuffer: string[] = []; // Retrieval tracking debounce
-  private retrievalFlushTimer: ReturnType<typeof setTimeout> | null = null;
-  private retrievalFlushInProgress = false;
-  private retrievalConsecutiveFailures = 0;
-  private static readonly RETRIEVAL_FLUSH_INTERVAL_MS = 30_000;
-  /** Shorter retry interval after a flush failure to drain backlog faster under load. */
-  private static readonly RETRIEVAL_RETRY_INTERVAL_MS = 5_000;
-  private static readonly RETRIEVAL_FLUSH_THRESHOLD = 50;
-  /** H1: Cap retrieval buffer to prevent unbounded growth during persistent Neo4j outages. */
-  private static readonly MAX_RETRIEVAL_BUFFER_SIZE = 1000;
+  private retrievalState: RetrievalBufferState = createRetrievalBufferState();
   /** Optional search result cache — set by plugin init when cache is enabled. */
   searchCache?: import("./search-cache.js").QueryResultCache;
 
@@ -121,7 +121,7 @@ export class Neo4jMemoryClient {
     }
   }
   async close(): Promise<void> {
-    await this.flushRetrievalBuffer().catch(() => {}); // Flush pending retrieval events
+    await this.flushRetrievalBuffer().catch(() => {}); // Flush pending retrieval events before close
     if (this.driver) {
       await this.driver.close();
       this.driver = null;
@@ -157,7 +157,7 @@ export class Neo4jMemoryClient {
   /** Create a raw Neo4j session. Caller is responsible for closing it. Used by sleep cycle phases that need multi-statement transactions. */
   async createSession(): Promise<import("neo4j-driver").Session> {
     await this.ensureInitialized();
-    return this.driver!.session();
+    return Health.createSession(this.driver!);
   }
   /**
    * Lightweight status probe that verifies connectivity and fetches summary counts
@@ -168,80 +168,16 @@ export class Neo4jMemoryClient {
     memories: number;
     entities: number;
   } | null> {
-    const runProbe = async (
-      session: import("neo4j-driver").Session,
-    ): Promise<{ memories: number; entities: number }> => {
-      const result = await session.run(
-        "OPTIONAL MATCH (m:Memory) WITH count(m) AS memories OPTIONAL MATCH (e:Entity) RETURN memories, count(e) AS entities",
-      );
-      const row = result.records[0];
-      return {
-        memories: row?.get("memories") ?? 0,
-        entities: row?.get("entities") ?? 0,
-      };
-    };
-    if (this.driver) {
-      const session = this.driver.session();
-      try {
-        return await runProbe(session);
-      } catch {
-        return null;
-      } finally {
-        await session.close();
-      }
-    }
-    let tempDriver: import("neo4j-driver").Driver | null = null;
-    try {
-      tempDriver = neo4j.driver(this.uri, neo4j.auth.basic(this.username, this.password), {
-        maxConnectionPoolSize: 1,
-        connectionAcquisitionTimeout: 5000,
-      });
-      const session = tempDriver.session();
-      try {
-        return await runProbe(session);
-      } finally {
-        await session.close();
-      }
-    } catch {
-      return null;
-    } finally {
-      await tempDriver?.close();
-    }
+    return Health.probeStatusCounts(this.driver, this.uri, this.username, this.password);
   }
   async verifyConnection(): Promise<boolean> {
-    // If the driver is already initialized, use it directly.
-    // Otherwise, create a temporary driver for a lightweight reachability check
-    // to avoid the heavyweight ensureInitialized() (indexes + migrations).
-    if (!this.driver) {
-      let tempDriver: import("neo4j-driver").Driver | null = null;
-      try {
-        tempDriver = neo4j.driver(this.uri, neo4j.auth.basic(this.username, this.password), {
-          maxConnectionPoolSize: 1,
-          connectionAcquisitionTimeout: 5000,
-        });
-        const session = tempDriver.session();
-        try {
-          await session.run("RETURN 1");
-          return true;
-        } finally {
-          await session.close();
-        }
-      } catch {
-        return false;
-      } finally {
-        await tempDriver?.close();
-      }
-    }
-    const session = this.driver.session();
-    try {
-      await session.run("RETURN 1");
-      return true;
-    } catch (err) {
-      this.logger.error(`memory-neo4j: connection verification failed: ${String(err)}`);
-      return false;
-    } finally {
-      await session.close();
-    }
+    return Health.verifyConnection(
+      this.driver,
+      this.uri,
+      this.username,
+      this.password,
+      this.logger,
+    );
   }
   // — Memory CRUD —
   /**
@@ -589,93 +525,22 @@ export class Neo4jMemoryClient {
   // — Retrieval Tracking —
   /** Record retrieval events for memories. Called after search/recall. Increments retrievalCount and updates lastRetrievedAt timestamp. */
   async recordRetrievals(memoryIds: string[]): Promise<void> {
-    if (memoryIds.length === 0) return;
-    // Buffer retrieval IDs instead of writing immediately
-    this.retrievalBuffer.push(...memoryIds);
-    // Flush if buffer exceeds threshold and no flush is already in-flight.
-    // When a flush IS in-flight, schedule a timer so buffered IDs are drained
-    // shortly after the current flush finishes (avoids silent accumulation).
-    if (this.retrievalBuffer.length >= Neo4jMemoryClient.RETRIEVAL_FLUSH_THRESHOLD) {
-      if (!this.retrievalFlushInProgress) {
-        await this.flushRetrievalBuffer();
-        return;
-      }
-      // Flush in-flight — ensure a timer is scheduled to drain once it completes
-      this.scheduleRetrievalFlush(Neo4jMemoryClient.RETRIEVAL_RETRY_INTERVAL_MS);
-      return;
-    }
-    // Schedule a timer-based flush if not already scheduled
-    this.scheduleRetrievalFlush(Neo4jMemoryClient.RETRIEVAL_FLUSH_INTERVAL_MS);
+    return recordRetrievalsImpl(
+      this.retrievalState,
+      memoryIds,
+      () => this.flushRetrievalBuffer(),
+      this.logger,
+    );
   }
 
-  /** Schedule a retrieval flush timer if one isn't already pending. */
-  private scheduleRetrievalFlush(delayMs: number): void {
-    if (this.retrievalFlushTimer) return;
-    this.retrievalFlushTimer = setTimeout(() => {
-      this.flushRetrievalBuffer().catch((err) => {
-        this.logger.debug?.(`memory-neo4j: retrieval flush failed: ${String(err)}`);
-      });
-    }, delayMs);
-    if (
-      this.retrievalFlushTimer &&
-      typeof this.retrievalFlushTimer === "object" &&
-      "unref" in this.retrievalFlushTimer
-    ) {
-      this.retrievalFlushTimer.unref();
-    }
-  }
   private async flushRetrievalBuffer(): Promise<void> {
-    if (this.retrievalFlushInProgress || this.retrievalBuffer.length === 0) return;
-    this.retrievalFlushInProgress = true;
-    try {
-      if (this.retrievalFlushTimer) {
-        clearTimeout(this.retrievalFlushTimer);
-        this.retrievalFlushTimer = null;
-      }
-      // Defensive copy: swap buffer before async work so new arrivals go
-      // into a fresh array, and restore on failure to avoid data loss.
-      const ids = [...this.retrievalBuffer];
-      this.retrievalBuffer = [];
-      // Deduplicate and count occurrences
-      const counts = new Map<string, number>();
-      for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
-      if (!this.driver) return;
-      try {
-        await this.retryOnTransient(() =>
-          this.withSession((s) => Search.recordRetrievals(s, [...counts.entries()])),
-        );
-        this.retrievalConsecutiveFailures = 0;
-        // If more IDs arrived while we were flushing, schedule a quick follow-up
-        if (this.retrievalBuffer.length > 0) {
-          this.scheduleRetrievalFlush(Neo4jMemoryClient.RETRIEVAL_RETRY_INTERVAL_MS);
-        }
-        return;
-      } catch (err) {
-        this.retrievalConsecutiveFailures++;
-        // M9: Restore unflushed IDs for retry by prepending so overflow truncation
-        // (splice from index 0) drops already-failed IDs first, preserving newer arrivals.
-        this.retrievalBuffer.unshift(...ids);
-        if (this.retrievalBuffer.length > Neo4jMemoryClient.MAX_RETRIEVAL_BUFFER_SIZE) {
-          const dropped = this.retrievalBuffer.length - Neo4jMemoryClient.MAX_RETRIEVAL_BUFFER_SIZE;
-          this.retrievalBuffer.splice(0, dropped); // Drop oldest entries
-          this.logger.warn(
-            `memory-neo4j: retrieval buffer overflow — dropped ${dropped} oldest IDs (cap: ${Neo4jMemoryClient.MAX_RETRIEVAL_BUFFER_SIZE})`,
-          );
-        }
-        // M6: Reschedule with shorter retry interval to drain backlog faster.
-        // Use exponential backoff capped at the normal interval to avoid hammering
-        // a persistently-down Neo4j instance.
-        const retryDelay = Math.min(
-          Neo4jMemoryClient.RETRIEVAL_RETRY_INTERVAL_MS *
-            Math.pow(2, this.retrievalConsecutiveFailures - 1),
-          Neo4jMemoryClient.RETRIEVAL_FLUSH_INTERVAL_MS,
-        );
-        this.scheduleRetrievalFlush(retryDelay);
-        throw err;
-      }
-    } finally {
-      this.retrievalFlushInProgress = false;
-    }
+    return flushRetrievalBuffer(
+      this.retrievalState,
+      this.driver,
+      this.logger,
+      (fn) => this.retryOnTransient(fn),
+      (fn) => this.withSession(fn),
+    );
   }
   // — Entity & Relationship Operations —
   /** Update the extraction status of a Memory node. Optionally increments the extractionRetries counter. */
@@ -1247,23 +1112,12 @@ export class Neo4jMemoryClient {
     fn: (session: import("neo4j-driver").Session) => Promise<T>,
     abortSignal?: AbortSignal,
   ): Promise<T> {
-    if (abortSignal?.aborted) throw new DOMException("Aborted", "AbortError");
-    await this.ensureInitialized();
-    // M2: Guard against concurrent close() nullifying driver after init
-    if (!this.driver) {
-      throw new Error("memory-neo4j: driver closed during operation");
-    }
-    const session = this.driver.session();
-    // Close the session early when the abort signal fires — this cancels any
-    // in-flight transaction and releases the connection back to the pool.
-    const onAbort = () => session.close().catch(() => {});
-    abortSignal?.addEventListener("abort", onAbort, { once: true });
-    try {
-      return await fn(session);
-    } finally {
-      abortSignal?.removeEventListener("abort", onAbort);
-      await session.close();
-    }
+    return withSessionImpl(
+      fn,
+      () => this.ensureInitialized(),
+      () => this.driver,
+      abortSignal,
+    );
   }
   /**
    * Run a search operation with retry + graceful fallback on errors.
@@ -1282,31 +1136,15 @@ export class Neo4jMemoryClient {
     logLevel: "warn" | "debug" = "warn",
     abortSignal?: AbortSignal,
   ): Promise<T> {
-    try {
-      return await this.retryOnTransient(
-        fn,
-        TRANSIENT_RETRY_ATTEMPTS,
-        TRANSIENT_RETRY_BASE_DELAY_MS,
-        abortSignal,
-      );
-    } catch (err) {
-      // AbortError means the signal timed out — return fallback silently, no log spam.
-      if (err instanceof DOMException && err.name === "AbortError") {
-        return fallback;
-      }
-      if (isNeo4jConnectionError(err) && rethrowConnection) {
-        this.logger.warn(`memory-neo4j: ${label} failed — Neo4j connection error: ${String(err)}`);
-        throw err;
-      }
-      const msg = `memory-neo4j: ${label} failed: ${String(err)}`;
-      if (logLevel === "debug") {
-        this.logger.debug?.(msg);
-      } else {
-        const suffix = isNeo4jConnectionError(err) ? "" : " (non-connection)";
-        this.logger.warn(`memory-neo4j: ${label} failed${suffix}: ${String(err)}`);
-      }
-      return fallback;
-    }
+    return withSearchFallbackImpl(
+      label,
+      fn,
+      fallback,
+      this.logger,
+      rethrowConnection,
+      logLevel,
+      abortSignal,
+    );
   }
   /** Retry an operation on transient Neo4j errors (deadlocks, connection blips, etc.) with exponential backoff. */
   private async retryOnTransient<T>(
@@ -1315,16 +1153,6 @@ export class Neo4jMemoryClient {
     baseDelay: number = TRANSIENT_RETRY_BASE_DELAY_MS,
     abortSignal?: AbortSignal,
   ): Promise<T> {
-    return retryWithBackoff(fn, {
-      maxAttempts,
-      baseDelayMs: baseDelay,
-      isRetryable: isTransientNeo4jError,
-      abortSignal,
-      onRetry: (err, attempt) => {
-        this.logger.warn(
-          `memory-neo4j: transient error, retrying (${attempt + 1}/${maxAttempts}): ${String(err)}`,
-        );
-      },
-    });
+    return retryOnTransientImpl(fn, this.logger, maxAttempts, baseDelay, abortSignal);
   }
 }
