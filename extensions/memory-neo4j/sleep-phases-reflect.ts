@@ -184,6 +184,9 @@ export function updateConfidence(
 
 /**
  * Find entities eligible for reflection: entities with observations AND 5+ connected memories.
+ *
+ * NOTE: Use toInteger() for LIMIT because JS numbers are IEEE 754 doubles
+ * and the Neo4j driver sends them as floats (e.g. 15.0), which Neo4j rejects.
  */
 async function getReflectionCandidates(
   session: Session,
@@ -198,7 +201,7 @@ async function getReflectionCandidates(
        OPTIONAL MATCH (o:Observation {agentId: $agentId, entityName: e.name})-[:OBSERVES]->(e)
        RETURN e.name AS entityName, o.summary AS observationSummary
        ORDER BY memCount DESC
-       LIMIT $limit`,
+       LIMIT toInteger($limit)`,
       {
         agentId,
         minMemories: MIN_MEMORIES_FOR_REFLECTION,

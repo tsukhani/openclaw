@@ -44,6 +44,8 @@ export async function createSemanticLinks(
   // Process in batches until no more unlinked memories
   while (!abortSignal?.aborted) {
     // Find memories with embeddings but no SIMILAR edges yet
+    // NOTE: Use toInteger() for LIMIT because JS numbers are IEEE 754 doubles
+    // and the Neo4j driver sends them as floats (e.g. 100.0), which Neo4j rejects.
     const unlinked = await session.executeRead((tx) =>
       tx.run(
         `MATCH (m:Memory)
@@ -51,7 +53,7 @@ export async function createSemanticLinks(
            AND m.embedding IS NOT NULL
            AND NOT EXISTS { MATCH (m)-[:SIMILAR]->() }
          RETURN m.id AS id, m.embedding AS embedding
-         LIMIT $limit`,
+         LIMIT toInteger($limit)`,
         { agentId, limit: SEMANTIC_BATCH_SIZE },
       ),
     );
@@ -73,7 +75,7 @@ export async function createSemanticLinks(
              AND node.agentId = $agentId
              AND score >= $threshold
            RETURN node.id AS targetId, score
-           LIMIT $maxNeighbors`,
+           LIMIT toInteger($maxNeighbors)`,
           {
             // Query k+1 to account for self-match being filtered out
             k: SEMANTIC_MAX_NEIGHBORS + 1,
@@ -140,7 +142,7 @@ export async function createTemporalLinks(
        WITH m.sessionKey AS sessionKey, collect(m) AS memories
        WHERE size(memories) > 1
        RETURN sessionKey, [mem IN memories | {id: mem.id, createdAt: mem.createdAt}] AS memories
-       LIMIT $limit`,
+       LIMIT toInteger($limit)`,
       { agentId, limit: TEMPORAL_BATCH_SIZE },
     ),
   );
@@ -218,7 +220,7 @@ export async function createCausalLinks(
        WHERE NOT EXISTS { MATCH (a)-[:CAUSED_BY]->(b) }
          AND NOT EXISTS { MATCH (b)-[:CAUSED_BY]->(a) }
        RETURN a.id AS fromId, a.text AS fromText, b.id AS toId, b.text AS toText
-       LIMIT $limit`,
+       LIMIT toInteger($limit)`,
       { agentId, limit: CAUSAL_BATCH_SIZE },
     ),
   );
