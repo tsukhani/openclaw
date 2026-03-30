@@ -59,7 +59,6 @@ export const PRESETS: Record<ConfigPreset, Record<string, unknown>> = {
     recencyWeight: 0.15,
     communityDetection: { enabled: true },
     episodicMemory: { enabled: true },
-    metrics: { enabled: true },
     cache: { enabled: true },
   },
 };

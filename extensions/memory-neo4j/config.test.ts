@@ -580,7 +580,7 @@ describe("memoryNeo4jConfigSchema.parse", () => {
       expect(config.recencyWeight).toBe(0.15);
       expect(config.communityDetection?.enabled).toBe(true);
       expect(config.episodicMemory?.enabled).toBe(true);
-      expect(config.metrics?.enabled).toBe(true);
+      expect(config.metrics).toBeUndefined();
       expect(config.cache?.enabled).toBe(true);
     });
 
