@@ -16,6 +16,88 @@ export type { RerankerConfig };
 export type { MemoryCategory };
 export { MEMORY_CATEGORIES };
 
+// ---------------------------------------------------------------------------
+// Config Presets — sensible defaults for common use cases
+// ---------------------------------------------------------------------------
+
+export type ConfigPreset = "minimal" | "balanced" | "full";
+
+/**
+ * Preset config overrides applied BEFORE user-provided values (user values always win).
+ * Each preset is a partial raw config object that gets deep-merged under the user config.
+ */
+export const PRESETS: Record<ConfigPreset, Record<string, unknown>> = {
+  minimal: {
+    autoCapture: true,
+    autoRecall: true,
+    autoRecallMinScore: 0.3,
+    coreMemory: { enabled: false },
+    conflictDetection: { enabled: false },
+    decomposition: { enabled: false },
+    graphSearchDepth: 1,
+    sleepCycle: { schedule: null },
+    recencyWeight: 0.0,
+  },
+  balanced: {
+    autoCapture: true,
+    autoRecall: true,
+    autoRecallMinScore: 0.25,
+    coreMemory: { enabled: true },
+    conflictDetection: { enabled: true },
+    decomposition: { enabled: false },
+    graphSearchDepth: 2,
+    recencyWeight: 0.1,
+  },
+  full: {
+    autoCapture: true,
+    autoRecall: true,
+    autoRecallMinScore: 0.2,
+    coreMemory: { enabled: true, refreshAtContextPercent: 70 },
+    conflictDetection: { enabled: true },
+    decomposition: { enabled: true },
+    graphSearchDepth: 3,
+    recencyWeight: 0.15,
+    communityDetection: { enabled: true },
+    episodicMemory: { enabled: true },
+    metrics: { enabled: true },
+    cache: { enabled: true },
+  },
+};
+
+const VALID_PRESETS = new Set<string>(Object.keys(PRESETS));
+
+/**
+ * Deep-merge preset defaults under user config. User values always win.
+ * Only merges plain objects recursively; scalars/arrays use user value if present.
+ */
+function deepMergePreset(
+  preset: Record<string, unknown>,
+  user: Record<string, unknown>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...preset };
+  for (const [key, userVal] of Object.entries(user)) {
+    if (key === "preset") continue; // strip the preset key itself from merged output
+    const presetVal = result[key];
+    if (
+      userVal != null &&
+      typeof userVal === "object" &&
+      !Array.isArray(userVal) &&
+      presetVal != null &&
+      typeof presetVal === "object" &&
+      !Array.isArray(presetVal)
+    ) {
+      // Recursively merge sub-objects
+      result[key] = deepMergePreset(
+        presetVal as Record<string, unknown>,
+        userVal as Record<string, unknown>,
+      );
+    } else {
+      result[key] = userVal;
+    }
+  }
+  return result;
+}
+
 export type EmbeddingProvider = "openai" | "ollama";
 
 export type MemoryNeo4jConfig = {
@@ -449,6 +531,7 @@ const SUB_SCHEMAS: Record<string, ReturnType<typeof allowedKeys>> = {
 };
 
 const TOP_LEVEL_KEYS = [
+  "preset",
   "embedding",
   "neo4j",
   "autoCapture",
@@ -588,7 +671,19 @@ export const memoryNeo4jConfigSchema = {
       const unknown = Object.keys(value as Record<string, unknown>).filter((k) => !allowed.has(k));
       throw new Error(`memory-neo4j config has unknown keys: ${unknown.join(", ")}`);
     }
-    const cfg = value as Record<string, unknown>;
+
+    // -- preset merging (before any field-level parsing) --
+    let cfg = value as Record<string, unknown>;
+    const rawPreset = cfg.preset;
+    if (rawPreset !== undefined) {
+      if (typeof rawPreset !== "string" || !VALID_PRESETS.has(rawPreset)) {
+        throw new Error(
+          `memory-neo4j config: preset must be one of ${[...VALID_PRESETS].join(", ")}, got: "${String(rawPreset)}"`,
+        );
+      }
+      const presetDefaults = PRESETS[rawPreset as ConfigPreset];
+      cfg = deepMergePreset(presetDefaults, cfg);
+    }
 
     // -- neo4j --
     const neo4jRaw = cfg.neo4j as Record<string, unknown> | undefined;

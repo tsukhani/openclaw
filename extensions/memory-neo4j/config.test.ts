@@ -11,6 +11,7 @@ import {
   contextLengthForModel,
   DEFAULT_EMBEDDING_CONTEXT_LENGTH,
   resolveExtractionConfig,
+  PRESETS,
 } from "./config.js";
 
 // ============================================================================
@@ -530,6 +531,108 @@ describe("memoryNeo4jConfigSchema.parse", () => {
           sleepCycle: { unknownKey: true },
         }),
       ).toThrow("unknown keys: unknownKey");
+    });
+  });
+
+  describe("preset config", () => {
+    const BASE = {
+      neo4j: { uri: "bolt://localhost:7687", password: "" },
+      embedding: { provider: "ollama" as const },
+    };
+
+    it("should apply 'minimal' preset defaults", () => {
+      const config = memoryNeo4jConfigSchema.parse({ ...BASE, preset: "minimal" });
+      expect(config.autoCapture).toBe(true);
+      expect(config.autoRecall).toBe(true);
+      expect(config.autoRecallMinScore).toBe(0.3);
+      expect(config.coreMemory.enabled).toBe(false);
+      expect(config.conflictDetection.enabled).toBe(false);
+      expect(config.decomposition.enabled).toBe(false);
+      expect(config.graphSearchDepth).toBe(1);
+      expect(config.sleepCycle.schedule).toBeNull();
+      expect(config.recencyWeight).toBe(0.0);
+    });
+
+    it("should apply 'balanced' preset defaults matching no-preset behavior", () => {
+      const withPreset = memoryNeo4jConfigSchema.parse({ ...BASE, preset: "balanced" });
+      const withoutPreset = memoryNeo4jConfigSchema.parse({ ...BASE });
+
+      expect(withPreset.autoCapture).toBe(withoutPreset.autoCapture);
+      expect(withPreset.autoRecall).toBe(withoutPreset.autoRecall);
+      expect(withPreset.autoRecallMinScore).toBe(withoutPreset.autoRecallMinScore);
+      expect(withPreset.coreMemory.enabled).toBe(withoutPreset.coreMemory.enabled);
+      expect(withPreset.conflictDetection.enabled).toBe(withoutPreset.conflictDetection.enabled);
+      expect(withPreset.decomposition.enabled).toBe(withoutPreset.decomposition.enabled);
+      expect(withPreset.graphSearchDepth).toBe(withoutPreset.graphSearchDepth);
+      expect(withPreset.recencyWeight).toBe(withoutPreset.recencyWeight);
+    });
+
+    it("should apply 'full' preset defaults", () => {
+      const config = memoryNeo4jConfigSchema.parse({ ...BASE, preset: "full" });
+      expect(config.autoCapture).toBe(true);
+      expect(config.autoRecall).toBe(true);
+      expect(config.autoRecallMinScore).toBe(0.2);
+      expect(config.coreMemory.enabled).toBe(true);
+      expect(config.coreMemory.refreshAtContextPercent).toBe(70);
+      expect(config.conflictDetection.enabled).toBe(true);
+      expect(config.decomposition.enabled).toBe(true);
+      expect(config.graphSearchDepth).toBe(3);
+      expect(config.recencyWeight).toBe(0.15);
+      expect(config.communityDetection?.enabled).toBe(true);
+      expect(config.episodicMemory?.enabled).toBe(true);
+      expect(config.metrics?.enabled).toBe(true);
+      expect(config.cache?.enabled).toBe(true);
+    });
+
+    it("should let user overrides win over preset values", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        ...BASE,
+        preset: "minimal",
+        autoRecallMinScore: 0.5,
+        coreMemory: { enabled: true },
+        graphSearchDepth: 2,
+      });
+      // User overrides should win
+      expect(config.autoRecallMinScore).toBe(0.5);
+      expect(config.coreMemory.enabled).toBe(true);
+      expect(config.graphSearchDepth).toBe(2);
+      // Preset defaults should still apply for non-overridden fields
+      expect(config.conflictDetection.enabled).toBe(false);
+      expect(config.decomposition.enabled).toBe(false);
+      expect(config.recencyWeight).toBe(0.0);
+    });
+
+    it("should deep-merge user overrides within sub-objects", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        ...BASE,
+        preset: "full",
+        // Override only refreshAtContextPercent within coreMemory, keep enabled: true from preset
+        coreMemory: { refreshAtContextPercent: 90 },
+      });
+      expect(config.coreMemory.enabled).toBe(true); // from preset
+      expect(config.coreMemory.refreshAtContextPercent).toBe(90); // user override
+    });
+
+    it("should reject invalid preset value", () => {
+      expect(() => memoryNeo4jConfigSchema.parse({ ...BASE, preset: "turbo" })).toThrow(
+        'preset must be one of minimal, balanced, full, got: "turbo"',
+      );
+    });
+
+    it("should work without preset (backwards compatible)", () => {
+      // No preset field at all — should produce the same result as always
+      const config = memoryNeo4jConfigSchema.parse(BASE);
+      expect(config.autoCapture).toBe(true);
+      expect(config.autoRecall).toBe(true);
+      expect(config.autoRecallMinScore).toBe(0.25);
+      expect(config.coreMemory.enabled).toBe(true);
+      expect(config.conflictDetection.enabled).toBe(true);
+      expect(config.graphSearchDepth).toBe(2);
+      expect(config.recencyWeight).toBe(0.1);
+    });
+
+    it("should export PRESETS constant with all three presets", () => {
+      expect(Object.keys(PRESETS)).toEqual(["minimal", "balanced", "full"]);
     });
   });
 
