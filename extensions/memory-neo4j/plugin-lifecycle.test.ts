@@ -81,6 +81,7 @@ vi.mock("./embeddings.js", () => {
 
 vi.mock("./search.js", () => ({
   hybridSearch: vi.fn().mockResolvedValue([]),
+  buildSearchOptions: vi.fn().mockReturnValue({}),
 }));
 
 vi.mock("./auto-capture.js", () => ({
@@ -185,6 +186,7 @@ function createMockApi(): {
     registerProvider: vi.fn(),
     registerCommand: vi.fn(),
     registerContextEngine: vi.fn(),
+    registerMemoryRuntime: vi.fn(),
     resolvePath: vi.fn((p: string) => p),
     on: vi.fn((hookName: string, handler: HookHandler) => {
       hooks.set(hookName, handler);
