@@ -17,6 +17,7 @@ import {
   hybridSearch,
   detectFactTypeIntent,
   applyFactTypeBoost,
+  buildSearchOptions,
 } from "./search.js";
 
 // ============================================================================
@@ -1273,5 +1274,81 @@ describe("getAdaptiveWeights updates freshness weight", () => {
       const [, , , freshnessW] = getAdaptiveWeights(qt, true);
       expect(freshnessW).toBe(0.2);
     }
+  });
+});
+
+// ============================================================================
+// buildSearchOptions() — signal registry wiring
+// ============================================================================
+
+describe("buildSearchOptions", () => {
+  // Minimal stubs for required params
+  const baseCfg = {
+    graphSearchDepth: 2,
+    recencyWeight: 0.1,
+    communityDetection: { enabled: true, signalWeight: 0.15 },
+  } as Parameters<typeof buildSearchOptions>[0]["cfg"];
+  const baseParams = {
+    cfg: baseCfg,
+    extractionConfig: {} as Parameters<typeof buildSearchOptions>[0]["extractionConfig"],
+    db: { searchCache: undefined } as unknown as Parameters<typeof buildSearchOptions>[0]["db"],
+    logger: {} as Parameters<typeof buildSearchOptions>[0]["logger"],
+  };
+
+  it("should use legacy recencyWeight when signals not set", () => {
+    const opts = buildSearchOptions(baseParams)!;
+    expect(opts.recencyWeight).toBe(0.1);
+  });
+
+  it("should use legacy communityDetection.signalWeight when signals not set", () => {
+    const opts = buildSearchOptions(baseParams)!;
+    expect(opts.communitySignalWeight).toBe(0.15);
+  });
+
+  it("should prefer signals.recencyWeight over top-level recencyWeight", () => {
+    const opts = buildSearchOptions({
+      ...baseParams,
+      cfg: { ...baseCfg, signals: { recencyWeight: 0.5 } },
+    })!;
+    expect(opts.recencyWeight).toBe(0.5);
+  });
+
+  it("should prefer signals.communityWeight over communityDetection.signalWeight", () => {
+    const opts = buildSearchOptions({
+      ...baseParams,
+      cfg: { ...baseCfg, signals: { communityWeight: 0.4 } },
+    })!;
+    expect(opts.communitySignalWeight).toBe(0.4);
+  });
+
+  it("should wire mpfpSignalWeight from signals.mpfpWeight", () => {
+    const opts = buildSearchOptions({
+      ...baseParams,
+      cfg: { ...baseCfg, signals: { mpfpWeight: 0.3 } },
+    })!;
+    expect(opts.mpfpSignalWeight).toBe(0.3);
+  });
+
+  it("should wire observationSignalWeight from signals.observationWeight", () => {
+    const opts = buildSearchOptions({
+      ...baseParams,
+      cfg: { ...baseCfg, signals: { observationWeight: 0.1 } },
+    })!;
+    expect(opts.observationSignalWeight).toBe(0.1);
+  });
+
+  it("should wire opinionSignalWeight from signals.opinionWeight", () => {
+    const opts = buildSearchOptions({
+      ...baseParams,
+      cfg: { ...baseCfg, signals: { opinionWeight: 0.35 } },
+    })!;
+    expect(opts.opinionSignalWeight).toBe(0.35);
+  });
+
+  it("should leave signal weights undefined when signals section is absent", () => {
+    const opts = buildSearchOptions(baseParams)!;
+    expect(opts.mpfpSignalWeight).toBeUndefined();
+    expect(opts.observationSignalWeight).toBeUndefined();
+    expect(opts.opinionSignalWeight).toBeUndefined();
   });
 });

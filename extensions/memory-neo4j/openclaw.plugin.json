@@ -88,6 +88,10 @@
       "label": "Decay Curves",
       "help": "Per-category decay curve overrides. Example: {\"fact\": {\"halfLifeDays\": 60}, \"other\": {\"halfLifeDays\": 14}}"
     },
+    "signals": {
+      "label": "Signal Weights",
+      "help": "Per-signal weight configuration for search scoring. Consolidates recencyWeight, communityDetection.signalWeight, and other hardcoded signal weights into a single section."
+    },
     "sleepCycle.schedule": {
       "label": "Sleep Cycle Schedule",
       "help": "Cron expression for automatic memory consolidation (e.g. '0 3 * * *' for 3:00 AM daily). Set to null to disable."
@@ -248,6 +252,38 @@
       "recencyWeight": {
         "type": "number",
         "minimum": 0
+      },
+      "signals": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Per-signal weight configuration for search scoring. Provides a unified location for base weights. All weights must be >= 0.",
+        "properties": {
+          "recencyWeight": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Post-RRF recency boost (default: 0.1). Takes precedence over top-level recencyWeight."
+          },
+          "communityWeight": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Community detection signal weight in RRF fusion (default: 0.15). Takes precedence over communityDetection.signalWeight."
+          },
+          "mpfpWeight": {
+            "type": "number",
+            "minimum": 0,
+            "description": "MPFP meta-path signal weight in RRF fusion (default: 0.2)."
+          },
+          "observationWeight": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Observation summary signal weight in RRF fusion (default: 0.15)."
+          },
+          "opinionWeight": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Opinion/belief signal weight in RRF fusion (default: 0.2)."
+          }
+        }
       },
       "decomposition": {
         "type": "object",

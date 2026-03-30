@@ -1401,6 +1401,8 @@ export function buildSearchOptions(params: {
   includeQuarantined?: boolean;
 }): Parameters<typeof hybridSearch>[6] {
   const { cfg, extractionConfig, db, logger } = params;
+  // signals section takes precedence over scattered legacy locations
+  const signals = cfg.signals;
   return {
     graphSearchDepth: cfg.graphSearchDepth,
     graphSeedCap: cfg.graphSeedCap,
@@ -1408,8 +1410,11 @@ export function buildSearchOptions(params: {
     graphCausalRelTypes: cfg.graphCausalRelTypes,
     selfEntityName: params.selfEntityName,
     communityDetectionEnabled: cfg.communityDetection?.enabled,
-    communitySignalWeight: cfg.communityDetection?.signalWeight,
-    recencyWeight: cfg.recencyWeight,
+    communitySignalWeight: signals?.communityWeight ?? cfg.communityDetection?.signalWeight,
+    recencyWeight: signals?.recencyWeight ?? cfg.recencyWeight,
+    mpfpSignalWeight: signals?.mpfpWeight,
+    observationSignalWeight: signals?.observationWeight,
+    opinionSignalWeight: signals?.opinionWeight,
     logger,
     searchCache: db.searchCache,
     includeExpired: params.includeExpired,

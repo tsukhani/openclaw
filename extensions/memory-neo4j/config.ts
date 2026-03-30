@@ -60,6 +60,13 @@ export const PRESETS: Record<ConfigPreset, Record<string, unknown>> = {
     communityDetection: { enabled: true },
     episodicMemory: { enabled: true },
     cache: { enabled: true },
+    signals: {
+      recencyWeight: 0.15,
+      communityWeight: 0.2,
+      mpfpWeight: 0.25,
+      observationWeight: 0.2,
+      opinionWeight: 0.25,
+    },
   },
 };
 
@@ -274,6 +281,27 @@ export type MemoryNeo4jConfig = {
     literalism: number;
     /** How much to weight emotional/preference signals. 1 = low empathy, 5 = high empathy. */
     empathy: number;
+  };
+  /**
+   * Per-signal weight configuration for search scoring.
+   * Provides a unified location for base weights that were previously scattered
+   * across top-level `recencyWeight`, `communityDetection.signalWeight`, and
+   * hardcoded defaults in search.ts. The query-adaptive system still scales
+   * these base weights per query type.
+   *
+   * All weights must be >= 0. Omitting a weight uses the existing default.
+   */
+  signals?: {
+    /** Post-RRF recency boost. Default: 0.1. Takes precedence over top-level recencyWeight. */
+    recencyWeight?: number;
+    /** Community detection signal weight in RRF fusion. Default: 0.15. Takes precedence over communityDetection.signalWeight. */
+    communityWeight?: number;
+    /** MPFP meta-path signal weight in RRF fusion. Default: 0.2. */
+    mpfpWeight?: number;
+    /** Observation summary signal weight in RRF fusion. Default: 0.15. */
+    observationWeight?: number;
+    /** Opinion/belief signal weight in RRF fusion. Default: 0.2. */
+    opinionWeight?: number;
   };
 };
 
@@ -527,6 +555,13 @@ const SUB_SCHEMAS: Record<string, ReturnType<typeof allowedKeys>> = {
   episodicMemory: allowedKeys("enabled", "captureAssistant", "retentionDays"),
   instructionDetection: allowedKeys("enabled", "llmFallback"),
   disposition: allowedKeys("skepticism", "literalism", "empathy"),
+  signals: allowedKeys(
+    "recencyWeight",
+    "communityWeight",
+    "mpfpWeight",
+    "observationWeight",
+    "opinionWeight",
+  ),
 };
 
 const TOP_LEVEL_KEYS = [
@@ -558,6 +593,7 @@ const TOP_LEVEL_KEYS = [
   "episodicMemory",
   "instructionDetection",
   "disposition",
+  "signals",
 ];
 
 const RawConfigSchema = allowedKeys(...TOP_LEVEL_KEYS);
@@ -1025,6 +1061,29 @@ export const memoryNeo4jConfigSchema = {
         }
       : undefined;
 
+    // -- signals --
+    const signalsRaw = section(cfg, "signals") as Record<string, unknown> | undefined;
+    let signals: MemoryNeo4jConfig["signals"];
+    if (signalsRaw) {
+      const parseSignalWeight = (raw: unknown, name: string): number | undefined => {
+        if (raw === undefined || raw === null) return undefined;
+        if (typeof raw !== "number") {
+          throw new Error(`signals.${name} must be a number, got: ${String(raw)}`);
+        }
+        if (raw < 0) {
+          throw new Error(`signals.${name} must be >= 0, got: ${raw}`);
+        }
+        return raw;
+      };
+      signals = {
+        recencyWeight: parseSignalWeight(signalsRaw.recencyWeight, "recencyWeight"),
+        communityWeight: parseSignalWeight(signalsRaw.communityWeight, "communityWeight"),
+        mpfpWeight: parseSignalWeight(signalsRaw.mpfpWeight, "mpfpWeight"),
+        observationWeight: parseSignalWeight(signalsRaw.observationWeight, "observationWeight"),
+        opinionWeight: parseSignalWeight(signalsRaw.opinionWeight, "opinionWeight"),
+      };
+    }
+
     return {
       neo4j: { uri: neo4jUri, username: neo4jUsername, password: neo4jPassword },
       embedding: { provider, apiKey, model: embeddingModel, baseUrl },
@@ -1070,6 +1129,7 @@ export const memoryNeo4jConfigSchema = {
         llmFallback: instrRaw?.llmFallback === true,
       },
       disposition,
+      signals,
     };
   },
 };

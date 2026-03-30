@@ -582,6 +582,12 @@ describe("memoryNeo4jConfigSchema.parse", () => {
       expect(config.episodicMemory?.enabled).toBe(true);
       expect(config.metrics).toBeUndefined();
       expect(config.cache?.enabled).toBe(true);
+      expect(config.signals).toBeDefined();
+      expect(config.signals?.recencyWeight).toBe(0.15);
+      expect(config.signals?.communityWeight).toBe(0.2);
+      expect(config.signals?.mpfpWeight).toBe(0.25);
+      expect(config.signals?.observationWeight).toBe(0.2);
+      expect(config.signals?.opinionWeight).toBe(0.25);
     });
 
     it("should let user overrides win over preset values", () => {
@@ -633,6 +639,103 @@ describe("memoryNeo4jConfigSchema.parse", () => {
 
     it("should export PRESETS constant with all three presets", () => {
       expect(Object.keys(PRESETS)).toEqual(["minimal", "balanced", "full"]);
+    });
+  });
+
+  describe("signals config", () => {
+    const BASE = {
+      neo4j: { uri: "bolt://localhost:7687", password: "" },
+      embedding: { provider: "ollama" as const },
+    };
+
+    it("should parse signals section with all weights", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        ...BASE,
+        signals: {
+          recencyWeight: 0.2,
+          communityWeight: 0.3,
+          mpfpWeight: 0.25,
+          observationWeight: 0.1,
+          opinionWeight: 0.35,
+        },
+      });
+      expect(config.signals).toEqual({
+        recencyWeight: 0.2,
+        communityWeight: 0.3,
+        mpfpWeight: 0.25,
+        observationWeight: 0.1,
+        opinionWeight: 0.35,
+      });
+    });
+
+    it("should accept partial signals (only some weights)", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        ...BASE,
+        signals: { mpfpWeight: 0.5 },
+      });
+      expect(config.signals?.mpfpWeight).toBe(0.5);
+      expect(config.signals?.recencyWeight).toBeUndefined();
+      expect(config.signals?.communityWeight).toBeUndefined();
+    });
+
+    it("should accept zero weights", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        ...BASE,
+        signals: { recencyWeight: 0, opinionWeight: 0 },
+      });
+      expect(config.signals?.recencyWeight).toBe(0);
+      expect(config.signals?.opinionWeight).toBe(0);
+    });
+
+    it("should reject negative weights", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          ...BASE,
+          signals: { mpfpWeight: -0.1 },
+        }),
+      ).toThrow("signals.mpfpWeight must be >= 0");
+    });
+
+    it("should reject unknown keys in signals", () => {
+      expect(() =>
+        memoryNeo4jConfigSchema.parse({
+          ...BASE,
+          signals: { unknownSignal: 0.5 },
+        }),
+      ).toThrow("signals config has unknown keys: unknownSignal");
+    });
+
+    it("should leave signals undefined when not provided", () => {
+      const config = memoryNeo4jConfigSchema.parse(BASE);
+      expect(config.signals).toBeUndefined();
+    });
+
+    it("should be set from full preset", () => {
+      const config = memoryNeo4jConfigSchema.parse({ ...BASE, preset: "full" });
+      expect(config.signals).toBeDefined();
+      expect(config.signals?.recencyWeight).toBe(0.15);
+      expect(config.signals?.mpfpWeight).toBe(0.25);
+    });
+
+    it("should coexist with legacy recencyWeight (backward compat)", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        ...BASE,
+        recencyWeight: 0.3,
+        signals: { recencyWeight: 0.5 },
+      });
+      // Both are stored; precedence is resolved by consumers (search.ts)
+      expect(config.recencyWeight).toBe(0.3);
+      expect(config.signals?.recencyWeight).toBe(0.5);
+    });
+
+    it("should coexist with legacy communityDetection.signalWeight (backward compat)", () => {
+      const config = memoryNeo4jConfigSchema.parse({
+        ...BASE,
+        communityDetection: { enabled: true, signalWeight: 0.1 },
+        signals: { communityWeight: 0.4 },
+      });
+      expect(config.communityDetection?.signalWeight).toBe(0.1);
+      expect(config.signals?.communityWeight).toBe(0.4);
     });
   });
 
