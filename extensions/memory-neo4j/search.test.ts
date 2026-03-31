@@ -1351,4 +1351,309 @@ describe("buildSearchOptions", () => {
     expect(opts.observationSignalWeight).toBeUndefined();
     expect(opts.opinionSignalWeight).toBeUndefined();
   });
+
+  it("should wire provenanceEnabled from config (OP-200)", () => {
+    const opts = buildSearchOptions({
+      ...baseParams,
+      cfg: { ...baseCfg, provenanceEnabled: true },
+    })!;
+    expect(opts.provenanceEnabled).toBe(true);
+  });
+
+  it("should default provenanceEnabled to undefined when not set (OP-200)", () => {
+    const opts = buildSearchOptions(baseParams)!;
+    expect(opts.provenanceEnabled).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// OP-200: Retrieval provenance — BM25 matched terms
+// ============================================================================
+
+describe("BM25 matched terms provenance (OP-200)", () => {
+  type MockedDb = {
+    [K in keyof Pick<
+      Neo4jMemoryClient,
+      "vectorSearch" | "bm25Search" | "graphSearch" | "recordRetrievals"
+    >]: ReturnType<typeof vi.fn>;
+  };
+  type MockedEmbeddings = {
+    [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
+  };
+
+  const mockDb: MockedDb = {
+    vectorSearch: vi.fn(),
+    bm25Search: vi.fn(),
+    graphSearch: vi.fn(),
+    recordRetrievals: vi.fn(),
+  };
+  const mockEmbeddings: MockedEmbeddings = {
+    embed: vi.fn(),
+    embedBatch: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockEmbeddings.embed.mockResolvedValue([0.1, 0.2, 0.3]);
+    mockDb.recordRetrievals.mockResolvedValue(undefined);
+    mockDb.vectorSearch.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+  });
+
+  it("should attach matchedTerms to BM25 results when provenanceEnabled", async () => {
+    mockDb.bm25Search.mockResolvedValue([
+      {
+        id: "mem-1",
+        text: "Sarah likes sushi and pizza",
+        category: "preference",
+        importance: 0.8,
+        createdAt: "2026-01-01T00:00:00Z",
+        score: 0.9,
+      },
+    ]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "sarah sushi",
+      5,
+      "agent-1",
+      false,
+      { provenanceEnabled: true },
+    );
+
+    expect(results.length).toBeGreaterThan(0);
+    // The top result should have provenance from BM25 with matched terms
+    const bm25Prov = results[0].provenance?.find((p) => p.signal === "bm25");
+    expect(bm25Prov).toBeDefined();
+    expect(bm25Prov!.matchedTerms).toContain("sarah");
+    expect(bm25Prov!.matchedTerms).toContain("sushi");
+  });
+
+  it("should not attach provenance when provenanceEnabled is false", async () => {
+    mockDb.bm25Search.mockResolvedValue([
+      {
+        id: "mem-1",
+        text: "Sarah likes sushi",
+        category: "preference",
+        importance: 0.8,
+        createdAt: "2026-01-01T00:00:00Z",
+        score: 0.9,
+      },
+    ]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "sarah sushi",
+      5,
+      "agent-1",
+      false,
+      {},
+    );
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].provenance).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// OP-200: Retrieval provenance — RRF fusion provenance collection
+// ============================================================================
+
+describe("fuseWithConfidenceRRF — provenance collection (OP-200)", () => {
+  function makeSignalWithProv(id: string, score: number, signal: string): SearchSignalResult {
+    return {
+      id,
+      text: `Memory ${id}`,
+      category: "fact",
+      importance: 0.7,
+      createdAt: "2025-01-01T00:00:00Z",
+      score,
+      provenance: { signal: signal as any },
+    };
+  }
+
+  it("should collect provenance from contributing signals", () => {
+    const vecSignal = [makeSignalWithProv("mem-1", 0.9, "vector")];
+    const bm25Signal = [
+      {
+        id: "mem-1",
+        text: "Memory mem-1",
+        category: "fact",
+        importance: 0.7,
+        createdAt: "2025-01-01T00:00:00Z",
+        score: 0.8,
+        provenance: { signal: "bm25" as const, matchedTerms: ["test"] },
+      },
+    ];
+    const empty: SearchSignalResult[] = [];
+
+    const result = fuseWithConfidenceRRF(
+      [vecSignal, bm25Signal, empty, empty, empty, empty, empty, empty],
+      60,
+      [1.0, 1.0, 0, 0, 0, 0, 0, 0],
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].provenance).toBeDefined();
+    expect(result[0].provenance).toHaveLength(2);
+    expect(result[0].provenance![0].signal).toBe("vector");
+    expect(result[0].provenance![1].signal).toBe("bm25");
+    expect(result[0].provenance![1].matchedTerms).toEqual(["test"]);
+  });
+
+  it("should not include provenance when signals have no provenance", () => {
+    const signal: SearchSignalResult[] = [
+      {
+        id: "mem-1",
+        text: "Memory",
+        category: "fact",
+        importance: 0.7,
+        createdAt: "2025-01-01T00:00:00Z",
+        score: 0.9,
+      },
+    ];
+    const empty: SearchSignalResult[] = [];
+
+    const result = fuseWithConfidenceRRF(
+      [signal, empty, empty, empty, empty, empty, empty, empty],
+      60,
+      [1.0, 0, 0, 0, 0, 0, 0, 0],
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].provenance).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// OP-200: Retrieval provenance — FusionProvenance annotation
+// ============================================================================
+
+describe("hybridSearch — FusionProvenance annotation (OP-200)", () => {
+  type MockedDb = {
+    [K in keyof Pick<
+      Neo4jMemoryClient,
+      "vectorSearch" | "bm25Search" | "graphSearch" | "recordRetrievals"
+    >]: ReturnType<typeof vi.fn>;
+  };
+  type MockedEmbeddings = {
+    [K in keyof Pick<Embeddings, "embed" | "embedBatch">]: ReturnType<typeof vi.fn>;
+  };
+
+  const mockDb: MockedDb = {
+    vectorSearch: vi.fn(),
+    bm25Search: vi.fn(),
+    graphSearch: vi.fn(),
+    recordRetrievals: vi.fn(),
+  };
+  const mockEmbeddings: MockedEmbeddings = {
+    embed: vi.fn(),
+    embedBatch: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockEmbeddings.embed.mockResolvedValue([0.1, 0.2, 0.3]);
+    mockDb.recordRetrievals.mockResolvedValue(undefined);
+    mockDb.bm25Search.mockResolvedValue([]);
+    mockDb.graphSearch.mockResolvedValue([]);
+  });
+
+  it("should attach fusionProvenance with contributingSignals to top 5 results", async () => {
+    mockDb.vectorSearch.mockResolvedValue([
+      {
+        id: "m1",
+        text: "T1",
+        category: "fact",
+        importance: 0.8,
+        createdAt: "2026-01-01",
+        score: 0.95,
+      },
+      {
+        id: "m2",
+        text: "T2",
+        category: "fact",
+        importance: 0.7,
+        createdAt: "2026-01-01",
+        score: 0.85,
+      },
+    ]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      { provenanceEnabled: true },
+    );
+
+    expect(results.length).toBe(2);
+    expect(results[0].fusionProvenance).toBeDefined();
+    expect(results[0].fusionProvenance!.contributingSignals).toContain("vector");
+    expect(results[0].fusionProvenance!.recencyBoosted).toBe(true);
+  });
+
+  it("should not attach fusionProvenance when provenanceEnabled is false", async () => {
+    mockDb.vectorSearch.mockResolvedValue([
+      {
+        id: "m1",
+        text: "T1",
+        category: "fact",
+        importance: 0.8,
+        createdAt: "2026-01-01",
+        score: 0.95,
+      },
+    ]);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      5,
+      "agent-1",
+      false,
+      {},
+    );
+
+    expect(results.length).toBe(1);
+    expect(results[0].fusionProvenance).toBeUndefined();
+    expect(results[0].provenance).toBeUndefined();
+  });
+
+  it("should only attach provenance to top 5 results (context budget)", async () => {
+    // Create 7 results
+    const vecResults = Array.from({ length: 7 }, (_, i) => ({
+      id: `m${i}`,
+      text: `Memory ${i}`,
+      category: "fact",
+      importance: 0.8,
+      createdAt: "2026-01-01",
+      score: 0.9 - i * 0.1,
+    }));
+    mockDb.vectorSearch.mockResolvedValue(vecResults);
+
+    const results = await hybridSearch(
+      mockDb as unknown as Neo4jMemoryClient,
+      mockEmbeddings as unknown as Embeddings,
+      "test query",
+      7,
+      "agent-1",
+      false,
+      { provenanceEnabled: true },
+    );
+
+    expect(results.length).toBe(7);
+    // Top 5 should have fusionProvenance
+    for (let i = 0; i < 5; i++) {
+      expect(results[i].fusionProvenance).toBeDefined();
+    }
+    // Results 6+ should not
+    for (let i = 5; i < results.length; i++) {
+      expect(results[i].fusionProvenance).toBeUndefined();
+    }
+  });
 });

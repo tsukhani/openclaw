@@ -7,7 +7,7 @@
  * Reference: Cormack et al. (2009), extended with confidence weighting.
  */
 
-import type { SearchSignalResult, SignalAttribution } from "./schema.js";
+import type { SearchSignalResult, SignalAttribution, SignalProvenance } from "./schema.js";
 
 // ============================================================================
 // Signal Score Normalization
@@ -40,6 +40,8 @@ export function normalizeSignalScores(results: SearchSignalResult[]): SearchSign
 export type SignalEntry = {
   rank: number; // 1-indexed
   score: number; // 0-1 normalized
+  /** OP-200: Per-result provenance from this signal (when provenance tracking enabled). */
+  provenance?: SignalProvenance;
 };
 
 export type FusedCandidate = {
@@ -60,6 +62,8 @@ export type FusedCandidate = {
     observation: SignalAttribution;
     opinion?: SignalAttribution;
   };
+  /** OP-200: Provenance records from all contributing signals. */
+  provenance?: SignalProvenance[];
 };
 
 /**
@@ -83,14 +87,18 @@ export function fuseWithConfidenceRRF(
       `fuseWithConfidenceRRF: signals.length (${signals.length}) !== weights.length (${weights.length})`,
     );
   }
-  // Build per-signal rank/score lookups
+  // Build per-signal rank/score lookups (with provenance when present)
   const signalMaps: Map<string, SignalEntry>[] = signals.map((signal) => {
     const map = new Map<string, SignalEntry>();
     for (let i = 0; i < signal.length; i++) {
       const entry = signal[i];
       // If duplicate in same signal, keep first (higher ranked)
       if (!map.has(entry.id)) {
-        map.set(entry.id, { rank: i + 1, score: entry.score });
+        map.set(entry.id, {
+          rank: i + 1,
+          score: entry.score,
+          provenance: entry.provenance,
+        });
       }
     }
     return map;
@@ -129,15 +137,21 @@ export function fuseWithConfidenceRRF(
   // Calculate confidence-weighted RRF score for each candidate
   const results: FusedCandidate[] = [];
   const NO_SIGNAL: SignalAttribution = { rank: 0, score: 0 };
-
   for (const [id, meta] of candidateMetadata) {
     let rrfScore = 0;
+    // OP-200: Collect provenance from contributing signals.
+    let provenance: SignalProvenance[] | undefined;
 
     for (let i = 0; i < signalMaps.length; i++) {
       const entry = signalMaps[i].get(id);
       if (entry && entry.rank > 0) {
         // Confidence-weighted: multiply by original score
         rrfScore += weights[i] * entry.score * (1 / (k + entry.rank));
+        // OP-200: Collect provenance from this signal if present.
+        if (entry.provenance) {
+          provenance ??= [];
+          provenance.push(entry.provenance);
+        }
       }
     }
 
@@ -166,6 +180,7 @@ export function fuseWithConfidenceRRF(
       validFrom: meta.validFrom,
       rrfScore: weightedRrfScore,
       signals,
+      provenance,
     });
   }
 

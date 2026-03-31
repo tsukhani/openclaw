@@ -75,10 +75,11 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
         .option("--limit <n>", "Max results", "5")
         .option("--agent <id>", "Agent id (default: default)")
         .option("--include-expired", "Include superseded/expired memories in results")
+        .option("--provenance", "Include retrieval provenance (traversal paths, matched terms)")
         .action(
           async (
             query: string,
-            opts: { limit: string; agent?: string; includeExpired?: boolean },
+            opts: { limit: string; agent?: string; includeExpired?: boolean; provenance?: boolean },
           ) => {
             await handleSearch(db, embeddings, extractionConfig, cfg, query, opts);
           },

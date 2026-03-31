@@ -287,9 +287,10 @@ export async function handleSearch(
   extractionConfig: ExtractionConfig,
   cfg: MemoryNeo4jConfig,
   query: string,
-  opts: { limit: string; agent?: string; includeExpired?: boolean },
+  opts: { limit: string; agent?: string; includeExpired?: boolean; provenance?: boolean },
 ): Promise<void> {
   try {
+    const provenanceEnabled = opts.provenance === true;
     const results = await hybridSearch(
       db,
       embeddings,
@@ -300,6 +301,7 @@ export async function handleSearch(
       {
         graphSearchDepth: cfg.graphSearchDepth,
         includeExpired: opts.includeExpired ?? false,
+        provenanceEnabled,
       },
     );
 
@@ -308,20 +310,27 @@ export async function handleSearch(
     const graphResults = results.filter((r) => (r.signals?.graph?.score ?? 0) > 0);
     const memoryResults = results.filter((r) => (r.signals?.graph?.score ?? 0) === 0);
 
-    const fmt = (r: (typeof results)[number]) => ({
-      id: r.id,
-      text: r.text,
-      category: r.category,
-      importance: r.importance,
-      score: r.score,
-      signals: r.signals
-        ? {
-            vector: r.signals.vector?.score?.toFixed(4) ?? "\u2014",
-            bm25: r.signals.bm25?.score?.toFixed(4) ?? "\u2014",
-            graph: r.signals.graph?.score?.toFixed(4) ?? "\u2014",
-          }
-        : undefined,
-    });
+    const fmt = (r: (typeof results)[number]) => {
+      const base: Record<string, unknown> = {
+        id: r.id,
+        text: r.text,
+        category: r.category,
+        importance: r.importance,
+        score: r.score,
+        signals: r.signals
+          ? {
+              vector: r.signals.vector?.score?.toFixed(4) ?? "\u2014",
+              bm25: r.signals.bm25?.score?.toFixed(4) ?? "\u2014",
+              graph: r.signals.graph?.score?.toFixed(4) ?? "\u2014",
+            }
+          : undefined,
+      };
+      if (provenanceEnabled) {
+        if (r.provenance) base.provenance = r.provenance;
+        if (r.fusionProvenance) base.fusionProvenance = r.fusionProvenance;
+      }
+      return base;
+    };
 
     const output = {
       query,

@@ -246,6 +246,13 @@ export type MemoryNeo4jConfig = {
     /** Default trust scores per MemorySource type. Unlisted sources default to 1.0. */
     sourceDefaults?: Record<string, number>;
   };
+  /**
+   * Enable retrieval provenance tracking on search results (OP-200).
+   * When enabled, search results include traversal paths, matched terms,
+   * and fusion rationale. Adds ~20-40% more data per Cypher result row
+   * for graph/MPFP signals. Default: false.
+   */
+  provenanceEnabled?: boolean;
   /** Community detection and summarization. Default: disabled. */
   communityDetection?: {
     enabled: boolean;

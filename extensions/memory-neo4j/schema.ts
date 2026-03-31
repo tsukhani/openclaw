@@ -174,6 +174,64 @@ export type ExtractionResult = {
 // Search Types
 // ============================================================================
 
+/** Signal name used in provenance tracking (OP-200). */
+export type SignalName =
+  | "vector"
+  | "bm25"
+  | "graph"
+  | "freshness"
+  | "community"
+  | "mpfp"
+  | "observation"
+  | "opinion";
+
+/** A single hop in a graph or MPFP traversal path (OP-200). */
+export type TraversalHop = {
+  nodeId: string;
+  nodeLabel: "Memory" | "Entity";
+  /** Human-readable label (entity name, or truncated memory text — max 60 chars). */
+  displayName?: string;
+  /** Edge type that led to this node. */
+  edgeType: "SIMILAR" | "TEMPORAL_NEXT" | "EXTRACTED_FROM" | "CAUSED_BY";
+};
+
+/** Provenance record for a single signal's contribution to a result (OP-200). */
+export type SignalProvenance = {
+  /** Which signal found this result. */
+  signal: SignalName;
+  /** For BM25: matched query terms (intersection with memory text tokens). */
+  matchedTerms?: string[];
+  /** For graph/MPFP: the traversal path from seed to this memory.
+   *  First element is the seed node; last is the hop before the result. Max 3 hops. */
+  traversalPath?: TraversalHop[];
+  /** For MPFP: the meta-path pattern that produced this result. */
+  metaPathPattern?: Array<"SIMILAR" | "TEMPORAL_NEXT" | "EXTRACTED_FROM" | "CAUSED_BY">;
+  /** For MPFP/observation/opinion: the primary signal that seeded this result. */
+  seededBy?: "vector" | "bm25" | "both";
+  /** For graph: intermediate Entity names encountered during spreading activation. */
+  intermediateEntities?: string[];
+  /** The seed memory ID that initiated the traversal (graph/MPFP). */
+  seedId?: string;
+};
+
+/** Post-fusion provenance: which boosts/adjustments were applied (OP-200). */
+export type FusionProvenance = {
+  /** Signals that contributed to the RRF score (with non-zero weight). */
+  contributingSignals: SignalName[];
+  /** True if fact-type boost was applied. */
+  factTypeBoosted?: boolean;
+  /** Fact type that triggered the boost (e.g. "opinion", "experience"). */
+  factTypeMatch?: string;
+  /** True if recency multiplicative boost was applied. */
+  recencyBoosted?: boolean;
+  /** True if the result was reranked (cross-encoder or LLM). */
+  reranked?: boolean;
+  /** True if result came via query decomposition. */
+  fromDecomposition?: boolean;
+  /** Sub-query that found this result (when decomposed). */
+  decomposedSubQuery?: string;
+};
+
 export type SearchSignalResult = {
   id: string;
   text: string;
@@ -184,6 +242,8 @@ export type SearchSignalResult = {
   supersededBy?: string; // ID of the memory that replaced this one (OP-193)
   score: number;
   trustScore?: number; // 0.0–1.0 — memory reliability (for trust-weighted ranking)
+  /** Per-result provenance from this signal. Populated when provenance tracking is enabled (OP-200). */
+  provenance?: SignalProvenance;
 };
 
 export type SignalAttribution = {
@@ -224,6 +284,10 @@ export type HybridSearchResult = {
   opinionSource?: { topic: string; belief: string; confidence: number };
   /** True when results were produced via compound query decomposition (OP-190). */
   decomposed?: boolean;
+  /** Detailed provenance for contributing signals. Top 5 results only when enabled (OP-200). */
+  provenance?: SignalProvenance[];
+  /** Post-fusion provenance: boosts, adjustments, decomposition info (OP-200). */
+  fusionProvenance?: FusionProvenance;
   signals?: {
     vector: SignalAttribution;
     bm25: SignalAttribution;

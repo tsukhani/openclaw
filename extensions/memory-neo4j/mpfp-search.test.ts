@@ -336,4 +336,93 @@ describe("mpfpSearch", () => {
       expect(results[i - 1].score).toBeGreaterThanOrEqual(results[i].score);
     }
   });
+
+  // OP-200: Provenance tracking tests
+
+  it("attaches provenance with pattern and seedId when provenanceEnabled", async () => {
+    session.executeRead.mockImplementation(async (fn: any) => {
+      const mockTx = {
+        run: vi.fn().mockImplementation((query: string) => {
+          // Memory metadata fetch
+          if (query.includes("m.id IN $ids")) {
+            return Promise.resolve({
+              records: [
+                mockRecord({
+                  id: "mem-5",
+                  text: "found memory",
+                  category: "fact",
+                  importance: 0.8,
+                  createdAt: "2026-01-01T00:00:00Z",
+                  validFrom: null,
+                  trustScore: 1.0,
+                }),
+              ],
+            });
+          }
+          // Pattern traversal — include provenance columns
+          return Promise.resolve({
+            records: [
+              mockRecord({
+                nodeId: "mem-5",
+                score: 0.72,
+                label: "Memory",
+                seedId: "mem-1",
+                // No intermediate hops for 2-hop pattern where final is the result
+              }),
+            ],
+          });
+        }),
+      };
+      return fn(mockTx);
+    });
+
+    const results = await mpfpSearch(session as any, "agent-1", ["mem-1", "mem-2"], "semantic", {
+      logger: logger as any,
+      provenanceEnabled: true,
+    });
+
+    const found = results.find((r) => r.id === "mem-5");
+    expect(found).toBeDefined();
+    expect(found!.provenance).toBeDefined();
+    expect(found!.provenance!.signal).toBe("mpfp");
+    expect(found!.provenance!.metaPathPattern).toBeDefined();
+    expect(found!.provenance!.seedId).toBe("mem-1");
+  });
+
+  it("does not attach provenance when provenanceEnabled is false", async () => {
+    session.executeRead.mockImplementation(async (fn: any) => {
+      const mockTx = {
+        run: vi.fn().mockImplementation((query: string) => {
+          if (query.includes("m.id IN $ids")) {
+            return Promise.resolve({
+              records: [
+                mockRecord({
+                  id: "mem-5",
+                  text: "found memory",
+                  category: "fact",
+                  importance: 0.8,
+                  createdAt: "2026-01-01T00:00:00Z",
+                  validFrom: null,
+                  trustScore: 1.0,
+                }),
+              ],
+            });
+          }
+          return Promise.resolve({
+            records: [mockRecord({ nodeId: "mem-5", score: 0.72, label: "Memory" })],
+          });
+        }),
+      };
+      return fn(mockTx);
+    });
+
+    const results = await mpfpSearch(session as any, "agent-1", ["mem-1"], "semantic", {
+      logger: logger as any,
+      provenanceEnabled: false,
+    });
+
+    const found = results.find((r) => r.id === "mem-5");
+    expect(found).toBeDefined();
+    expect(found!.provenance).toBeUndefined();
+  });
 });

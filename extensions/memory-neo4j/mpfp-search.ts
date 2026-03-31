@@ -19,7 +19,7 @@
  */
 
 import type { Session } from "neo4j-driver";
-import type { Logger, SearchSignalResult } from "./schema.js";
+import type { Logger, SearchSignalResult, SignalProvenance, TraversalHop } from "./schema.js";
 
 // ── Meta-path pattern definitions ───────────────────────────────────────────
 
@@ -60,6 +60,8 @@ export type MpfpOptions = {
   topKNeighbors?: number;
   threshold?: number;
   logger?: Logger;
+  /** OP-200: Enable retrieval provenance tracking on results. */
+  provenanceEnabled?: boolean;
 };
 
 // ── Core traversal ──────────────────────────────────────────────────────────
@@ -69,6 +71,12 @@ type TraversalHit = {
   score: number;
   /** Label of the final node (Memory or Entity). */
   label: "Memory" | "Entity";
+  /** OP-200: Provenance — the meta-path pattern that found this hit. */
+  pattern?: MetaPathPattern;
+  /** OP-200: Provenance — seed Memory ID that started the traversal. */
+  seedId?: string;
+  /** OP-200: Provenance — intermediate hop node IDs/labels/names (max 3). */
+  hops?: TraversalHop[];
 };
 
 /**
@@ -83,6 +91,7 @@ async function traversePattern(
   seedNodeIds: string[],
   pattern: MetaPathPattern,
   options: Required<Pick<MpfpOptions, "alpha" | "topKNeighbors" | "threshold">>,
+  provenanceEnabled = false,
 ): Promise<TraversalHit[]> {
   if (seedNodeIds.length === 0 || pattern.length === 0) return [];
 
@@ -130,6 +139,20 @@ async function traversePattern(
   const lastEdge = pattern[pattern.length - 1];
   const finalIsEntity = lastEdge === "EXTRACTED_FROM";
 
+  // OP-200: When provenance is enabled, also return seed.id and intermediate hop info.
+  const hopReturnCols = provenanceEnabled
+    ? `, seed.id AS seedId` +
+      hopAliases
+        .slice(0, -1) // Intermediate hops only (exclude final node which is the result)
+        .map(
+          (h, i) =>
+            `, ${h}.id AS hop${i}Id` +
+            `, CASE WHEN 'Entity' IN labels(${h}) THEN ${h}.name ELSE left(${h}.text, 60) END AS hop${i}Name` +
+            `, CASE WHEN 'Entity' IN labels(${h}) THEN 'Entity' ELSE 'Memory' END AS hop${i}Label`,
+        )
+        .join("")
+    : "";
+
   const cypher = `
     MATCH (seed:Memory)${matchParts.join("")}
     WHERE seed.id IN $seedIds
@@ -139,11 +162,21 @@ async function traversePattern(
     WITH DISTINCT ${finalNode},
          ${decayFactor} * ${weightProduct} AS score,
          labels(${finalNode}) AS nodeLabels
+         ${
+           provenanceEnabled
+             ? `, seed` +
+               hopAliases
+                 .slice(0, -1)
+                 .map((h) => `, ${h}`)
+                 .join("")
+             : ""
+         }
     ORDER BY score DESC
     LIMIT $topK
     WHERE score >= $threshold
     RETURN ${finalNode}.id AS nodeId, score,
            CASE WHEN 'Entity' IN nodeLabels THEN 'Entity' ELSE 'Memory' END AS label
+           ${hopReturnCols}
   `;
 
   const result = await session.executeRead((tx) =>
@@ -155,11 +188,34 @@ async function traversePattern(
     }),
   );
 
-  return result.records.map((r) => ({
-    nodeId: r.get("nodeId") as string,
-    score: r.get("score") as number,
-    label: r.get("label") as "Memory" | "Entity",
-  }));
+  return result.records.map((r) => {
+    const hit: TraversalHit = {
+      nodeId: r.get("nodeId") as string,
+      score: r.get("score") as number,
+      label: r.get("label") as "Memory" | "Entity",
+    };
+    if (provenanceEnabled) {
+      hit.pattern = pattern;
+      hit.seedId = r.get("seedId") as string;
+      // Build intermediate hops (all hops except the final node)
+      const intermediateCount = hopAliases.length - 1;
+      if (intermediateCount > 0) {
+        hit.hops = [];
+        for (let i = 0; i < intermediateCount; i++) {
+          const hopId = r.get(`hop${i}Id`);
+          if (hopId) {
+            hit.hops.push({
+              nodeId: hopId as string,
+              nodeLabel: r.get(`hop${i}Label`) as "Memory" | "Entity",
+              displayName: (r.get(`hop${i}Name`) as string) ?? undefined,
+              edgeType: pattern[i],
+            });
+          }
+        }
+      }
+    }
+    return hit;
+  });
 }
 
 /**
@@ -236,6 +292,7 @@ export async function mpfpSearch(
   const alpha = options.alpha ?? DEFAULT_ALPHA;
   const topKNeighbors = options.topKNeighbors ?? DEFAULT_TOP_K_NEIGHBORS;
   const threshold = options.threshold ?? DEFAULT_THRESHOLD;
+  const provenanceEnabled = options.provenanceEnabled === true;
 
   // Select patterns based on mode
   let patterns: MetaPathPattern[];
@@ -258,11 +315,14 @@ export async function mpfpSearch(
   // Run all patterns in parallel
   const patternResults = await Promise.all(
     patterns.map((pattern) =>
-      traversePattern(session, agentId, seedNodeIds, pattern, {
-        alpha,
-        topKNeighbors,
-        threshold,
-      }).catch((err) => {
+      traversePattern(
+        session,
+        agentId,
+        seedNodeIds,
+        pattern,
+        { alpha, topKNeighbors, threshold },
+        provenanceEnabled,
+      ).catch((err) => {
         options.logger?.debug?.(
           `memory-neo4j: [mpfp] pattern [${pattern.join("→")}] failed: ${err instanceof Error ? err.message : String(err)}`,
         );
@@ -305,6 +365,17 @@ export async function mpfpSearch(
     },
   );
 
+  // OP-200: Build a map from nodeId → provenance for entity/memory hits
+  const hitProvenanceMap = new Map<string, TraversalHit>();
+  if (provenanceEnabled) {
+    for (const hit of allHits) {
+      const existing = hitProvenanceMap.get(hit.nodeId);
+      if (!existing || hit.score > existing.score) {
+        hitProvenanceMap.set(hit.nodeId, hit);
+      }
+    }
+  }
+
   // Merge and deduplicate — keep highest score per memory ID
   const scoreMap = new Map<string, SearchSignalResult>();
 
@@ -321,6 +392,28 @@ export async function mpfpSearch(
 
   // Sort by score descending
   results.sort((a, b) => b.score - a.score);
+
+  // OP-200: Attach provenance from traversal hits to final results.
+  if (provenanceEnabled) {
+    for (const result of results) {
+      // Try to find the traversal hit that led to this memory.
+      // For direct memory hits, the nodeId is the memory ID.
+      // For bridged entity hits, we check entity hits that were bridged.
+      const directHit = hitProvenanceMap.get(result.id);
+      if (directHit?.pattern) {
+        const prov: SignalProvenance = {
+          signal: "mpfp",
+          metaPathPattern: directHit.pattern,
+          seedId: directHit.seedId,
+          traversalPath: directHit.hops,
+          intermediateEntities: directHit.hops
+            ?.filter((h) => h.nodeLabel === "Entity")
+            .map((h) => h.displayName ?? h.nodeId),
+        };
+        result.provenance = prov;
+      }
+    }
+  }
 
   return results;
 }

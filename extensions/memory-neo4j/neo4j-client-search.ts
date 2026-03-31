@@ -621,9 +621,9 @@ export async function structuredGraphSearch(
      OPTIONAL MATCH (e)-[:EXTRACTED_FROM]->(m:Memory)
        WHERE true ${memExpiredFilter} ${memAgentFilter} ${memQuarantineFilter}
      WITH seedResults, hopResults, entityEid, entityText, entityCategory, entityCreatedAt, entityScore,
-          collect(m) AS memories
+          e.name AS eName, collect(m) AS memories
      WITH seedResults, hopResults, entityEid, entityText, entityCategory, entityCreatedAt, entityScore,
-          CASE WHEN size(memories) > 0 THEN memories ELSE [null] END AS mems
+          eName, CASE WHEN size(memories) > 0 THEN memories ELSE [null] END AS mems
      UNWIND mems AS mem
      WITH seedResults, hopResults, collect({
        id: coalesce(mem.id, entityEid),
@@ -634,7 +634,8 @@ export async function structuredGraphSearch(
        validFrom: mem.validFrom,
        importance: coalesce(mem.importance, 0.5),
        trustScore: coalesce(mem.trustScore, 1.0),
-       memoryEmbedding: mem.embedding
+       memoryEmbedding: mem.embedding,
+       entityName: coalesce(eName, '')
      }) AS hopMemoryRows
 
      // Step 2: Seed entities as synthesized text fallback (no EXTRACTED_FROM resolution)
@@ -648,7 +649,8 @@ export async function structuredGraphSearch(
        validFrom: null,
        importance: 0.5,
        trustScore: 1.0,
-       memoryEmbedding: null
+       memoryEmbedding: null,
+       entityName: ''
      }) AS seedMemoryRows
 
      // Step 3: Combine — prefer hop results, use seed fallback when no hops found
@@ -663,7 +665,8 @@ export async function structuredGraphSearch(
        row.validFrom AS validFrom,
        row.importance AS importance,
        row.trustScore AS trustScore,
-       row.memoryEmbedding AS memoryEmbedding`,
+       row.memoryEmbedding AS memoryEmbedding,
+       row.entityName AS entityName`,
         {
           seedElementIds,
           seedScoreMap: Object.fromEntries(seedScoreMap),
@@ -708,6 +711,8 @@ export async function structuredGraphSearch(
 
     const existing = byId.get(id);
     if (!existing || score > existing.score) {
+      // OP-200: Extract intermediate entity name for provenance.
+      const entityName = record.get("entityName") as string | null;
       byId.set(id, {
         id,
         text: record.get("text") as string,
@@ -717,6 +722,14 @@ export async function structuredGraphSearch(
         validFrom: record.get("validFrom") != null ? String(record.get("validFrom")) : undefined,
         score,
         trustScore: toJsNumber(record.get("trustScore")) || 1.0,
+        ...(entityName
+          ? {
+              provenance: {
+                signal: "graph" as const,
+                intermediateEntities: [entityName],
+              },
+            }
+          : {}),
       });
     }
   }
@@ -893,13 +906,31 @@ export async function causalChainSearch(
     const score = record.get("graphScore") as number;
     const existing = byId.get(id);
     if (!existing || score > existing.score) {
+      // OP-200: Causal chain text already encodes the traversal path
+      // (e.g. "causal chain: A --CAUSED_BY--> B"). Extract entity names.
+      const text = record.get("text") as string;
+      const category = record.get("category") as string;
+      const chainEntities =
+        category === "cause" || category === "effect"
+          ? (text.match(/(?:^|\s)([A-Za-z][A-Za-z0-9 ]*?)(?:\s+--|$)/g) ?? [])
+              .map((s) => s.replace(/\s*--$/, "").trim())
+              .filter((s) => s.length >= 2)
+          : [];
       byId.set(id, {
         id,
-        text: record.get("text") as string,
-        category: record.get("category") as string,
+        text,
+        category,
         importance: 0.8,
         createdAt: String(record.get("createdAt") ?? ""),
         score,
+        ...(chainEntities.length > 0
+          ? {
+              provenance: {
+                signal: "graph" as const,
+                intermediateEntities: chainEntities,
+              },
+            }
+          : {}),
       });
     }
   }

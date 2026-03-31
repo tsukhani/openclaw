@@ -20,7 +20,15 @@ import { NO_OP_METRICS } from "./metrics.js";
 import { getOpinionsForTopics } from "./neo4j-client-opinion.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
 import { decomposeQuery, extractTemporalConstraint } from "./query-analyzer.js";
-import type { HybridSearchResult, Logger, RerankerConfig, SearchSignalResult } from "./schema.js";
+import type {
+  FusionProvenance,
+  HybridSearchResult,
+  Logger,
+  RerankerConfig,
+  SearchSignalResult,
+  SignalName,
+  SignalProvenance,
+} from "./schema.js";
 
 // Re-export extracted modules so existing imports from "./search.js" continue to work.
 export { classifyQuery, expandBm25Query, getAdaptiveWeights } from "./search-query-classifier.js";
@@ -40,6 +48,29 @@ import {
 // Internal imports from extracted modules used by the orchestrator below.
 import { classifyQuery, expandBm25Query, getAdaptiveWeights } from "./search-query-classifier.js";
 import { fuseWithConfidenceRRF, normalizeSignalScores } from "./search-rrf-fusion.js";
+
+// ============================================================================
+// Provenance Helpers (OP-200)
+// ============================================================================
+
+/** Tag signal results with a simple provenance record. */
+function tagProvenance(results: SearchSignalResult[], provenance: SignalProvenance): void {
+  for (const r of results) {
+    r.provenance = provenance;
+  }
+}
+
+/** Extract matched query terms from BM25 results via JS-side token intersection. */
+function computeBm25MatchedTerms(query: string, text: string): string[] {
+  const queryTokens = new Set(
+    query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length >= 2),
+  );
+  const textLower = text.toLowerCase();
+  return [...queryTokens].filter((t) => textLower.includes(t));
+}
 
 // ============================================================================
 // Hybrid Search Orchestrator
@@ -125,6 +156,8 @@ export async function hybridSearch(
     opinionEnabled?: boolean;
     /** Weight for opinion signal in RRF fusion. Default: 0.2. */
     opinionSignalWeight?: number;
+    /** Enable retrieval provenance tracking (OP-200). Default: false. */
+    provenanceEnabled?: boolean;
     /** @internal Guard against infinite recursion in compound query decomposition (OP-190). */
     _skipDecomposition?: boolean;
   } = {},
@@ -159,14 +192,25 @@ export async function hybridSearch(
       const seenIds = new Set<string>();
       const maxLen = Math.max(...subResults.map((r) => r.length));
       for (let rank = 0; rank < maxLen; rank++) {
-        for (const results of subResults) {
+        for (let sqIdx = 0; sqIdx < subResults.length; sqIdx++) {
+          const results = subResults[sqIdx];
           if (rank < results.length) {
             const r = results[rank];
             if (!seenIds.has(r.id)) {
               seenIds.add(r.id);
-              merged.push({ ...r, decomposed: true });
+              // OP-200: Tag decomposed results with their sub-query for provenance.
+              const fusionProv =
+                options.provenanceEnabled === true
+                  ? {
+                      fusionProvenance: {
+                        ...(r.fusionProvenance ?? { contributingSignals: [] }),
+                        fromDecomposition: true as const,
+                        decomposedSubQuery: decomposition.subQueries[sqIdx],
+                      },
+                    }
+                  : {};
+              merged.push({ ...r, decomposed: true, ...fusionProv });
             }
-            // Dedup: if already seen, skip (first occurrence has higher rank = higher score)
           }
         }
       }
@@ -460,6 +504,25 @@ export async function hybridSearch(
   ]);
   const tSignals = performance.now();
 
+  // OP-200: Attach provenance to primary signal results when enabled.
+  const provenanceEnabled = options.provenanceEnabled === true;
+  if (provenanceEnabled) {
+    tagProvenance(vectorResults, { signal: "vector" });
+    for (const r of bm25Results) {
+      r.provenance = {
+        signal: "bm25",
+        matchedTerms: computeBm25MatchedTerms(bm25Query, r.text),
+      };
+    }
+    // Graph results already carry provenance from structuredGraphSearch/causalChainSearch
+    // when provenanceEnabled is threaded through (Phase 2 graph task).
+    // For now, tag any graph results that don't have provenance yet.
+    for (const r of graphResults) {
+      if (!r.provenance) r.provenance = { signal: "graph" };
+    }
+    tagProvenance(communityResults, { signal: "community" });
+  }
+
   // 4a. Normalize unbounded graph/community scores to 0-1.
   //     Vector (cosine) and BM25 are already in [0, 1]; graph and community
   //     carry raw Lucene fulltext scores (often 2–5+) that would dominate RRF.
@@ -488,9 +551,26 @@ export async function hybridSearch(
             ? "both"
             : "semantic";
       mpfpResults = await withAbortableTimeout(
-        (signal) => db.mpfpSearch(seedIds, agentId, mpfpMode, { logger }, signal),
+        (signal) =>
+          db.mpfpSearch(seedIds, agentId, mpfpMode, { logger, provenanceEnabled }, signal),
         [] as SearchSignalResult[],
       );
+    }
+  }
+  // OP-200: Tag MPFP results that don't already carry provenance from traversePattern.
+  if (provenanceEnabled) {
+    const vectorSeedIds = new Set(vectorResults.map((r) => r.id));
+    const bm25SeedIds = new Set(bm25Results.map((r) => r.id));
+    for (const r of mpfpResults) {
+      if (!r.provenance) {
+        const seededBy =
+          vectorSeedIds.size > 0 && bm25SeedIds.size > 0
+            ? "both"
+            : vectorSeedIds.size > 0
+              ? "vector"
+              : "bm25";
+        r.provenance = { signal: "mpfp", seededBy: seededBy as "vector" | "bm25" | "both" };
+      }
     }
   }
   const normalizedMpfpResults = normalizeSignalScores(mpfpResults);
@@ -523,6 +603,15 @@ export async function hybridSearch(
               importance: 0.8,
               createdAt: new Date().toISOString(),
               score: count > 1 ? 1 - i / count : 1.0,
+              ...(provenanceEnabled
+                ? {
+                    provenance: {
+                      signal: "observation" as const,
+                      intermediateEntities: [obs.entityName],
+                      seededBy: "both" as const,
+                    },
+                  }
+                : {}),
             });
           }
         }
@@ -566,6 +655,15 @@ export async function hybridSearch(
                 importance: 0.9,
                 createdAt: new Date().toISOString(),
                 score: count > 1 ? baseScore * (1 - i / count) : baseScore,
+                ...(provenanceEnabled
+                  ? {
+                      provenance: {
+                        signal: "opinion" as const,
+                        matchedTerms: [op.topic],
+                        seededBy: "bm25" as const,
+                      },
+                    }
+                  : {}),
               });
             }
           }
@@ -594,6 +692,10 @@ export async function hybridSearch(
     ],
     now,
   );
+  // OP-200: Tag freshness results (synthetic signal, minimal provenance).
+  if (provenanceEnabled) {
+    tagProvenance(freshnessSignal, { signal: "freshness" });
+  }
 
   // 5. Fuse all signals with confidence-weighted RRF.
   //    8 signals: vector, bm25, graph, freshness, community, mpfp, observation, opinion.
@@ -706,20 +808,55 @@ export async function hybridSearch(
     return secondNormalized < LOW_CONFIDENCE_THRESHOLD;
   })();
 
-  const results: HybridSearchResult[] = candidates.map((r) => ({
-    id: r.id,
-    text: r.text,
-    category: r.category,
-    importance: r.importance,
-    createdAt: r.createdAt,
-    validFrom: r.validFrom,
-    score: Math.min(1, r.boostedScore * normalizer),
-    ...(lowConfidence ? { lowConfidence: true as const } : {}),
-    signals: {
-      ...r.signals,
-      recency: { rank: 0, score: r.recencyScore },
-    },
-  }));
+  const results: HybridSearchResult[] = candidates.map((r, idx) => {
+    const result: HybridSearchResult = {
+      id: r.id,
+      text: r.text,
+      category: r.category,
+      importance: r.importance,
+      createdAt: r.createdAt,
+      validFrom: r.validFrom,
+      score: Math.min(1, r.boostedScore * normalizer),
+      ...(lowConfidence ? { lowConfidence: true as const } : {}),
+      signals: {
+        ...r.signals,
+        recency: { rank: 0, score: r.recencyScore },
+      },
+    };
+
+    // OP-200: Attach provenance and fusionProvenance for top 5 results only (context budget).
+    if (provenanceEnabled && idx < 5) {
+      if (r.provenance && r.provenance.length > 0) {
+        result.provenance = r.provenance;
+      }
+      // Build contributing signals list from non-zero signal attributions.
+      const contributing: SignalName[] = [];
+      const s = r.signals;
+      if (s.vector.rank > 0) contributing.push("vector");
+      if (s.bm25.rank > 0) contributing.push("bm25");
+      if (s.graph.rank > 0) contributing.push("graph");
+      if (s.freshness?.rank && s.freshness.rank > 0) contributing.push("freshness");
+      if (s.community?.rank && s.community.rank > 0) contributing.push("community");
+      if (s.mpfp?.rank && s.mpfp.rank > 0) contributing.push("mpfp");
+      if (s.observation?.rank && s.observation.rank > 0) contributing.push("observation");
+      if (s.opinion?.rank && s.opinion.rank > 0) contributing.push("opinion");
+
+      const fusion: FusionProvenance = { contributingSignals: contributing };
+      if (factTypeIntent) {
+        fusion.factTypeBoosted = true;
+        fusion.factTypeMatch = factTypeIntent;
+      }
+      if (recencyWeight > 0 && r.recencyScore > 0) {
+        fusion.recencyBoosted = true;
+      }
+      if (rerankerActive) {
+        fusion.reranked = true;
+      }
+      result.fusionProvenance = fusion;
+    }
+
+    return result;
+  });
 
   // 7b. Rerank candidates if configured (OP-130).
   //     Temporal/update queries route to LLM reranker (with timestamps) inside rerankCandidates.
@@ -877,6 +1014,7 @@ export function buildSearchOptions(params: {
     includeExpired: params.includeExpired,
     asOf: params.asOf,
     includeQuarantined: params.includeQuarantined,
+    provenanceEnabled: cfg.provenanceEnabled,
     ...(cfg.reranker?.enabled ? { rerankerConfig: cfg.reranker, extractionConfig } : {}),
   };
 }

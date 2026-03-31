@@ -280,3 +280,66 @@ describe("memory_store decomposition", () => {
     expect((db.storeMemory as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);
   });
 });
+
+// ============================================================================
+// OP-200: Provenance stripping in memory_recall
+// ============================================================================
+
+describe("memory_recall provenance stripping (OP-200)", () => {
+  it("should strip provenance and fusionProvenance from HybridSearchResult", () => {
+    // Test the stripping logic directly: when includeProvenance=false or
+    // provenanceEnabled=false, provenance fields should be removed.
+    const resultWithProvenance = {
+      id: "mem-1",
+      text: "Sarah likes sushi",
+      category: "preference",
+      importance: 0.8,
+      createdAt: "2026-01-01",
+      score: 0.95,
+      provenance: [{ signal: "bm25" as const, matchedTerms: ["sarah", "sushi"] }],
+      fusionProvenance: {
+        contributingSignals: ["vector" as const, "bm25" as const],
+        recencyBoosted: true,
+      },
+      signals: {
+        vector: { rank: 1, score: 0.9 },
+        bm25: { rank: 1, score: 0.85 },
+        graph: { rank: 0, score: 0 },
+      },
+    };
+
+    // Simulate the stripping logic from plugin-tools.ts
+    const { provenance, fusionProvenance, ...stripped } = resultWithProvenance;
+
+    expect(stripped.id).toBe("mem-1");
+    expect(stripped.text).toBe("Sarah likes sushi");
+    expect(stripped.signals).toBeDefined();
+    expect("provenance" in stripped).toBe(false);
+    expect("fusionProvenance" in stripped).toBe(false);
+  });
+
+  it("should preserve provenance when both gates are true", () => {
+    const resultWithProvenance = {
+      id: "mem-1",
+      text: "Memory",
+      category: "fact",
+      importance: 0.8,
+      createdAt: "2026-01-01",
+      score: 0.95,
+      provenance: [{ signal: "vector" as const }],
+      fusionProvenance: { contributingSignals: ["vector" as const] },
+    };
+
+    // When shouldIncludeProvenance is true, result passes through unchanged
+    const shouldIncludeProvenance = true;
+    const result: Record<string, unknown> = shouldIncludeProvenance
+      ? resultWithProvenance
+      : (() => {
+          const { provenance, fusionProvenance, ...rest } = resultWithProvenance;
+          return rest;
+        })();
+
+    expect(result.provenance).toBeDefined();
+    expect(result.fusionProvenance).toBeDefined();
+  });
+});

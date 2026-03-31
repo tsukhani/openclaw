@@ -82,6 +82,12 @@ export function registerMemoryTools(
                 "Include quarantined memories (flagged as instruction-like). Default: false",
             }),
           ),
+          includeProvenance: Type.Optional(
+            Type.Boolean({
+              description:
+                "Include retrieval provenance (traversal paths, matched terms, fusion rationale). Default: false",
+            }),
+          ),
         }),
         async execute(_toolCallId: string, params: unknown) {
           const {
@@ -90,12 +96,14 @@ export function registerMemoryTools(
             includeExpired = false,
             asOf,
             includeQuarantined = false,
+            includeProvenance = false,
           } = params as {
             query: string;
             limit?: number;
             includeExpired?: boolean;
             asOf?: string;
             includeQuarantined?: boolean;
+            includeProvenance?: boolean;
           };
           // H9: Guard against NaN from non-numeric input (NaN propagates through Math.min/max)
           const limit = Number.isFinite(rawLimit)
@@ -155,7 +163,14 @@ export function registerMemoryTools(
               details: { count: 0, error: "neo4j_connection" },
             };
           }
-          const results = recallResult;
+          // OP-200: Strip provenance fields when not requested (two-gate: config + param).
+          const shouldIncludeProvenance = includeProvenance && cfg.provenanceEnabled === true;
+          const results = shouldIncludeProvenance
+            ? recallResult
+            : recallResult.map((r) => {
+                const { provenance, fusionProvenance, ...rest } = r;
+                return rest;
+              });
 
           if (results.length === 0) {
             return {
