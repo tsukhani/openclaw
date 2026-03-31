@@ -148,7 +148,8 @@ export async function batchEntityOperations(
          ON CREATE SET
            n.id = e.id, n.type = e.type, n.aliases = e.aliases,
            n.description = e.description,
-           n.firstSeen = $now, n.lastSeen = $now
+           n.firstSeen = $now, n.lastSeen = $now,
+           n.relationshipCount = 0
          ON MATCH SET
            n.type = COALESCE(e.type, n.type),
            n.description = COALESCE(e.description, n.description),
@@ -248,6 +249,28 @@ export async function batchEntityOperations(
             })),
             now,
           },
+        );
+      }
+
+      // 3b. Update relationshipCount for all entities involved in new relationships.
+      //     Counts both incoming and outgoing entity-to-entity relationships (undirected)
+      //     consistent with the merge operations in mergeEntityPair / batchMergeEntityPairsChunk.
+      const involvedNames = new Set<string>();
+      for (const rel of sanitizedRels) {
+        involvedNames.add(rel.source.trim().toLowerCase());
+        involvedNames.add(rel.target.trim().toLowerCase());
+      }
+      if (involvedNames.size > 0) {
+        await tx.run(
+          `MATCH (mem:Memory {id: $memoryId})
+           WITH mem
+           UNWIND $names AS eName
+           MATCH (n:Entity {name: eName, agentId: mem.agentId})
+           OPTIONAL MATCH (n)-[r]-(:Entity)
+           WHERE type(r) <> 'DERIVED_FROM'
+           WITH n, count(r) AS actual
+           SET n.relationshipCount = actual`,
+          { memoryId, names: [...involvedNames] },
         );
       }
     }
@@ -1127,9 +1150,14 @@ export async function markRelationshipReclassificationSkipped(
  * @returns Number of entities updated
  */
 export async function reconcileEntityRelationshipCounts(session: Session): Promise<number> {
-  // M6: Exclude MENTIONS/TAGGED/DERIVED_FROM (consistent with getEntityGraphStats)
-  // C1: Use directed pattern (->)  to avoid double-counting — undirected (-) counts
-  // each relationship from both endpoints, inflating the count by 2x.
+  // M6: Exclude DERIVED_FROM (infrastructure edge, not a semantic relationship).
+  //     MENTIONS/TAGGED won't match the (:Entity)-[:]-(:Entity) pattern anyway
+  //     (they connect Memory→Entity and Memory→Tag) but are excluded for safety.
+  // C1: Use undirected pattern (-) so both incoming and outgoing entity-to-entity
+  //     relationships are counted. Neo4j's relationship uniqueness guarantees each
+  //     relationship is returned once per MATCH, so no double-counting occurs.
+  //     This is consistent with the merge operations (mergeEntityPair /
+  //     batchMergeEntityPairsChunk) which already use undirected patterns.
   // H2: Process in batches of 1000 to avoid transaction timeout on large entity graphs.
   const BATCH_SIZE = 1000;
   let totalUpdated = 0;
@@ -1137,7 +1165,7 @@ export async function reconcileEntityRelationshipCounts(session: Session): Promi
     const result = await session.executeWrite((tx) =>
       tx.run(
         `MATCH (e:Entity)
-       OPTIONAL MATCH (e)-[r]->(:Entity)
+       OPTIONAL MATCH (e)-[r]-(:Entity)
        WHERE type(r) <> 'MENTIONS' AND type(r) <> 'TAGGED' AND type(r) <> 'DERIVED_FROM'
        WITH e, count(r) AS actual
        WHERE e.relationshipCount IS NULL OR e.relationshipCount <> actual
