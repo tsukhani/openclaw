@@ -323,3 +323,76 @@ describe("registerMemoryHooks message forwarding", () => {
     expect(messages).toHaveLength(2);
   });
 });
+
+// ============================================================================
+// captureOnError tests
+// ============================================================================
+
+describe("registerMemoryHooks captureOnError", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("skips capture on failed turn when captureOnError is false (default)", async () => {
+    const { api, getHandler } = createMockApi();
+    const cfg = createMinimalConfig();
+    registerMemoryHooks(
+      api,
+      mockDb,
+      mockEmbeddings,
+      cfg,
+      minimalExtractionConfig,
+      abortRef,
+      mockLogger,
+    );
+    mockRunAutoCapture.mockResolvedValue(undefined);
+
+    const handler = getHandler("agent_end");
+    handler({ success: false, messages: [{ role: "user", content: "some content" }] }, validCtx);
+    await flushPromises();
+
+    expect(mockRunAutoCapture).not.toHaveBeenCalled();
+  });
+
+  it("captures on failed turn when captureOnError is true", async () => {
+    const { api, getHandler } = createMockApi();
+    const cfg = { ...createMinimalConfig(), captureOnError: true } as MemoryNeo4jConfig;
+    registerMemoryHooks(
+      api,
+      mockDb,
+      mockEmbeddings,
+      cfg,
+      minimalExtractionConfig,
+      abortRef,
+      mockLogger,
+    );
+    mockRunAutoCapture.mockResolvedValue(undefined);
+
+    const handler = getHandler("agent_end");
+    handler({ success: false, messages: [{ role: "user", content: "some content" }] }, validCtx);
+    await flushPromises();
+
+    expect(mockRunAutoCapture).toHaveBeenCalledOnce();
+  });
+
+  it("still skips when messages are empty regardless of captureOnError", async () => {
+    const { api, getHandler } = createMockApi();
+    const cfg = { ...createMinimalConfig(), captureOnError: true } as MemoryNeo4jConfig;
+    registerMemoryHooks(
+      api,
+      mockDb,
+      mockEmbeddings,
+      cfg,
+      minimalExtractionConfig,
+      abortRef,
+      mockLogger,
+    );
+    mockRunAutoCapture.mockResolvedValue(undefined);
+
+    const handler = getHandler("agent_end");
+    handler({ success: false, messages: [] }, validCtx);
+    await flushPromises();
+
+    expect(mockRunAutoCapture).not.toHaveBeenCalled();
+  });
+});
