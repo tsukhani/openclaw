@@ -95,7 +95,7 @@ export async function createStatusScanCoreBootstrap<TAgentStatus>(
       ? Promise.resolve<string | null>(null)
       : params
           .getTailnetHostname((cmd, args) =>
-            runExec(cmd, args, { timeoutMs: 1200, maxBuffer: 200_000 }),
+            runExec(cmd, args, { timeoutMs: 5000, maxBuffer: 200_000 }),
           )
           .catch(() => null);
   const updatePromise = skipColdStartNetworkChecks
