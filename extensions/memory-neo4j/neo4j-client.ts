@@ -440,6 +440,7 @@ export class Neo4jMemoryClient {
     embedding?: number[],
     causalRelTypes?: string[],
     abortSignal?: AbortSignal,
+    parsedChain?: import("./possessive-chain.js").PossessiveChain,
   ): Promise<SearchSignalResult[]> {
     if (!query.trim()) return [];
     return this.withSearchFallback(
@@ -463,6 +464,7 @@ export class Neo4jMemoryClient {
               embedding,
               causalRelTypes,
               this.driver ? () => this.driver!.session() : undefined,
+              parsedChain,
             ),
           abortSignal,
         ),

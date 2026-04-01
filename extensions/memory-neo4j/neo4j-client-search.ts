@@ -940,11 +940,219 @@ export async function causalChainSearch(
     .slice(0, limit);
 }
 
+// ── Possessive-chain directed traversal ────────────────────────────────────
+
+/**
+ * Directed possessive-chain traversal.
+ *
+ * Resolves queries like "my wife's older son's phone number" by:
+ *   1. Seeding on the first entity in the chain (e.g. "tarun")
+ *   2. Traversing typed relationships per chain step (MARRIED_TO → PARENT_OF)
+ *   3. Returning the final entity's property or memories
+ *
+ * Returns synthesized text showing the traversal path:
+ *   "tarun --MARRIED_TO--> renu --PARENT_OF--> kheshav (phone: +91...)"
+ */
+export async function possessiveChainSearch(
+  session: Session,
+  chain: import("./possessive-chain.js").PossessiveChain,
+  limit: number,
+  agentId?: string,
+  includeExpired?: boolean,
+): Promise<SearchSignalResult[]> {
+  const agentFilter = agentId ? "AND node.agentId = $agentId" : "";
+  const seedName = escapeLucene(chain.seedEntity);
+  if (!seedName.trim()) return [];
+
+  // Build dynamic Cypher for each chain step.
+  // Each step is an OPTIONAL MATCH along the specified relationship types.
+  const hopClauses: string[] = [];
+  const hopWithVars: string[] = ["node"];
+  const relValidityFilter = !includeExpired
+    ? (relVar: string) => `AND (${relVar}.validUntil IS NULL OR ${relVar}.validUntil > $now)`
+    : () => "";
+
+  for (let i = 0; i < chain.steps.length; i++) {
+    const step = chain.steps[i];
+    const prevVar = i === 0 ? "node" : `hop${i}`;
+    const nextVar = `hop${i + 1}`;
+    const relVar = `r${i + 1}`;
+
+    let relPattern: string;
+    if (step.relTypes.length > 0) {
+      // Sanitize and join relationship types for Cypher
+      const safeTypes = step.relTypes
+        .map((t) => sanitizeRelationshipType(t))
+        .filter((t): t is string => t !== null);
+      if (safeTypes.length === 0) {
+        relPattern = `[${relVar}]`;
+      } else {
+        relPattern = `[${relVar}:${safeTypes.join("|")}]`;
+      }
+    } else {
+      // Unknown term — traverse any relationship and match by entity name
+      relPattern = `[${relVar}]`;
+    }
+
+    // Build qualifier filter for the hop entity
+    let qualifierFilter = "";
+    if (step.qualifiers.length > 0) {
+      // Match qualifiers against relationship qualifier or entity description/aliases
+      const qualTerms = step.qualifiers.map((q) => q.toLowerCase());
+      qualifierFilter = qualTerms
+        .map(
+          (q) =>
+            `AND (${relVar}.qualifier = '${q}' OR ${nextVar}.description CONTAINS '${q}' OR any(a IN coalesce(${nextVar}.aliases, []) WHERE a CONTAINS '${q}'))`,
+        )
+        .join(" ");
+    }
+
+    // Entity name filter for unknown terms (no relationship type match)
+    let entityNameFilter = "";
+    if (step.relTypes.length === 0 && step.description) {
+      entityNameFilter = `AND (${nextVar}.name CONTAINS '${step.description}' OR any(a IN coalesce(${nextVar}.aliases, []) WHERE a CONTAINS '${step.description}'))`;
+    }
+
+    hopClauses.push(
+      `OPTIONAL MATCH (${prevVar})-${relPattern}-(${nextVar}:Entity)
+       WHERE ${nextVar} <> ${prevVar}
+         AND ${nextVar}.agentId = ${prevVar}.agentId
+         ${relValidityFilter(relVar)}
+         ${qualifierFilter}
+         ${entityNameFilter}`,
+    );
+    hopWithVars.push(nextVar, relVar);
+  }
+
+  const finalVar = `hop${chain.steps.length}`;
+
+  // Build chain text showing the traversal path for provenance
+  const chainTextParts: string[] = [];
+  chainTextParts.push("coalesce(node.name, '?')");
+  for (let i = 0; i < chain.steps.length; i++) {
+    chainTextParts.push(`' --' + type(r${i + 1}) + '--> ' + coalesce(hop${i + 1}.name, '?')`);
+  }
+  const chainTextExpr = chainTextParts.join(" + ");
+
+  // Target property resolution: if the target maps to a known property key,
+  // include it in the synthesized text
+  const targetPropExpr = chain.targetPropertyKey
+    ? `+ CASE WHEN ${finalVar}['${chain.targetPropertyKey}'] IS NOT NULL THEN ' (${chain.targetPropertyKey}: ' + toString(${finalVar}['${chain.targetPropertyKey}']) + ')' ELSE '' END`
+    : "";
+
+  // Memory-level filters for EXTRACTED_FROM bridge
+  const memAgentFilter = agentId ? "AND m.agentId = $agentId" : "";
+  const memQuarantineFilter = "AND (m.quarantined IS NULL OR m.quarantined = false)";
+  const { filter: memExpiredFilter, params: memTemporalParams } = buildTemporalFilter(
+    "m.",
+    includeExpired,
+  );
+
+  const cypher = `
+    // Seed: find the starting entity by name
+    CALL db.index.fulltext.queryNodes('entity_fulltext_index', $seedName)
+    YIELD node, score
+    WHERE score >= 0.5 ${agentFilter}
+    WITH node, score
+    ORDER BY score DESC
+    LIMIT 1
+
+    // Chain traversal
+    ${hopClauses.join("\n    ")}
+
+    // Filter: final hop entity must exist
+    WITH ${hopWithVars.join(", ")}, score,
+         ${chainTextExpr} ${targetPropExpr} AS chainText
+    WHERE ${finalVar} IS NOT NULL
+
+    // Build synthesized text for the final entity
+    WITH ${finalVar}, chainText, score,
+         coalesce(${finalVar}.type, 'entity') AS typeLabel,
+         [k IN keys(${finalVar}) WHERE NOT k IN $blocklist AND NOT valueType(${finalVar}[k]) STARTS WITH 'LIST' | k + ': ' + coalesce(toString(${finalVar}[k]), '')] AS propPairs
+    WITH ${finalVar}, chainText, score, typeLabel,
+         typeLabel + ' ' + coalesce(${finalVar}.name, '') +
+         CASE WHEN size(propPairs) > 0 THEN ' — ' + reduce(s = '', p IN propPairs | CASE WHEN s = '' THEN p ELSE s + ', ' + p END) ELSE '' END
+         AS synthesized
+
+    // Resolve to Memory nodes via EXTRACTED_FROM (like structuredGraphSearch)
+    OPTIONAL MATCH (${finalVar})-[:EXTRACTED_FROM]->(m:Memory)
+      WHERE true ${memExpiredFilter} ${memAgentFilter} ${memQuarantineFilter}
+    WITH chainText, score, synthesized,
+         elementId(${finalVar}) AS entityEid,
+         coalesce(${finalVar}.type, 'entity') AS entityCategory,
+         coalesce(${finalVar}.createdAt, '') AS entityCreatedAt,
+         ${finalVar}.name AS entityName,
+         collect(m) AS memories
+
+    // Return memories if available, otherwise the entity itself
+    WITH chainText, score, synthesized, entityEid, entityCategory, entityCreatedAt, entityName,
+         CASE WHEN size(memories) > 0 THEN memories ELSE [null] END AS mems
+    UNWIND mems AS mem
+
+    RETURN
+      coalesce(mem.id, entityEid) AS id,
+      coalesce(mem.text, synthesized) AS text,
+      coalesce(mem.category, entityCategory) AS category,
+      coalesce(mem.createdAt, entityCreatedAt) AS createdAt,
+      score AS graphScore,
+      mem.validFrom AS validFrom,
+      coalesce(mem.importance, 0.8) AS importance,
+      coalesce(mem.trustScore, 1.0) AS trustScore,
+      chainText,
+      coalesce(entityName, '') AS entityName
+  `;
+
+  const now = !includeExpired ? new Date().toISOString() : undefined;
+  const result = await session.executeRead(
+    (tx) =>
+      tx.run(cypher, {
+        seedName,
+        blocklist: [...INTERNAL_PROPERTY_BLOCKLIST],
+        ...(agentId ? { agentId } : {}),
+        ...(now ? { now } : {}),
+        ...memTemporalParams,
+      }),
+    { timeout: GRAPH_TRAVERSAL_TIMEOUT_MS },
+  );
+
+  const byId = new Map<string, SearchSignalResult>();
+  for (const record of result.records) {
+    const id = record.get("id") as string;
+    if (!id) continue;
+    const graphScore = record.get("graphScore") as number;
+    const chainText = record.get("chainText") as string;
+    const entityName = record.get("entityName") as string | null;
+
+    // Chain traversal confidence: full score (no decay needed — each step is explicit)
+    const existing = byId.get(id);
+    if (!existing || graphScore > existing.score) {
+      byId.set(id, {
+        id,
+        text: record.get("text") as string,
+        category: record.get("category") as string,
+        importance: toJsNumber(record.get("importance")) || 0.8,
+        createdAt: String(record.get("createdAt") ?? ""),
+        validFrom: record.get("validFrom") != null ? String(record.get("validFrom")) : undefined,
+        score: graphScore,
+        trustScore: toJsNumber(record.get("trustScore")) || 1.0,
+        provenance: {
+          signal: "graph" as const,
+          intermediateEntities: [chainText, ...(entityName ? [entityName] : [])],
+        },
+      });
+    }
+  }
+
+  return Array.from(byId.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
+
 /**
  * Signal 3: Graph traversal search.
  *
- * Dispatches to either general entity graph search or directed causal chain
- * search based on queryType. Both are entity-type and relationship-type agnostic.
+ * Dispatches to general entity graph search, directed causal chain search,
+ * or possessive-chain search based on queryType.
  *
  * The three RRF signals are cleanly separated:
  *   Signal 1 (vector)  → Memory nodes
@@ -967,9 +1175,15 @@ export async function graphSearch(
   embedding?: number[],
   causalRelTypes?: string[],
   createSession?: () => Session,
+  parsedChain?: import("./possessive-chain.js").PossessiveChain,
 ): Promise<SearchSignalResult[]> {
   // L1-L3: _firingThreshold, _asOf, _relTypes: kept for Neo4jMemoryClient interface compat;
   // not forwarded to structuredGraphSearch/causalChainSearch.
+  // When LLM decomposition produced a chain plan, use directed traversal
+  // regardless of the original query type (entity, extraction, possessive-chain).
+  if (parsedChain) {
+    return possessiveChainSearch(session, parsedChain, limit, agentId, includeExpired);
+  }
   if (queryType === "causal") {
     return causalChainSearch(
       session,

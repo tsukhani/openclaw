@@ -18,6 +18,7 @@ export type QueryType =
   | "updates"
   | "extraction"
   | "causal"
+  | "possessive-chain"
   | "default";
 
 // BM25 query expansion: stop words to exclude (too generic, noise-only).
@@ -168,11 +169,11 @@ export function classifyQuery(query: string): QueryType {
 
   // Possessive chain queries: "my wife's older son's phone number", "Alice's manager's email"
   // Two or more possessives indicate multi-hop entity relationship traversal regardless of
-  // word count. These need graph signal boost to resolve chains like user → wife → son → phone.
+  // word count. These need directed graph traversal to resolve chains like user → wife → son → phone.
   // M13: String.match() with a global regex ignores lastIndex — no reset needed.
   const possessiveCount = (query.match(POSSESSIVE_RE) || []).length;
   if (possessiveCount >= 2) {
-    return "entity";
+    return "possessive-chain";
   }
 
   // Extraction queries: ask for specific facts stored in memory (OP-138).
@@ -249,6 +250,9 @@ export function getAdaptiveWeights(
     case "updates":
       // Stronger freshness boost so newer validFrom memories outrank stale ones
       return [1.0, 1.0, graphBase * 0.3, 0.6];
+    case "possessive-chain":
+      // Possessive chains: graph signal is primary (directed traversal), vector as backup
+      return [0.8, 0.6, graphBase * 0.8, 0.0];
     case "causal":
       // Why/cause queries: graph helps with causal chains but must not override primary signals
       return [0.9, 0.7, graphBase * 0.5, 0.1];

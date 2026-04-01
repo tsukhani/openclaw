@@ -97,12 +97,12 @@ describe("classifyQuery", () => {
   });
 
   describe("possessive chain queries (multi-hop entity traversal)", () => {
-    it("should classify 2+ possessives as 'entity' regardless of word count", () => {
-      expect(classifyQuery("What is my wife's older son's phone number?")).toBe("entity");
+    it("should classify 2+ possessives as 'possessive-chain'", () => {
+      expect(classifyQuery("What is my wife's older son's phone number?")).toBe("possessive-chain");
     });
 
-    it("should classify possessive chain without question prefix as 'entity'", () => {
-      expect(classifyQuery("Alice's manager's email address")).toBe("entity");
+    it("should classify possessive chain without question prefix as 'possessive-chain'", () => {
+      expect(classifyQuery("Alice's manager's email address")).toBe("possessive-chain");
     });
 
     it("should classify WH-question with single possessive as 'entity'", () => {
@@ -201,6 +201,14 @@ describe("getAdaptiveWeights", () => {
       expect(bm25).toBe(0.7);
       expect(graph).toBeCloseTo(0.5);
       expect(freshness).toBe(0.1);
+    });
+
+    it("should strongly boost graph for possessive-chain queries", () => {
+      const [vector, bm25, graph, freshness] = getAdaptiveWeights("possessive-chain", true);
+      expect(vector).toBe(0.8);
+      expect(bm25).toBe(0.6);
+      expect(graph).toBeCloseTo(0.8);
+      expect(freshness).toBe(0.0);
     });
   });
 
@@ -621,6 +629,7 @@ describe("hybridSearch", () => {
       expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
       undefined, // graphCausalRelTypes
       expect.any(AbortSignal),
+      undefined, // parsedChain
     );
   });
 
@@ -654,6 +663,7 @@ describe("hybridSearch", () => {
       expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
       undefined, // graphCausalRelTypes
       expect.any(AbortSignal),
+      undefined, // parsedChain
     );
   });
 
@@ -687,6 +697,7 @@ describe("hybridSearch", () => {
       expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
       undefined, // graphCausalRelTypes
       expect.any(AbortSignal),
+      undefined, // parsedChain
     );
   });
 
@@ -719,6 +730,7 @@ describe("hybridSearch", () => {
       expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
       undefined, // graphCausalRelTypes
       expect.any(AbortSignal),
+      undefined, // parsedChain
     );
   });
 });
@@ -821,6 +833,7 @@ describe("hybridSearch — asOf parameter (OP-120)", () => {
       expect.any(Array), // OP-143: queryEmbedding for dual-seed entity traversal
       undefined, // graphCausalRelTypes
       expect.any(AbortSignal),
+      undefined, // parsedChain
     );
   });
 });

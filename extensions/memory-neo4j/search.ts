@@ -37,6 +37,8 @@ export { applyFactTypeBoost, detectFactTypeIntent } from "./search-fact-type.js"
 export { isLowConfidenceResult, LOW_CONFIDENCE_THRESHOLD } from "./search-freshness.js";
 export { fuseWithConfidenceRRF } from "./search-rrf-fusion.js";
 
+import { decomposeChainQuery, fetchGraphSchema, parsePossessiveChain } from "./possessive-chain.js";
+import type { PossessiveChain } from "./possessive-chain.js";
 import { applyFactTypeBoost, detectFactTypeIntent } from "./search-fact-type.js";
 import {
   buildFreshnessSignal,
@@ -415,10 +417,13 @@ export async function hybridSearch(
   // graph traversal timeout is now 1s (down from 2s) and typical queries
   // complete in <100ms. The 2s outer timeout covers network/session overhead.
   const SIGNAL_TIMEOUT_MS = 2_000;
+  // Possessive-chain queries include an LLM call for decomposition; allow more time.
+  const CHAIN_SIGNAL_TIMEOUT_MS = 10_000;
   // M15: Clear timer when the promise resolves to prevent timer accumulation
   const withAbortableTimeout = <T>(
     fn: (signal: AbortSignal) => Promise<T>,
     fallback: T,
+    timeoutMs: number = SIGNAL_TIMEOUT_MS,
   ): Promise<T> => {
     const ac = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
@@ -426,7 +431,7 @@ export async function hybridSearch(
       timer = setTimeout(() => {
         ac.abort();
         resolve(fallback);
-      }, SIGNAL_TIMEOUT_MS);
+      }, timeoutMs);
       if (typeof timer === "object" && "unref" in timer) timer.unref();
     });
     return Promise.race([fn(ac.signal).finally(() => clearTimeout(timer)), timeoutPromise]);
@@ -465,26 +470,66 @@ export async function hybridSearch(
       [] as SearchSignalResult[],
     ),
     withAbortableTimeout(
-      (signal) =>
-        graphEnabled
-          ? db.graphSearch(
-              graphQuery,
-              candidateLimit,
-              graphFiringThreshold,
-              agentId,
-              graphSearchDepth,
-              includeExpired,
-              asOf,
-              graphSeedCap,
-              graphRelTypes,
-              undefined, // hopDecayThreshold — use default
-              queryType, // dispatch to causalChainSearch for "causal" queries
-              queryEmbedding, // OP-143: dual-seed — vector + fulltext for entity traversal
-              graphCausalRelTypes, // configurable causal types for chain search
+      async (signal) => {
+        if (!graphEnabled) return [] as SearchSignalResult[];
+
+        // LLM-based chain decomposition for relationship traversal queries.
+        // The LLM determines whether the query is a multi-hop traversal and
+        // returns a structured plan. It returns isTraversable=false for queries
+        // that aren't relationship chains, so it's safe to attempt broadly.
+        // Attempted for entity, extraction, and possessive-chain query types —
+        // these are the types most likely to involve relationship traversal.
+        // Causal queries have their own directed search; short/long/updates/default
+        // rarely involve multi-hop relationship chains.
+        const attemptChainDecomposition =
+          queryType === "possessive-chain" || queryType === "entity" || queryType === "extraction";
+
+        let parsedChain: PossessiveChain | undefined;
+        if (attemptChainDecomposition) {
+          if (extractionConfig) {
+            // Fetch live graph schema to ground the LLM in actual entity names
+            // and relationship types. Runs in parallel with nothing (fast query).
+            const schema = agentId ? await fetchGraphSchema(db, agentId) : undefined;
+            const llmResult = await decomposeChainQuery(
+              query,
+              extractionConfig,
+              selfEntityName ?? undefined,
               signal,
-            )
-          : Promise.resolve([] as SearchSignalResult[]),
+              schema,
+            );
+            if (llmResult.isChain) parsedChain = llmResult;
+          }
+          // Fall back to rule-based parser for possessive-chain queries
+          // when LLM is unavailable or fails
+          if (!parsedChain && queryType === "possessive-chain") {
+            const ruleResult = parsePossessiveChain(query, selfEntityName ?? undefined);
+            if (ruleResult.isChain) parsedChain = ruleResult;
+          }
+        }
+
+        return db.graphSearch(
+          graphQuery,
+          candidateLimit,
+          graphFiringThreshold,
+          agentId,
+          graphSearchDepth,
+          includeExpired,
+          asOf,
+          graphSeedCap,
+          graphRelTypes,
+          undefined, // hopDecayThreshold — use default
+          queryType, // dispatch to causalChainSearch/possessiveChainSearch
+          queryEmbedding, // OP-143: dual-seed — vector + fulltext for entity traversal
+          graphCausalRelTypes, // configurable causal types for chain search
+          signal,
+          parsedChain, // possessive-chain directed traversal
+        );
+      },
       [] as SearchSignalResult[],
+      // Queries that attempt LLM chain decomposition need extended timeout
+      queryType === "possessive-chain" || queryType === "entity" || queryType === "extraction"
+        ? CHAIN_SIGNAL_TIMEOUT_MS
+        : undefined,
     ),
     withAbortableTimeout(
       (signal) =>
