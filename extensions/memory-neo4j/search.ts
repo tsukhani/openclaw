@@ -486,7 +486,15 @@ export async function hybridSearch(
 
         let parsedChain: PossessiveChain | undefined;
         if (attemptChainDecomposition) {
-          if (extractionConfig) {
+          // For possessive-chain queries, try the zero-latency rule-based parser
+          // first — it handles explicit possessive patterns ("my wife's son's phone")
+          // without an LLM round-trip. Only fall through to LLM decomposition for
+          // entity/extraction queries or when the rule-based parser can't parse it.
+          if (queryType === "possessive-chain") {
+            const ruleResult = parsePossessiveChain(query, selfEntityName ?? undefined);
+            if (ruleResult.isChain) parsedChain = ruleResult;
+          }
+          if (!parsedChain && extractionConfig) {
             // Fetch live graph schema to ground the LLM in actual entity names
             // and relationship types. Runs in parallel with nothing (fast query).
             const schema = agentId ? await fetchGraphSchema(db, agentId) : undefined;
@@ -498,12 +506,6 @@ export async function hybridSearch(
               schema,
             );
             if (llmResult.isChain) parsedChain = llmResult;
-          }
-          // Fall back to rule-based parser for possessive-chain queries
-          // when LLM is unavailable or fails
-          if (!parsedChain && queryType === "possessive-chain") {
-            const ruleResult = parsePossessiveChain(query, selfEntityName ?? undefined);
-            if (ruleResult.isChain) parsedChain = ruleResult;
           }
         }
 
