@@ -577,15 +577,8 @@ export function registerMemoryHooks(
       logger.debug?.(
         `memory-neo4j: agent_end fired (success=${event.success}, messages=${event.messages?.length ?? 0})`,
       );
-      if (!event.messages || event.messages.length === 0) {
-        logger.debug?.("memory-neo4j: skipping - empty messages");
-        metrics.increment("auto_capture.skipped");
-        return;
-      }
-      if (!event.success && !cfg.captureOnError) {
-        logger.debug?.(
-          "memory-neo4j: skipping capture — agent_end success=false and captureOnError=false",
-        );
+      if (!event.success || !event.messages || event.messages.length === 0) {
+        logger.debug?.("memory-neo4j: skipping - no success or empty messages");
         metrics.increment("auto_capture.skipped");
         return;
       }

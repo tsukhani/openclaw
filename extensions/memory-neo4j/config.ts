@@ -40,7 +40,6 @@ export const PRESETS: Record<ConfigPreset, Record<string, unknown>> = {
   },
   balanced: {
     autoCapture: true,
-    captureOnError: true,
     autoRecall: true,
     autoRecallMinScore: 0.25,
     coreMemory: { enabled: true },
@@ -51,7 +50,6 @@ export const PRESETS: Record<ConfigPreset, Record<string, unknown>> = {
   },
   full: {
     autoCapture: true,
-    captureOnError: true,
     autoRecall: true,
     autoRecallMinScore: 0.2,
     coreMemory: { enabled: true, refreshAtContextPercent: 70 },
@@ -134,11 +132,6 @@ export type MemoryNeo4jConfig = {
     maxTokens?: number;
   };
   autoCapture: boolean;
-  /**
-   * When true, auto-capture runs even when agent_end fires with success=false
-   * (e.g. model crashes, failovers). Default: false (skip failed turns).
-   */
-  captureOnError?: boolean;
   autoCaptureSkipPattern?: RegExp;
   autoRecall: boolean;
   autoRecallMinScore: number;
@@ -583,7 +576,6 @@ const TOP_LEVEL_KEYS = [
   "embedding",
   "neo4j",
   "autoCapture",
-  "captureOnError",
   "autoCaptureSkipPattern",
   "autoRecall",
   "autoRecallMinScore",
@@ -1104,7 +1096,6 @@ export const memoryNeo4jConfigSchema = {
       embedding: { provider, apiKey, model: embeddingModel, baseUrl },
       extraction,
       autoCapture: cfg.autoCapture !== false,
-      captureOnError: cfg.captureOnError === true,
       autoCaptureSkipPattern: compileRegex(captureSkipRaw, "autoCaptureSkipPattern"),
       autoRecall: cfg.autoRecall !== false,
       autoRecallMinScore,
