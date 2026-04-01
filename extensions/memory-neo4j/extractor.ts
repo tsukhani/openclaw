@@ -519,6 +519,15 @@ function validateExtractionResult(
             "alternative",
             "former",
             "temporary",
+            // Family ordinal qualifiers — needed for possessive-chain graph traversal
+            // to distinguish "older son" from "younger son", etc.
+            "older",
+            "younger",
+            "eldest",
+            "youngest",
+            "first",
+            "second",
+            "third",
           ]);
           return q && ALLOWED_QUALIFIERS.has(q) ? q : undefined;
         })(),

@@ -1060,6 +1060,9 @@ export function buildSearchOptions(params: {
     asOf: params.asOf,
     includeQuarantined: params.includeQuarantined,
     provenanceEnabled: cfg.provenanceEnabled,
-    ...(cfg.reranker?.enabled ? { rerankerConfig: cfg.reranker, extractionConfig } : {}),
+    // extractionConfig is needed both for LLM chain decomposition (graph signal)
+    // and for LLM-based reranking — pass it unconditionally.
+    extractionConfig,
+    ...(cfg.reranker?.enabled ? { rerankerConfig: cfg.reranker } : {}),
   };
 }

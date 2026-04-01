@@ -5,6 +5,8 @@
  * The thin registration table lives in cli.ts.
  */
 
+import os from "node:os";
+import path from "node:path";
 import neo4j from "neo4j-driver";
 import { passesAttentionGate } from "./attention-gate.js";
 import type { CliDeps } from "./cli.js";
@@ -16,8 +18,9 @@ import type { EvalOutputFormat, MemoryAbility } from "./eval/types.js";
 import { EVAL_VARIANTS } from "./eval/variants.js";
 import { stripMessageWrappers } from "./message-utils.js";
 import type { Neo4jMemoryClient } from "./neo4j-client.js";
+import { resolveSelfEntityName } from "./plugin-hooks.js";
 import type { Logger } from "./schema.js";
-import { hybridSearch } from "./search.js";
+import { buildSearchOptions, hybridSearch } from "./search.js";
 import { runSleepCycle } from "./sleep-cycle.js";
 
 /** Iterative max to avoid stack overflow from Math.max(...spread) on large arrays. */
@@ -291,6 +294,20 @@ export async function handleSearch(
 ): Promise<void> {
   try {
     const provenanceEnabled = opts.provenance === true;
+    // Resolve selfEntityName: config takes priority, then USER.md in workspace dir
+    const workspaceDir = path.join(os.homedir(), ".openclaw", "workspace");
+    const selfEntityName =
+      cfg.selfEntityName ?? (await resolveSelfEntityName(workspaceDir).catch(() => null));
+    const searchOptions = buildSearchOptions({
+      cfg,
+      extractionConfig,
+      db,
+      logger: { info() {}, warn() {}, debug() {}, error() {} } as unknown as Logger,
+      selfEntityName,
+      includeExpired: opts.includeExpired ?? false,
+    });
+    // CLI-specific override: provenance flag from --provenance option
+    searchOptions!.provenanceEnabled = provenanceEnabled;
     const results = await hybridSearch(
       db,
       embeddings,
@@ -298,11 +315,7 @@ export async function handleSearch(
       Math.max(1, parseInt(opts.limit, 10) || 5),
       opts.agent ?? "default",
       extractionConfig.enabled,
-      {
-        graphSearchDepth: cfg.graphSearchDepth,
-        includeExpired: opts.includeExpired ?? false,
-        provenanceEnabled,
-      },
+      searchOptions,
     );
 
     // Partition results by dominant signal for easier inspection.
