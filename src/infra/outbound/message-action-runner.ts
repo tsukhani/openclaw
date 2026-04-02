@@ -1,6 +1,7 @@
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import { resolveSessionAgentId } from "../../agents/agent-scope.js";
 import {
+  ToolInputError,
   readNumberParam,
   readStringArrayParam,
   readStringParam,
@@ -533,11 +534,21 @@ async function handleSendAction(ctx: ResolvedActionContext): Promise<MessageActi
   const hasPresentation = hasMessagePresentationBlocks(params.presentation);
   const hasInteractive = hasInteractiveReplyBlocks(params.interactive);
   const caption = readStringParam(params, "caption", { allowEmpty: true }) ?? "";
+  const messageRequired =
+    !mediaHint &&
+    !hasButtons &&
+    !hasCard &&
+    !hasComponents &&
+    !hasInteractive &&
+    !hasBlocks &&
+    !hasPresentation;
   let message =
-    readStringParam(params, "message", {
-      required: !mediaHint && !hasPresentation && !hasInteractive,
-      allowEmpty: true,
-    }) ?? "";
+    readStringParam(params, "message", { required: false, allowEmpty: true }) ??
+    readStringParam(params, "content", { required: false, allowEmpty: true }) ??
+    "";
+  if (messageRequired && !message) {
+    throw new ToolInputError("message required");
+  }
   if (message.includes("\\n")) {
     message = message.replaceAll("\\n", "\n");
   }
