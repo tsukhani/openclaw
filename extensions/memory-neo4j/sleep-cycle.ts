@@ -48,6 +48,12 @@ import {
 } from "./sleep-phases-links.js";
 import { runObservationGeneration } from "./sleep-phases-observations.js";
 import {
+  runRuleLearning,
+  runRuleMaterialization,
+  runConsistencyAudit,
+  runCausalModelUpdate,
+} from "./sleep-phases-reasoning.js";
+import {
   runEntityReclassification,
   runRelationshipReclassification,
 } from "./sleep-phases-reclassify.js";
@@ -121,6 +127,10 @@ export async function runSleepCycle(
         opinionsArchived: 0,
         opinionsGeneralized: 0,
       },
+      ruleLearning: { rulesDiscovered: 0, rulesActivated: 0, rulesRejected: 0, rulesPruned: 0 },
+      ruleMaterialization: { factsInferred: 0, iterations: 0, converged: false },
+      consistencyAudit: { constraintsChecked: 0, violationsFound: 0, memoriesQuarantined: 0 },
+      causalModelUpdate: { modelsUpdated: 0, edgesAdded: 0, edgesRemoved: 0 },
       durationMs: 0,
       aborted: true,
     };
@@ -166,6 +176,10 @@ export async function runSleepCycle(
         opinionsArchived: 0,
         opinionsGeneralized: 0,
       },
+      ruleLearning: { rulesDiscovered: 0, rulesActivated: 0, rulesRejected: 0, rulesPruned: 0 },
+      ruleMaterialization: { factsInferred: 0, iterations: 0, converged: false },
+      consistencyAudit: { constraintsChecked: 0, violationsFound: 0, memoriesQuarantined: 0 },
+      causalModelUpdate: { modelsUpdated: 0, edgesAdded: 0, edgesRemoved: 0 },
       durationMs: 0,
       aborted: false,
     };
@@ -368,6 +382,40 @@ export async function runSleepCycle(
     if (!abortSignal?.aborted) {
       // Phase 4: Orphan cleanup (must run after decay may have created orphans)
       await runOrphanCleanup(db, logger, options, result);
+    }
+
+    // ── Stage 4 (sequential — neuro-symbolic reasoning phases) ─────────
+
+    if (!abortSignal?.aborted) {
+      const reasoningAgentId = options.agentId ?? "default";
+      const reasoningCfg = options.reasoningConfig;
+
+      // Phase 14: Rule Learning
+      if (!options.skipRuleLearning) {
+        await runRuleLearning(db, logger, reasoningAgentId, reasoningCfg, result, abortSignal);
+      }
+
+      // Phase 15: Rule Materialization
+      if (!abortSignal?.aborted && !options.skipRuleMaterialization) {
+        await runRuleMaterialization(
+          db,
+          logger,
+          reasoningAgentId,
+          reasoningCfg,
+          result,
+          abortSignal,
+        );
+      }
+
+      // Phase 16: Consistency Audit
+      if (!abortSignal?.aborted && !options.skipConsistencyAudit) {
+        await runConsistencyAudit(db, logger, reasoningAgentId, result, abortSignal);
+      }
+
+      // Phase 17: Causal Model Update
+      if (!abortSignal?.aborted && !options.skipCausalModelUpdate) {
+        await runCausalModelUpdate(db, logger, reasoningAgentId, result, abortSignal);
+      }
     }
 
     result.durationMs = Date.now() - startTime;

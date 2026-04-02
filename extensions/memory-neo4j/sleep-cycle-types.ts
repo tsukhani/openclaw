@@ -121,6 +121,31 @@ export type SleepCycleResult = {
     /** Cross-entity generalized opinions (OP-188). */
     opinionsGeneralized: number;
   };
+  // Phase 14: Rule Learning (neuro-symbolic)
+  ruleLearning: {
+    rulesDiscovered: number;
+    rulesActivated: number;
+    rulesRejected: number;
+    rulesPruned: number;
+  };
+  // Phase 15: Rule Materialization (neuro-symbolic)
+  ruleMaterialization: {
+    factsInferred: number;
+    iterations: number;
+    converged: boolean;
+  };
+  // Phase 16: Consistency Audit (neuro-symbolic)
+  consistencyAudit: {
+    constraintsChecked: number;
+    violationsFound: number;
+    memoriesQuarantined: number;
+  };
+  // Phase 17: Causal Model Update (neuro-symbolic)
+  causalModelUpdate: {
+    modelsUpdated: number;
+    edgesAdded: number;
+    edgesRemoved: number;
+  };
   // Overall
   durationMs: number;
   aborted: boolean;
@@ -202,6 +227,14 @@ export type SleepCycleOptions = {
   skipReflection?: boolean; // Skip opinion/belief synthesis (default: false)
   reflectionMaxEntities?: number; // Max entities per sleep run (default: 15)
 
+  // Phase 14-17: Neuro-symbolic reasoning
+  skipRuleLearning?: boolean; // Skip rule learning phase (default: false)
+  skipRuleMaterialization?: boolean; // Skip rule materialization phase (default: false)
+  skipConsistencyAudit?: boolean; // Skip consistency audit phase (default: false)
+  skipCausalModelUpdate?: boolean; // Skip causal model update phase (default: false)
+  /** Reasoning engine config for sleep phases. */
+  reasoningConfig?: import("./config.js").MemoryNeo4jConfig["reasoning"];
+
   // Progress callback
   onPhaseStart?: (
     phase:
@@ -225,7 +258,11 @@ export type SleepCycleOptions = {
       | "relationshipReclassification"
       | "linkCreation"
       | "observationGeneration"
-      | "reflection",
+      | "reflection"
+      | "ruleLearning"
+      | "ruleMaterialization"
+      | "consistencyAudit"
+      | "causalModelUpdate",
   ) => void;
   onProgress?: (phase: string, message: string) => void;
 };

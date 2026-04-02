@@ -184,7 +184,17 @@ export async function bm25Search(
             node.supersededBy AS supersededBy,
             COALESCE(node.trustScore, 1.0) AS trustScore,
             score AS bm25Score
-     ORDER BY score DESC
+     UNION ALL
+     CALL db.index.fulltext.queryNodes('inferred_fact_fulltext_index', $query)
+     YIELD node AS ifNode, score AS ifScore
+     WHERE ifNode.validUntil IS NULL ${agentId ? "AND ifNode.agentId = $agentId" : ""}
+     RETURN ifNode.id AS id, ifNode.text AS text, 'inferred' AS category,
+            1.0 AS importance, ifNode.createdAt AS createdAt,
+            ifNode.validFrom AS validFrom,
+            null AS supersededBy,
+            ifNode.confidence AS trustScore,
+            ifScore AS bm25Score
+     ORDER BY bm25Score DESC
      LIMIT $limit`,
       {
         query: escaped,

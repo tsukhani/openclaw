@@ -298,6 +298,32 @@ export type MemoryNeo4jConfig = {
    *
    * All weights must be >= 0. Omitting a weight uses the existing default.
    */
+  /**
+   * Neuro-symbolic logic engine configuration.
+   * Controls rule learning, materialization, consistency checking, and causal inference.
+   */
+  reasoning?: {
+    /** Maximum number of active rules per agent. Default: 100. */
+    ruleCapPerAgent?: number;
+    /** Minimum confidence for an inferred fact to be materialized. Default: 0.3. */
+    confidenceFloor?: number;
+    /** Per-step confidence decay in multi-step inference chains. Default: 0.9. */
+    depthDecay?: number;
+    /** Maximum fixed-point iterations during materialization. Default: 10. */
+    maxMaterializationIterations?: number;
+    /** Minimum support (grounding instances) for a learned rule to be activated. Default: 5. */
+    minRuleSupport?: number;
+    /** Minimum PCA confidence for a learned rule to be activated. Default: 0.6. */
+    minRuleConfidence?: number;
+    /** Time limit in seconds for each reasoning sleep phase. Default: 60. */
+    phaseTimeLimitSeconds?: number;
+    /** Minimum entity count in graph before rule learning runs. Default: 10. */
+    minEntitiesForLearning?: number;
+    /** Maximum hops for path-based rule mining. Default: 3. */
+    maxRuleLength?: number;
+    /** Number of random walks per rule learning iteration. Default: 1000. */
+    learningSampleSize?: number;
+  };
   signals?: {
     /** Post-RRF recency boost. Default: 0.1. Takes precedence over top-level recencyWeight. */
     recencyWeight?: number;

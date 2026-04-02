@@ -102,6 +102,23 @@ export async function ensureIndexes(
     // ── Community indexes (community detection) ──
     "CREATE CONSTRAINT community_id_unique IF NOT EXISTS FOR (c:Community) REQUIRE c.id IS UNIQUE",
     "CREATE FULLTEXT INDEX community_fulltext_index IF NOT EXISTS FOR (c:Community) ON EACH [c.name, c.summary]",
+
+    // ── Neuro-symbolic logic engine indexes ──
+    "CREATE CONSTRAINT rule_id_unique IF NOT EXISTS FOR (r:Rule) REQUIRE r.id IS UNIQUE",
+    "CREATE INDEX rule_agent_active_index IF NOT EXISTS FOR (r:Rule) ON (r.agentId, r.active)",
+    "CREATE CONSTRAINT inferred_fact_id_unique IF NOT EXISTS FOR (f:InferredFact) REQUIRE f.id IS UNIQUE",
+    "CREATE INDEX inferred_fact_agent_index IF NOT EXISTS FOR (f:InferredFact) ON (f.agentId)",
+    `CREATE VECTOR INDEX inferred_fact_embedding_index IF NOT EXISTS
+      FOR (f:InferredFact) ON f.embedding
+      OPTIONS {indexConfig: {
+        \`vector.dimensions\`: ${dimensions},
+        \`vector.similarity_function\`: 'cosine'
+      }}`,
+    "CREATE FULLTEXT INDEX inferred_fact_fulltext_index IF NOT EXISTS FOR (f:InferredFact) ON EACH [f.text]",
+    "CREATE CONSTRAINT causal_model_id_unique IF NOT EXISTS FOR (cm:CausalModel) REQUIRE cm.id IS UNIQUE",
+    "CREATE INDEX causal_model_agent_index IF NOT EXISTS FOR (cm:CausalModel) ON (cm.agentId)",
+    "CREATE CONSTRAINT causal_variable_id_unique IF NOT EXISTS FOR (cv:CausalVariable) REQUIRE cv.id IS UNIQUE",
+    "CREATE INDEX causal_variable_agent_name_index IF NOT EXISTS FOR (cv:CausalVariable) ON (cv.agentId, cv.name)",
   ];
 
   const session = driver.session();

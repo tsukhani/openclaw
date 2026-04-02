@@ -125,6 +125,77 @@ export type OpinionNode = {
   generalized?: boolean;
 };
 
+// ── Neuro-Symbolic Logic Engine Node Types ──
+
+/** Source of a rule definition. */
+export type RuleSource = "manual" | "learned" | "llm-proposed";
+
+/** How to aggregate edge confidences when evaluating a rule. */
+export type ConfidenceFormula = "min" | "product" | "mean";
+
+/** A stored logical rule with Cypher-pattern antecedent and consequent. */
+export type RuleNode = {
+  id: string;
+  name: string;
+  /** Cypher MATCH pattern (e.g. "(x:Entity)-[:WORKS_AT]->(y:Entity)-[:LOCATED_IN]->(z:Entity)"). */
+  antecedent: string;
+  /** Cypher CREATE/MERGE pattern for the consequent (e.g. "(x)-[:LOCATED_IN {inferred: true}]->(z)"). */
+  consequent: string;
+  confidence: number; // 0.0–1.0
+  confidenceFormula: ConfidenceFormula;
+  source: RuleSource;
+  /** Number of grounding instances in the knowledge graph. */
+  support: number;
+  /** Fraction of consequent instances explained by this rule. */
+  headCoverage: number;
+  active: boolean;
+  agentId: string;
+  validFrom: string; // ISO-8601
+  validUntil?: string; // ISO-8601
+  createdAt: string; // ISO-8601
+};
+
+/** An inferred fact produced by rule materialization. */
+export type InferredFactNode = {
+  id: string;
+  text: string; // human-readable statement
+  confidence: number; // propagated through inference chain
+  ruleId: string; // which rule produced this
+  groundingMemoryIds: string[]; // source memories
+  materialized: boolean; // written to KG as a searchable node?
+  embedding?: number[];
+  agentId: string;
+  validFrom: string; // ISO-8601
+  validUntil?: string; // ISO-8601
+  createdAt: string; // ISO-8601
+};
+
+/** Type of a causal variable. */
+export type CausalVariableType = "endogenous" | "exogenous";
+
+/** Domain of a causal variable. */
+export type CausalVariableDomain = "binary" | "categorical" | "continuous" | "ordinal";
+
+/** A structural causal model stored in Neo4j. */
+export type CausalModelNode = {
+  id: string;
+  name: string;
+  description: string;
+  agentId: string;
+  createdAt: string; // ISO-8601
+  updatedAt: string; // ISO-8601
+};
+
+/** A variable in a structural causal model. */
+export type CausalVariableNode = {
+  id: string;
+  name: string;
+  type: CausalVariableType;
+  domain: CausalVariableDomain;
+  observedValue?: string;
+  agentId: string;
+};
+
 /** Temporal properties on entity-to-entity relationship edges (OP-122). */
 export type EntityRelationship = {
   type: string;
@@ -183,7 +254,8 @@ export type SignalName =
   | "community"
   | "mpfp"
   | "observation"
-  | "opinion";
+  | "opinion"
+  | "inference";
 
 /** A single hop in a graph or MPFP traversal path (OP-200). */
 export type TraversalHop = {
@@ -457,12 +529,27 @@ export const EPISODE_SOURCE_REL = "EPISODE_SOURCE";
 /** Relationship from Entity to its Community (community detection). */
 export const BELONGS_TO_REL = "BELONGS_TO";
 
+// ── Neuro-Symbolic Logic Engine Relationship Constants ──
+
+/** Relationship from CausalVariable to CausalVariable (causal mechanism). */
+export const CAUSES_REL = "CAUSES";
+/** Relationship from CausalVariable to CausalModel (membership). */
+export const PART_OF_MODEL_REL = "PART_OF_MODEL";
+/** Relationship from InferredFact to Rule (provenance). */
+export const INFERRED_BY_REL = "INFERRED_BY";
+/** Relationship from InferredFact/Rule to Memory (grounding evidence). */
+export const GROUNDED_IN_REL = "GROUNDED_IN";
+/** Relationship between Rules (detected conflict). */
+export const CONTRADICTS_REL = "CONTRADICTS";
+
 // M2: Centralized index names — use these constants instead of hardcoded strings.
 export const INDEX_MEMORY_EMBEDDING = "memory_embedding_index";
 export const INDEX_MEMORY_FULLTEXT = "memory_fulltext_index";
 export const INDEX_ENTITY_FULLTEXT = "entity_fulltext_index";
 export const INDEX_ENTITY_EMBEDDING = "entity_embedding_index";
 export const INDEX_COMMUNITY_FULLTEXT = "community_fulltext_index";
+export const INDEX_INFERRED_FACT_EMBEDDING = "inferred_fact_embedding_index";
+export const INDEX_INFERRED_FACT_FULLTEXT = "inferred_fact_fulltext_index";
 
 /**
  * Sanitize a relationship type string for safe Cypher interpolation.

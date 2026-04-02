@@ -196,6 +196,13 @@ export class Neo4jMemoryClient {
       // Return a sentinel ID so callers do not crash; the memory is not stored.
       return `blocked:credential:${Date.now()}`;
     }
+    // Neuro-symbolic: Capture-time consistency validation hook.
+    // When constraints are defined, the consistency checker can run inline checks
+    // before storage. Currently handled post-hoc via sleep Phase 16 and on-demand
+    // via logic_query tool in "check" mode. Full capture-time integration requires
+    // wiring constraint definitions through the plugin lifecycle.
+    // See: consistency-checker.ts, plugin-tools-reasoning.ts
+
     // M4: Validate embedding dimensions match configured dimensions
     if (input.embedding.length > 0 && input.embedding.length !== this.dimensions) {
       this.logger.warn(

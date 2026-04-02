@@ -249,6 +249,111 @@ export function registerCli(api: OpenClawPluginApi, deps: CliDeps): void {
             await handleEval(db, embeddings, extractionConfig, cfg, opts);
           },
         );
+      // ── Neuro-symbolic reasoning commands ──
+
+      memory
+        .command("rules")
+        .description("Manage logical inference rules")
+        .argument("[action]", "Action: list, learn, prune (default: list)", "list")
+        .option("--agent <id>", "Agent id (default: default)")
+        .option("--json", "Output as JSON")
+        .action(async (action: string, opts: { agent?: string; json?: boolean }) => {
+          const agentId = opts.agent ?? "default";
+          const session = await db.createSession();
+          try {
+            if (action === "list") {
+              const { listActiveRules } = await import("./neo4j-client-rules.js");
+              const rules = await listActiveRules(session, agentId);
+              if (opts.json) {
+                console.log(JSON.stringify(rules, null, 2));
+              } else if (rules.length === 0) {
+                console.log("No active rules.");
+              } else {
+                for (const r of rules) {
+                  console.log(
+                    `  ${r.name} [${r.source}] — confidence: ${(r.confidence * 100).toFixed(0)}%, support: ${r.support}`,
+                  );
+                }
+              }
+            } else if (action === "learn") {
+              const { RuleLearner } = await import("./rule-learner.js");
+              const cliLogger = {
+                info: console.log,
+                warn: console.warn,
+                error: console.error,
+                debug: () => {},
+              };
+              const learner = new RuleLearner(cfg, cliLogger);
+              const result = await learner.learnRules(session, agentId, { timeLimit: 60 });
+              console.log(
+                `Discovered ${result.rulesDiscovered} patterns, activated ${result.rulesActivated}, rejected ${result.rulesRejected}`,
+              );
+            } else if (action === "prune") {
+              const { RuleLearner } = await import("./rule-learner.js");
+              const cliLog = {
+                info: console.log,
+                warn: console.warn,
+                error: console.error,
+                debug: () => {},
+              };
+              const learner = new RuleLearner(cfg, cliLog);
+              const pruned = await learner.pruneRules(session, agentId);
+              console.log(`Pruned ${pruned} low-support rules.`);
+            } else {
+              console.error(`Unknown action: ${action}. Use: list, learn, prune`);
+            }
+          } finally {
+            await session.close();
+          }
+        });
+
+      memory
+        .command("causal")
+        .description("Manage causal models")
+        .argument("[action]", "Action: list, discover (default: list)", "list")
+        .option("--agent <id>", "Agent id (default: default)")
+        .option("--method <m>", "Discovery method: temporal, llm-assisted, hybrid", "temporal")
+        .option("--json", "Output as JSON")
+        .action(
+          async (action: string, opts: { agent?: string; method?: string; json?: boolean }) => {
+            const agentId = opts.agent ?? "default";
+            const session = await db.createSession();
+            try {
+              if (action === "list") {
+                const { listCausalModels } = await import("./neo4j-client-causal.js");
+                const models = await listCausalModels(session, agentId);
+                if (opts.json) {
+                  console.log(JSON.stringify(models, null, 2));
+                } else if (models.length === 0) {
+                  console.log("No causal models.");
+                } else {
+                  for (const m of models) {
+                    console.log(`  ${m.name} (${m.id}) — ${m.description}`);
+                  }
+                }
+              } else if (action === "discover") {
+                const { CausalEngine } = await import("./causal-engine.js");
+                const cliCausalLogger = {
+                  info: console.log,
+                  warn: console.warn,
+                  error: console.error,
+                  debug: () => {},
+                };
+                const engine = new CausalEngine(cliCausalLogger);
+                const method =
+                  (opts.method as "temporal" | "llm-assisted" | "hybrid") ?? "temporal";
+                const result = await engine.discoverStructure(session, agentId, { method });
+                console.log(
+                  `Created model "${result.modelName}" with ${result.variablesCreated} variables and ${result.edgesCreated} edges.`,
+                );
+              } else {
+                console.error(`Unknown action: ${action}. Use: list, discover`);
+              }
+            } finally {
+              await session.close();
+            }
+          },
+        );
     },
     { commands: ["memory neo4j"] },
   );
