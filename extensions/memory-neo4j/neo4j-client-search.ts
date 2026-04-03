@@ -334,14 +334,16 @@ async function fuzzyTokenSeed(
 
   const agentFilter = agentId ? "AND e.agentId = $agentId" : "";
 
-  // Build a WHERE clause that matches entities containing ANY token in their name
-  // Use parameterized token list + ANY() for safe, injection-free matching
+  // Build a WHERE clause that matches entities containing ANY token in their name or aliases.
+  // Use parameterized token list + ANY() for safe, injection-free matching.
   const result = await session.executeRead((tx) =>
     tx.run(
       `MATCH (e:Entity)
-       WHERE ANY(token IN $tokens WHERE toLower(e.name) CONTAINS token)
+       WHERE ANY(token IN $tokens WHERE toLower(e.name) CONTAINS token
+         OR ANY(alias IN coalesce(e.aliases, []) WHERE toLower(alias) CONTAINS token))
          ${agentFilter}
-       WITH e, [token IN $tokens WHERE toLower(e.name) CONTAINS token] AS matched
+       WITH e, [token IN $tokens WHERE toLower(e.name) CONTAINS token
+         OR ANY(alias IN coalesce(e.aliases, []) WHERE toLower(alias) CONTAINS token)] AS matched
        RETURN elementId(e) AS eid,
               toFloat(size(matched)) / toFloat($tokenCount) AS score
        ORDER BY score DESC, e.relationshipCount DESC
@@ -349,6 +351,138 @@ async function fuzzyTokenSeed(
       {
         tokens,
         tokenCount: tokens.length,
+        seedCap: neo4j.int(Math.max(1, Math.floor(seedCap))),
+        ...(agentId ? { agentId } : {}),
+      },
+    ),
+  );
+
+  const seeds = new Map<string, number>();
+  for (const r of result.records) {
+    seeds.set(r.get("eid") as string, r.get("score") as number);
+  }
+  return seeds;
+}
+
+/**
+ * Extract entity name candidates from a search query using lightweight regex NER.
+ *
+ * Identifies proper nouns and possessive subjects that likely refer to entity names,
+ * so graph search can seed on precise entity names rather than the full query string.
+ *
+ * Examples:
+ *   "What is Tarun's wife's name?" → ["tarun"]
+ *   "Tell me about Renu Sukhani" → ["renu sukhani"]
+ *   "Where does Tarun work?" → ["tarun"]
+ */
+export function extractQueryEntities(query: string): string[] {
+  const candidates = new Set<string>();
+
+  // Possessive subjects: "Tarun's" → "tarun"
+  const POSSESSIVE_RE = /\b([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]+){0,2})'s\b/g;
+  for (const m of query.matchAll(POSSESSIVE_RE)) {
+    candidates.add(m[1].toLowerCase());
+  }
+
+  // Capitalized proper nouns (2+ consecutive capitalized words or single capitalized word
+  // that isn't a sentence starter and isn't a common English word)
+  const PROPER_NOUN_RE = /\b([A-Z][a-z]{2,}(?:\s+[A-Z][a-z]+)+)\b/g;
+  for (const m of query.matchAll(PROPER_NOUN_RE)) {
+    candidates.add(m[0].toLowerCase());
+  }
+
+  // Single capitalized words that aren't at sentence start and aren't common words
+  const SINGLE_PROPER_RE = /(?:^.+?\s|[\s,;:])([A-Z][a-z]{2,})\b/g;
+  const COMMON_WORDS = new Set([
+    "the",
+    "what",
+    "where",
+    "when",
+    "who",
+    "how",
+    "which",
+    "why",
+    "tell",
+    "show",
+    "find",
+    "get",
+    "give",
+    "does",
+    "did",
+    "has",
+    "can",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "about",
+    "from",
+    "with",
+    "that",
+    "this",
+    "have",
+    "been",
+    "some",
+    "any",
+    "all",
+    "each",
+    "every",
+    "most",
+    "many",
+    "not",
+    "but",
+    "and",
+    "for",
+    "are",
+    "was",
+    "were",
+    "his",
+    "her",
+    "its",
+    "our",
+    "their",
+    "your",
+    "also",
+    "just",
+  ]);
+  for (const m of query.matchAll(SINGLE_PROPER_RE)) {
+    const word = m[1].toLowerCase();
+    if (!COMMON_WORDS.has(word)) {
+      candidates.add(word);
+    }
+  }
+
+  return [...candidates];
+}
+
+/**
+ * Exact name/alias match seed for entity seeding.
+ *
+ * Directly matches entity names and aliases against extracted query entity names.
+ * Bypasses BM25 scoring to handle short names (e.g. "tarun") that may score
+ * below the fulltext threshold. Runs between fulltext/vector and fuzzy token seed.
+ */
+async function exactNameAliasSeed(
+  session: Session,
+  entityNames: string[],
+  seedCap: number,
+  agentId?: string,
+): Promise<Map<string, number>> {
+  if (entityNames.length === 0) return new Map();
+
+  const agentFilter = agentId ? "AND e.agentId = $agentId" : "";
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `UNWIND $names AS name
+       MATCH (e:Entity)
+       WHERE (e.name = name OR name IN [alias IN coalesce(e.aliases, []) | toLower(alias)])
+         ${agentFilter}
+       RETURN DISTINCT elementId(e) AS eid, 1.0 AS score
+       LIMIT $seedCap`,
+      {
+        names: entityNames.map((n) => n.toLowerCase()),
         seedCap: neo4j.int(Math.max(1, Math.floor(seedCap))),
         ...(agentId ? { agentId } : {}),
       },
@@ -558,8 +692,22 @@ export async function structuredGraphSearch(
     }
   }
 
-  // Fuzzy token fallback: when fulltext + vector return 0 seeds, try
-  // case-insensitive CONTAINS matching on entity names with query tokens.
+  // NER-based exact match fallback: extract entity name candidates from the query
+  // using lightweight regex NER, then match against entity names and aliases directly.
+  // This handles short exact names (e.g. "tarun") that BM25 may underscore,
+  // and aliases that the fulltext index may not have matched.
+  if (seedScores.size === 0) {
+    const queryEntities = extractQueryEntities(query);
+    if (queryEntities.length > 0) {
+      const exactSeeds = await exactNameAliasSeed(session, queryEntities, seedCap, agentId);
+      for (const [eid, score] of exactSeeds) {
+        seedScores.set(eid, score);
+      }
+    }
+  }
+
+  // Fuzzy token fallback: when fulltext + vector + exact match return 0 seeds, try
+  // case-insensitive CONTAINS matching on entity names and aliases with query tokens.
   if (seedScores.size === 0) {
     const fuzzySeedScores = await fuzzyTokenSeed(session, query, seedCap, agentId);
     for (const [eid, score] of fuzzySeedScores) {
@@ -898,7 +1046,18 @@ export async function causalChainSearch(
     }
   }
 
-  // Fuzzy token fallback when fulltext returns 0 seeds
+  // NER-based exact match fallback (same as structuredGraphSearch)
+  if (seedScores.size === 0) {
+    const queryEntities = extractQueryEntities(query);
+    if (queryEntities.length > 0) {
+      const exactSeeds = await exactNameAliasSeed(session, queryEntities, seedCap, agentId);
+      for (const [eid, score] of exactSeeds) {
+        seedScores.set(eid, score);
+      }
+    }
+  }
+
+  // Fuzzy token fallback when fulltext + exact match return 0 seeds
   if (seedScores.size === 0) {
     const fuzzySeedScores = await fuzzyTokenSeed(session, query, seedCap, agentId);
     for (const [eid, score] of fuzzySeedScores) {
@@ -915,7 +1074,7 @@ export async function causalChainSearch(
   const result = await session.executeRead(
     (tx) =>
       tx.run(
-        `// Load seed entities by pre-computed element IDs (fulltext + fuzzy fallback)
+        `// Load seed entities by pre-computed element IDs (fulltext + exact + fuzzy fallback)
      UNWIND $seedElementIds AS seedEid
      MATCH (node:Entity)
      WHERE elementId(node) = seedEid
@@ -1162,10 +1321,23 @@ export async function possessiveChainSearch(
   );
 
   const cypher = `
-    // Seed: find the starting entity by name
-    CALL db.index.fulltext.queryNodes('entity_fulltext_index', $seedName)
-    YIELD node, score
-    WHERE score >= 0.5 ${agentFilter}
+    // Seed: find the starting entity by name via fulltext (BM25) OR exact name/alias match.
+    // The exact match fallback handles short names (e.g. "tarun") where BM25 may underscore.
+    CALL {
+      CALL db.index.fulltext.queryNodes('entity_fulltext_index', $seedName)
+      YIELD node, score
+      WHERE score >= 0.5 ${agentFilter}
+      RETURN node, score
+      ORDER BY score DESC
+      LIMIT 1
+      UNION
+      MATCH (node:Entity)
+      WHERE (node.name = toLower($seedName)
+        OR toLower($seedName) IN [a IN coalesce(node.aliases, []) | toLower(a)])
+        ${agentFilter}
+      RETURN node, 1.0 AS score
+      LIMIT 1
+    }
     WITH node, score
     ORDER BY score DESC
     LIMIT 1

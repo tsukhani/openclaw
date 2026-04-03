@@ -69,7 +69,12 @@ export async function ensureIndexes(
 
     // Full-text indexes (Lucene BM25)
     "CREATE FULLTEXT INDEX memory_fulltext_index IF NOT EXISTS FOR (m:Memory) ON EACH [m.text]",
-    "CREATE FULLTEXT INDEX entity_fulltext_index IF NOT EXISTS FOR (e:Entity) ON EACH [e.name]",
+    // Migration: entity_fulltext_index v1 (name only) → v2 (name + aliases).
+    // Drop the old index to allow creation with the expanded property set.
+    // Aliases are string arrays — Neo4j fulltext indexes each element separately,
+    // so searching for an alias term finds the entity without extra queries.
+    "DROP INDEX entity_fulltext_index IF EXISTS",
+    "CREATE FULLTEXT INDEX entity_fulltext_index IF NOT EXISTS FOR (e:Entity) ON EACH [e.name, e.aliases]",
     // Drop legacy typed-label fulltext index (OP-142)
     "DROP INDEX structured_entity_fulltext_index IF EXISTS",
 
