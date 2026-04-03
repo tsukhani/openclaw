@@ -198,3 +198,6 @@ extensions/**/.openclaw-runtime-deps-stamp.json
 
 # Output dir for scripts/run-opengrep.sh (local opengrep scans)
 /.opengrep-out/
+
+.mcp.json
+**/bitbucket.log
