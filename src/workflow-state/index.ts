@@ -23,3 +23,15 @@ export {
   type TransitionResult,
   type TransitionError,
 } from "./store.js";
+
+export {
+  isWorkflowStateEnabled,
+  resolveWorkflowBaseDir,
+  createCronWorkflow,
+  createSubagentWorkflow,
+  transitionOnComplete,
+  transitionStepSafe,
+  checkpointBefore,
+  type CreateCronWorkflowParams,
+  type CreateSubagentWorkflowParams,
+} from "./integrations.js";

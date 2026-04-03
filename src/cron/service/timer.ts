@@ -78,6 +78,7 @@ type TimedCronRunOutcome = CronRunOutcome &
     jobId: string;
     job: CronJob;
     taskRunId?: string;
+    workflowId?: string;
     delivered?: boolean;
     deliveryAttempted?: boolean;
     startedAt: number;
@@ -282,6 +283,58 @@ function tryFinishCronTaskRun(
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Workflow state tracking — fire-and-forget
+// ---------------------------------------------------------------------------
+
+async function tryCreateCronWorkflowTracking(params: {
+  state: CronServiceState;
+  job: CronJob;
+}): Promise<string | undefined> {
+  try {
+    const { createCronWorkflow, resolveWorkflowBaseDir } =
+      await import("../../workflow-state/integrations.js");
+    const baseDir = await resolveWorkflowBaseDir();
+    return await createCronWorkflow({
+      baseDir,
+      sessionKey: params.job.sessionKey ?? `cron:${params.job.id}`,
+      cronJobId: params.job.id,
+      cronJobName: params.job.name,
+      agentId: params.job.agentId,
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+function tryFinishCronWorkflowTracking(
+  _state: CronServiceState,
+  job: CronJob,
+  result: Pick<TimedCronRunOutcome, "workflowId" | "status" | "error">,
+): void {
+  if (!result.workflowId) {
+    return;
+  }
+  void (async () => {
+    try {
+      const { transitionOnComplete, resolveWorkflowBaseDir } =
+        await import("../../workflow-state/integrations.js");
+      const baseDir = await resolveWorkflowBaseDir();
+      const sessionKey = job.sessionKey ?? `cron:${job.id}`;
+      await transitionOnComplete({
+        baseDir,
+        sessionKey,
+        workflowId: result.workflowId,
+        status: result.status === "ok" || result.status === "skipped" ? "completed" : "failed",
+        error: result.error,
+      });
+    } catch {
+      // fire-and-forget
+    }
+  })();
+}
+
 /** Default max retries for one-shot jobs on transient errors (#24355). */
 const DEFAULT_MAX_TRANSIENT_RETRIES = 3;
 
@@ -740,6 +793,7 @@ function applyOutcomeToStoredJob(state: CronServiceState, result: TimedCronRunOu
   });
 
   emitJobFinished(state, job, result, result.startedAt);
+  tryFinishCronWorkflowTracking(state, job, result);
 
   if (shouldDelete) {
     store.jobs = jobs.filter((entry) => entry.id !== job.id);
@@ -879,6 +933,7 @@ export async function onTimer(state: CronServiceState) {
       emit(state, { jobId: job.id, action: "started", job, runAtMs: startedAt });
       const jobTimeoutMs = resolveCronJobTimeoutMs(job);
       const taskRunId = tryCreateCronTaskRun({ state, job, startedAt });
+      const workflowId = await tryCreateCronWorkflowTracking({ state, job });
 
       try {
         const result = await executeJobCoreWithTimeout(state, job);
@@ -886,6 +941,7 @@ export async function onTimer(state: CronServiceState) {
           jobId: id,
           job,
           taskRunId,
+          workflowId,
           ...result,
           startedAt,
           endedAt: state.deps.nowMs(),
@@ -900,6 +956,7 @@ export async function onTimer(state: CronServiceState) {
           jobId: id,
           job,
           taskRunId,
+          workflowId,
           status: "error",
           error: errorText,
           startedAt,
@@ -1526,6 +1583,7 @@ export async function executeJob(
   job.state.lastError = undefined;
   markCronJobActive(job.id);
   emit(state, { jobId: job.id, action: "started", job, runAtMs: startedAt });
+  const workflowId = await tryCreateCronWorkflowTracking({ state, job });
 
   let coreResult: {
     status: CronRunStatus;
@@ -1549,6 +1607,11 @@ export async function executeJob(
   });
 
   emitJobFinished(state, job, coreResult, startedAt);
+  tryFinishCronWorkflowTracking(state, job, {
+    workflowId,
+    status: coreResult.status,
+    error: coreResult.error,
+  });
 
   if (shouldDelete && state.store) {
     state.store.jobs = state.store.jobs.filter((j) => j.id !== job.id);

@@ -35,6 +35,16 @@ const entrySpecs: readonly CommandGroupDescriptorSpec<SubCliRegistrar>[] = [
       loadModule: () => import("../completion-cli.js"),
       exportName: "registerCompletionCli",
     },
+    {
+      commandNames: ["events"],
+      loadModule: () => import("../events-cli.js"),
+      exportName: "registerEventsCli",
+    },
+    {
+      commandNames: ["workflow"],
+      loadModule: () => import("../workflow-cli.js"),
+      exportName: "registerWorkflowCli",
+    },
   ]),
 ];
 

@@ -721,6 +721,9 @@ export function createSubagentRegistryLifecycleController(params: {
       outcome,
     });
 
+    // Fire-and-forget: transition the workflow to a terminal state.
+    void tryCompleteSubagentWorkflowTracking(entry, completeParams.outcome);
+
     try {
       await persistSubagentSessionTiming(entry);
     } catch (err) {
@@ -789,4 +792,35 @@ export function createSubagentRegistryLifecycleController(params: {
     refreshFrozenResultFromSession,
     startSubagentAnnounceCleanupFlow,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Workflow state tracking — fire-and-forget
+// ---------------------------------------------------------------------------
+
+async function tryCompleteSubagentWorkflowTracking(
+  entry: SubagentRunRecord,
+  outcome: SubagentRunOutcome,
+): Promise<void> {
+  try {
+    const { transitionOnComplete, resolveWorkflowBaseDir } =
+      await import("../workflow-state/integrations.js");
+    const { listWorkflows } = await import("../workflow-state/store.js");
+    const baseDir = await resolveWorkflowBaseDir();
+    const workflows = await listWorkflows(baseDir, entry.childSessionKey);
+    // Find the most recent executing workflow for this subagent session.
+    const wf = workflows.find((w) => w.status === "executing");
+    if (!wf) {
+      return;
+    }
+    await transitionOnComplete({
+      baseDir,
+      sessionKey: entry.childSessionKey,
+      workflowId: wf.id,
+      status: outcome.status === "ok" ? "completed" : "failed",
+      error: outcome.error,
+    });
+  } catch {
+    // fire-and-forget
+  }
 }

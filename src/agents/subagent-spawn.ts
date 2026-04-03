@@ -1204,6 +1204,17 @@ export async function spawnSubagentDirect(
     };
   }
 
+  // Fire-and-forget: create workflow tracking for this subagent run.
+  void tryCreateSubagentWorkflowTracking({
+    childSessionKey,
+    runId: childRunId,
+    task,
+    label: label || undefined,
+    requesterSessionKey: requesterInternalKey,
+    model: resolvedModel,
+    agentId: targetAgentId,
+  });
+
   if (hookRunner?.hasHooks("subagent_spawned")) {
     try {
       await hookRunner.runSubagentSpawned(
@@ -1252,6 +1263,38 @@ export async function spawnSubagentDirect(
     modelApplied: resolvedModel ? modelApplied : undefined,
     attachments: attachmentsReceipt,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Workflow state tracking — fire-and-forget
+// ---------------------------------------------------------------------------
+
+async function tryCreateSubagentWorkflowTracking(params: {
+  childSessionKey: string;
+  runId: string;
+  task: string;
+  label?: string;
+  requesterSessionKey: string;
+  model?: string;
+  agentId?: string;
+}): Promise<void> {
+  try {
+    const { createSubagentWorkflow, resolveWorkflowBaseDir } =
+      await import("../workflow-state/integrations.js");
+    const baseDir = await resolveWorkflowBaseDir();
+    await createSubagentWorkflow({
+      baseDir,
+      sessionKey: params.childSessionKey,
+      runId: params.runId,
+      task: params.task,
+      label: params.label,
+      requesterSessionKey: params.requesterSessionKey,
+      model: params.model,
+      agentId: params.agentId,
+    });
+  } catch {
+    // fire-and-forget
+  }
 }
 
 export const __testing = {
