@@ -1,3 +1,5 @@
+import { emitContextLoad } from "../unified-events/integrations.js";
+import type { ContextResource } from "../unified-events/types.js";
 import { loadWorkspaceBootstrapFiles, type WorkspaceBootstrapFile } from "./workspace.js";
 
 type BootstrapSnapshot = {
@@ -44,6 +46,17 @@ export async function getOrLoadBootstrapFiles(params: {
   }
 
   cache.set(params.sessionKey, { workspaceDir: params.workspaceDir, files });
+
+  // Emit context-load event for loaded files.
+  const resources: ContextResource[] = files
+    .filter((f) => !f.missing && f.content != null)
+    .map((f) => ({
+      path: f.path,
+      sizeBytes: Buffer.byteLength(f.content!, "utf-8"),
+      source: "workspace" as const,
+    }));
+  emitContextLoad({ sessionKey: params.sessionKey, resources });
+
   return files;
 }
 

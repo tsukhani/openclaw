@@ -1,4 +1,5 @@
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
+import { resolveStateDir } from "../config/paths.js";
 import {
   addDurableCommandApproval,
   type ExecAsk,
@@ -17,6 +18,8 @@ import {
   detectInterpreterInlineEvalArgv,
 } from "../infra/exec-inline-eval.js";
 import type { SafeBinProfile } from "../infra/exec-safe-bin-policy.js";
+import { logInfo } from "../logger.js";
+import { recordPermissionDecision } from "../security/permission-decisions.js";
 import { markBackgrounded, tail } from "./bash-process-registry.js";
 import {
   buildExecApprovalRequesterContext,
@@ -531,12 +534,27 @@ export async function processGatewayAllowlist(
       }
 
       if (deniedReason) {
+        void recordPermissionDecision(resolveStateDir(), {
+          toolName: "exec",
+          decision: "deny",
+          reason: deniedReason,
+          sessionKey: params.sessionKey ?? approvalId,
+          context: { command: params.command, approvalId },
+        }).catch(() => undefined);
         await sendExecApprovalFollowupResult(
           followupTarget,
           `Exec denied (gateway id=${approvalId}, ${deniedReason}): ${params.command}`,
         );
         return;
       }
+
+      void recordPermissionDecision(resolveStateDir(), {
+        toolName: "exec",
+        decision: "allow",
+        reason: approvedByAsk ? "approved-by-ask" : "approved",
+        sessionKey: params.sessionKey ?? approvalId,
+        context: { command: params.command, approvalId },
+      }).catch(() => undefined);
 
       recordMatchedAllowlistUse(resolvedPath ?? undefined);
 

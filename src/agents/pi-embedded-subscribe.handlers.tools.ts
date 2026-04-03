@@ -15,6 +15,7 @@ import {
 import type { ExecApprovalDecision } from "../infra/exec-approvals.js";
 import type { PluginHookAfterToolCallEvent } from "../plugins/types.js";
 import { normalizeOptionalLowercaseString, readStringValue } from "../shared/string-coerce.js";
+import { emitToolCall } from "../unified-events/integrations.js";
 import type { ApplyPatchSummary } from "./apply-patch.js";
 import type { ExecToolDetails } from "./bash-tools.exec-types.js";
 import { parseExecApprovalResultText } from "./exec-approval-result.js";
@@ -935,6 +936,21 @@ export async function handleToolExecutionEnd(
       : {}),
   };
   emitTrackedItemEvent(ctx, itemData);
+
+  // Emit to unified event log (fire-and-forget).
+  if (ctx.params.sessionKey) {
+    const durationMsForEvent = startData?.startTime != null ? Date.now() - startData.startTime : 0;
+    emitToolCall({
+      sessionKey: ctx.params.sessionKey,
+      runId,
+      toolName,
+      toolParams: afterToolCallArgs,
+      durationMs: durationMsForEvent,
+      result: isToolError
+        ? { status: "error", error: extractToolErrorMessage(sanitizedResult) ?? "unknown error" }
+        : { status: "ok", summary: meta },
+    });
+  }
   void ctx.params.onAgentEvent?.({
     stream: "tool",
     data: {

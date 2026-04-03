@@ -5,6 +5,7 @@ import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { shouldLogVerbose } from "../globals.js";
 import { logDebug } from "../logger.js";
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
+import { emitRoutingDecision } from "../unified-events/integrations.js";
 import {
   normalizeRouteBindingId,
   normalizeRouteBindingRoles,
@@ -693,6 +694,15 @@ export function resolveAgentRoute(input: ResolveAgentRouteInput): ResolvedAgentR
         routeCache.set(routeCacheKey, route);
       }
     }
+
+    emitRoutingDecision({
+      sessionKey: sessionKey,
+      channelId: channel,
+      agentId: resolvedAgentId,
+      resolvedSessionKey: sessionKey,
+      reason: matchedBy,
+    });
+
     return route;
   };
 

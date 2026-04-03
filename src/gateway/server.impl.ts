@@ -53,6 +53,7 @@ import {
   getInspectableTaskRegistrySummary,
   stopTaskRegistryMaintenance,
 } from "../tasks/task-registry.maintenance.js";
+import { registerSessionLifecycleListener } from "../unified-events/integrations.js";
 import { createAuthRateLimiter, type AuthRateLimiter } from "./auth-rate-limit.js";
 import { resolveGatewayAuth } from "./auth.js";
 import { createGatewayAuxHandlers } from "./server-aux-handlers.js";
@@ -948,6 +949,11 @@ export async function startGatewayServer(
         chatAbortControllers,
       }),
     );
+
+    // Register unified event log session lifecycle listener.
+    if (!minimalTestGateway) {
+      registerSessionLifecycleListener();
+    }
 
     Object.assign(
       runtimeState,
