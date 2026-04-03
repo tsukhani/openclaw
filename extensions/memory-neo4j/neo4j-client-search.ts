@@ -309,6 +309,59 @@ export async function communitySearch(
   }));
 }
 
+/**
+ * Fuzzy token seed fallback for entity seeding.
+ *
+ * When fulltext + vector seeding return 0 results (e.g. query "OpenSpace auth"
+ * vs entity "openspace mcp configuration test"), this helper tokenizes the query
+ * and finds entities whose names CONTAIN at least one query token. Results are
+ * scored by the fraction of query tokens matched.
+ *
+ * This is intentionally a last-resort fallback — it's less precise than fulltext
+ * or vector matching, but prevents complete seed failure for partial-match queries.
+ */
+async function fuzzyTokenSeed(
+  session: Session,
+  query: string,
+  seedCap: number,
+  agentId?: string,
+): Promise<Map<string, number>> {
+  const tokens = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((t) => t.length >= 2);
+  if (tokens.length === 0) return new Map();
+
+  const agentFilter = agentId ? "AND e.agentId = $agentId" : "";
+
+  // Build a WHERE clause that matches entities containing ANY token in their name
+  // Use parameterized token list + ANY() for safe, injection-free matching
+  const result = await session.executeRead((tx) =>
+    tx.run(
+      `MATCH (e:Entity)
+       WHERE ANY(token IN $tokens WHERE toLower(e.name) CONTAINS token)
+         ${agentFilter}
+       WITH e, [token IN $tokens WHERE toLower(e.name) CONTAINS token] AS matched
+       RETURN elementId(e) AS eid,
+              toFloat(size(matched)) / toFloat($tokenCount) AS score
+       ORDER BY score DESC, e.relationshipCount DESC
+       LIMIT $seedCap`,
+      {
+        tokens,
+        tokenCount: tokens.length,
+        seedCap: neo4j.int(Math.max(1, Math.floor(seedCap))),
+        ...(agentId ? { agentId } : {}),
+      },
+    ),
+  );
+
+  const seeds = new Map<string, number>();
+  for (const r of result.records) {
+    seeds.set(r.get("eid") as string, r.get("score") as number);
+  }
+  return seeds;
+}
+
 // L6: Properties excluded from synthesized text in entity graph search results.
 // These are internal/system fields that don't carry user-facing information.
 // Frozen to prevent accidental mutation at runtime.
@@ -505,7 +558,16 @@ export async function structuredGraphSearch(
     }
   }
 
-  // No seeds found from either signal — return empty
+  // Fuzzy token fallback: when fulltext + vector return 0 seeds, try
+  // case-insensitive CONTAINS matching on entity names with query tokens.
+  if (seedScores.size === 0) {
+    const fuzzySeedScores = await fuzzyTokenSeed(session, query, seedCap, agentId);
+    for (const [eid, score] of fuzzySeedScores) {
+      seedScores.set(eid, score);
+    }
+  }
+
+  // No seeds found from any signal — return empty
   if (seedScores.size === 0) {
     return [];
   }
@@ -789,7 +851,7 @@ export async function causalChainSearch(
   includeExpired?: boolean,
 ): Promise<SearchSignalResult[]> {
   // Escape Lucene special characters — defense-in-depth so this function is safe when called directly
-  query = escapeLucene(query);
+  const escapedQuery = escapeLucene(query);
   const types = causalRelTypes ?? DEFAULT_CAUSAL_RELATIONSHIP_TYPES;
   const CAUSAL_REL_PATTERN = buildCausalRelPattern(types);
   // M19: Graceful degradation when all causal types are invalid
@@ -809,15 +871,55 @@ export async function causalChainSearch(
     : "";
   const nowParam = !includeExpired ? new Date().toISOString() : undefined;
 
+  // Pre-compute seeds: fulltext first, fuzzy token fallback when fulltext returns 0.
+  // This mirrors structuredGraphSearch's dual-seed strategy but adapted for causal queries
+  // where the query terms may only partially overlap entity names (e.g. "OpenSpace auth"
+  // vs entity "openspace mcp configuration test").
+  const seedScores = new Map<string, number>();
+
+  if (escapedQuery.trim()) {
+    const fulltextResult = await session.executeRead((tx) =>
+      tx.run(
+        `CALL db.index.fulltext.queryNodes('entity_fulltext_index', $query)
+         YIELD node, score
+         WHERE score >= 0.5 ${agentFilter}
+         RETURN elementId(node) AS eid, score
+         ORDER BY score DESC
+         LIMIT $seedCap`,
+        {
+          query: escapedQuery,
+          seedCap: neo4j.int(Math.max(1, Math.floor(seedCap))),
+          ...(agentId ? { agentId } : {}),
+        },
+      ),
+    );
+    for (const r of fulltextResult.records) {
+      seedScores.set(r.get("eid") as string, r.get("score") as number);
+    }
+  }
+
+  // Fuzzy token fallback when fulltext returns 0 seeds
+  if (seedScores.size === 0) {
+    const fuzzySeedScores = await fuzzyTokenSeed(session, query, seedCap, agentId);
+    for (const [eid, score] of fuzzySeedScores) {
+      seedScores.set(eid, score);
+    }
+  }
+
+  if (seedScores.size === 0) return [];
+
+  const sortedSeeds = [...seedScores.entries()].sort((a, b) => b[1] - a[1]).slice(0, seedCap);
+  const seedElementIds = sortedSeeds.map(([eid]) => eid);
+  const seedScoreMap = Object.fromEntries(sortedSeeds);
+
   const result = await session.executeRead(
     (tx) =>
       tx.run(
-        `// Find seed entities via fulltext
-     CALL db.index.fulltext.queryNodes('entity_fulltext_index', $query)
-     YIELD node, score
-     WHERE score >= 0.5 ${agentFilter}
-     WITH node, score
-     ORDER BY score DESC
+        `// Load seed entities by pre-computed element IDs (fulltext + fuzzy fallback)
+     UNWIND $seedElementIds AS seedEid
+     MATCH (node:Entity)
+     WHERE elementId(node) = seedEid
+     WITH node, $seedScoreMap[seedEid] AS score
      LIMIT $seedCap
 
      // Build seed text
@@ -898,7 +1000,8 @@ export async function causalChainSearch(
      RETURN row.id AS id, row.text AS text, row.category AS category,
             row.createdAt AS createdAt, max(row.score) AS graphScore`,
         {
-          query,
+          seedElementIds,
+          seedScoreMap,
           seedCap: neo4j.int(Math.max(1, Math.floor(seedCap))),
           blocklist: [...INTERNAL_PROPERTY_BLOCKLIST],
           hopDecayThreshold,
