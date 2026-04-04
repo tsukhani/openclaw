@@ -463,7 +463,7 @@ export function resolveContextTokensForModel(params: {
   // string like "ollama/kimi-k2.5:cloud").
   let configuredLimit: number | undefined;
   if (ref) {
-    configuredLimit = resolveConfiguredProviderContextWindow(params.cfg, ref.provider, ref.model);
+    configuredLimit = resolveConfiguredProviderContextTokens(params.cfg, ref.provider, ref.model);
   }
   // Also try cache lookups if config didn't return a value
   if (configuredLimit === undefined && ref) {

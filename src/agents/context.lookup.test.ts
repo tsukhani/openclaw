@@ -365,7 +365,7 @@ describe("lookupContextTokens", () => {
 
   it("resolveContextTokensForModel prefers exact provider key over alias-normalized match", async () => {
     // When both "bedrock" and "amazon-bedrock" exist as config keys (alias pattern),
-    // resolveConfiguredProviderContextWindow must return the exact-key match first,
+    // resolveConfiguredProviderContextTokens must return the exact-key match first,
     // not the first normalized hit — mirroring pi-embedded-runner/model.ts behaviour.
     mockDiscoveryDeps([]);
 
@@ -401,7 +401,7 @@ describe("lookupContextTokens", () => {
     // status.ts log-usage fallback calls resolveContextTokensForModel({ model })
     // with no provider. When model = "google/gemini-2.5-pro" (OpenRouter ID),
     // resolveProviderModelRef infers provider="google". Without the guard,
-    // resolveConfiguredProviderContextWindow would return Google's configured
+    // resolveConfiguredProviderContextTokens would return Google's configured
     // window and misreport context limits for the OpenRouter session.
     mockDiscoveryDeps([{ id: "google/gemini-2.5-pro", contextWindow: 999_000 }]);
 
