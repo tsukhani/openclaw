@@ -95,15 +95,11 @@ export const lineSetupWizard: ChannelSetupWizard = {
     unconfiguredScore: 0,
     includeStatusLine: true,
     resolveConfigured: ({ cfg, accountId }) =>
-<<<<<<< HEAD
-      isLineConfigured(cfg, accountId ?? resolveDefaultLineAccountId(cfg)),
-=======
       accountId
         ? isLineConfigured(cfg, accountId)
         : listLineAccountIds(cfg).some((resolvedAccountId) =>
             isLineConfigured(cfg, resolvedAccountId),
           ),
->>>>>>> aa4651a593 (chore: fix oxfmt formatting after rebase)
     resolveExtraStatusLines: ({ cfg }) => [`Accounts: ${listLineAccountIds(cfg).length || 0}`],
   }),
   introNote: {
