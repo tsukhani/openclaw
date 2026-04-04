@@ -12,7 +12,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { emitToolCallAndVerify, setBaseDirForTests, setEnabledForTests } from "./integrations.js";
 import { registerBuiltinVerifiers, unregisterAllVerifiers } from "./register-verifiers.js";
 import { queryEvents, resetEventIdCountersForTests } from "./store.js";
-import type { ToolCallEvent, VerificationEvent } from "./types.js";
 
 let tmpDir: string;
 
