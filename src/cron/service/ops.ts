@@ -397,7 +397,11 @@ export async function update(state: CronServiceState, id: string, patch: CronJob
   });
 }
 
-export async function remove(state: CronServiceState, id: string) {
+export async function remove(
+  state: CronServiceState,
+  id: string,
+  opts?: { selfDestruct?: boolean; agentSessionKey?: string },
+) {
   return await locked(state, async () => {
     warnIfDisabled(state, "remove");
     await ensureLoaded(state);
@@ -411,7 +415,17 @@ export async function remove(state: CronServiceState, id: string) {
     await persist(state);
     armTimer(state);
     if (removed) {
-      emit(state, { jobId: id, action: "removed", job: removedJob });
+      if (opts?.selfDestruct) {
+        emit(state, {
+          jobId: id,
+          action: "self-destruct",
+          job: removedJob,
+          jobName: removedJob?.name,
+          sessionKey: opts.agentSessionKey,
+        });
+      } else {
+        emit(state, { jobId: id, action: "removed", job: removedJob });
+      }
     }
     return { ok: true, removed } as const;
   });

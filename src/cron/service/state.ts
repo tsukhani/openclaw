@@ -16,7 +16,7 @@ import type {
 
 export type CronEvent = {
   jobId: string;
-  action: "added" | "updated" | "removed" | "started" | "finished";
+  action: "added" | "updated" | "removed" | "started" | "finished" | "self-destruct";
   /** Snapshot of the job at the time of the event. Present for all actions where the job is accessible. */
   job?: CronJob;
   runAtMs?: number;
@@ -31,6 +31,8 @@ export type CronEvent = {
   sessionId?: string;
   sessionKey?: string;
   nextRunAtMs?: number;
+  /** Job name at the time of the event (populated for self-destruct). */
+  jobName?: string;
 } & CronRunTelemetry;
 
 export type Logger = {

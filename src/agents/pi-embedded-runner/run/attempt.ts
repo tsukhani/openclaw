@@ -723,6 +723,7 @@ export async function runEmbeddedAttempt(
             const allTools = createOpenClawCodingTools({
               agentId: sessionAgentId,
               ...buildEmbeddedAttemptToolRunContext({ ...params, trace: runTrace }),
+              cronJobId: params.cronJobId,
               exec: {
                 ...params.execOverrides,
                 elevated: params.bashElevated,

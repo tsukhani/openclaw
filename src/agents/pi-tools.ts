@@ -276,6 +276,8 @@ export function createOpenClawCodingTools(options?: {
   trigger?: string;
   /** Stable cron job identifier populated for cron-triggered runs. */
   jobId?: string;
+  /** Cron job ID when this run was spawned by a cron job. */
+  cronJobId?: string;
   /** Relative workspace path that memory-triggered writes may append to. */
   memoryFlushWritePath?: string;
   agentDir?: string;
@@ -517,6 +519,7 @@ export function createOpenClawCodingTools(options?: {
     security: options?.exec?.security ?? execConfig.security,
     ask: options?.exec?.ask ?? execConfig.ask,
     trigger: options?.trigger,
+    cronJobId: options?.cronJobId,
     node: options?.exec?.node ?? execConfig.node,
     pathPrepend: options?.exec?.pathPrepend ?? execConfig.pathPrepend,
     safeBins: options?.exec?.safeBins ?? execConfig.safeBins,
@@ -600,6 +603,7 @@ export function createOpenClawCodingTools(options?: {
       sandboxBrowserBridgeUrl: sandbox?.browser?.bridgeUrl,
       allowHostBrowserControl: sandbox ? sandbox.browserAllowHostControl : true,
       agentSessionKey: options?.sessionKey,
+      cronJobId: options?.cronJobId,
       agentChannel: resolveGatewayMessageChannel(options?.messageProvider),
       agentAccountId: options?.agentAccountId,
       agentTo: options?.messageTo,

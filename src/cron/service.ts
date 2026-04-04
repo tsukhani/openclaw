@@ -50,8 +50,8 @@ export class CronService implements CronServiceContract {
     return await ops.update(this.state, id, patch);
   }
 
-  async remove(id: string) {
-    return await ops.remove(this.state, id);
+  async remove(id: string, opts?: { selfDestruct?: boolean; agentSessionKey?: string }) {
+    return await ops.remove(this.state, id, opts);
   }
 
   async run(id: string, mode?: "due" | "force"): Promise<CronServiceRunResult> {

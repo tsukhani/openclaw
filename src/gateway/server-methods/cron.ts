@@ -368,7 +368,12 @@ export const cronHandlers: GatewayRequestHandlers = {
       );
       return;
     }
-    const p = params as { id?: string; jobId?: string };
+    const p = params as {
+      id?: string;
+      jobId?: string;
+      selfDestruct?: boolean;
+      agentSessionKey?: string;
+    };
     const jobId = p.id ?? p.jobId;
     if (!jobId) {
       respond(
@@ -378,9 +383,19 @@ export const cronHandlers: GatewayRequestHandlers = {
       );
       return;
     }
-    const result = await context.cron.remove(jobId);
+    const selfDestructOpts = p.selfDestruct
+      ? { selfDestruct: true as const, agentSessionKey: p.agentSessionKey }
+      : undefined;
+    const result = await context.cron.remove(jobId, selfDestructOpts);
     if (result.removed) {
-      context.logGateway.info("cron: job removed", { jobId });
+      if (p.selfDestruct) {
+        context.logGateway.info("cron: job self-destructed", {
+          jobId,
+          agentSessionKey: p.agentSessionKey,
+        });
+      } else {
+        context.logGateway.info("cron: job removed", { jobId });
+      }
     }
     respond(true, result, undefined);
   },

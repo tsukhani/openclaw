@@ -327,7 +327,12 @@ export const CronUpdateParamsSchema = cronIdOrJobIdParams({
   patch: CronJobPatchSchema,
 });
 
-export const CronRemoveParamsSchema = cronIdOrJobIdParams({});
+export const CronRemoveParamsSchema = cronIdOrJobIdParams({
+  /** True when a cron-spawned agent is removing its own parent job (self-destruct). */
+  selfDestruct: Type.Optional(Type.Boolean()),
+  /** Session key of the agent performing the self-destruct (for audit logging). */
+  agentSessionKey: Type.Optional(Type.String()),
+});
 
 export const CronRunParamsSchema = cronIdOrJobIdParams({
   mode: Type.Optional(Type.Union([Type.Literal("due"), Type.Literal("force")])),

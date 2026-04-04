@@ -316,6 +316,8 @@ type CronToolOptions = {
   currentDeliveryContext?: DeliveryContext;
   /** Restrict this cron tool instance to removing only this active cron job. */
   selfRemoveOnlyJobId?: string;
+  /** Cron job ID when this session was spawned by a cron job (for self-destruct security). */
+  cronJobId?: string;
 };
 
 type GatewayToolCaller = typeof callGatewayTool;
@@ -810,7 +812,22 @@ Use jobId as the canonical identifier; id is accepted for compatibility. Use con
           if (!id) {
             throw new Error("jobId required (id accepted for backward compatibility)");
           }
-          return jsonResult(await callGateway("cron.remove", gatewayOpts, { id }));
+          // Security: cron-spawned agents can only remove their own parent cron job.
+          const parentCronJobId = opts?.cronJobId;
+          if (parentCronJobId && id !== parentCronJobId) {
+            throw new Error(
+              `Security: cron-spawned agents can only remove their parent cron job (${parentCronJobId}), not ${id}`,
+            );
+          }
+          const isSelfDestruct = !!parentCronJobId && id === parentCronJobId;
+          return jsonResult(
+            await callGateway("cron.remove", gatewayOpts, {
+              id,
+              ...(isSelfDestruct
+                ? { selfDestruct: true, agentSessionKey: opts?.agentSessionKey }
+                : {}),
+            }),
+          );
         }
         case "run": {
           const id = readCronJobIdParam(params);

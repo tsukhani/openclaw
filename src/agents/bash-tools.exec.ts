@@ -1670,6 +1670,12 @@ export function createExecTool(
         applyShellPath(env, shellPath);
       }
 
+      // Inject OPENCLAW_CRON_JOB_ID for cron-spawned sessions so bash subprocesses
+      // can reference the parent cron job ID (used for self-destruct pattern).
+      if (defaults?.cronJobId) {
+        env.OPENCLAW_CRON_JOB_ID = defaults.cronJobId;
+      }
+
       // `tools.exec.pathPrepend` is only meaningful when exec runs locally (gateway) or in the sandbox.
       // Node hosts intentionally ignore request-scoped PATH overrides, so don't pretend this applies.
       if (host === "node" && defaultPathPrepend.length > 0) {

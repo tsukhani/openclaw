@@ -10,6 +10,8 @@ export type ExecToolDefaults = {
   security?: ExecSecurity;
   ask?: ExecAsk;
   trigger?: string;
+  /** Cron job ID for injecting OPENCLAW_CRON_JOB_ID into subprocess env. */
+  cronJobId?: string;
   node?: string;
   pathPrepend?: string[];
   safeBins?: string[];

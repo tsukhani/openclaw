@@ -55,6 +55,8 @@ export function createOpenClawTools(
     sandboxBrowserBridgeUrl?: string;
     allowHostBrowserControl?: boolean;
     agentSessionKey?: string;
+    /** Cron job ID when this run was spawned by a cron job (for self-destruct security). */
+    cronJobId?: string;
     agentChannel?: GatewayMessageChannel;
     agentAccountId?: string;
     /** Delivery target for topic/thread routing. */
@@ -252,6 +254,7 @@ export function createOpenClawTools(
             ...(options?.cronSelfRemoveOnlyJobId
               ? { selfRemoveOnlyJobId: options.cronSelfRemoveOnlyJobId }
               : {}),
+            ...(options?.cronJobId ? { cronJobId: options.cronJobId } : {}),
           }),
         ]),
     ...(!embedded && messageTool ? [messageTool] : []),

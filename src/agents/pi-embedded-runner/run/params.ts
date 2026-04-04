@@ -114,6 +114,8 @@ export type RunEmbeddedPiAgentParams = {
   toolResultFormat?: ToolResultFormat;
   /** If true, suppress tool error warning payloads for this run (including mutating tools). */
   suppressToolErrorWarnings?: boolean;
+  /** Cron job ID when this run was spawned by a cron job. Injected as OPENCLAW_CRON_JOB_ID env var. */
+  cronJobId?: string;
   /** Bootstrap context mode for workspace file injection. */
   bootstrapContextMode?: "full" | "lightweight";
   /** Run kind hint for context mode behavior. */
