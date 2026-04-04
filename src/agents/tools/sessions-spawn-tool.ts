@@ -311,7 +311,7 @@ export function createSessionsSpawnTool(
         if (shouldTrackViaRegistry && childSessionKey && childRunId) {
           const cfg = getRuntimeConfig();
           const trackedSpawnMode = resolveTrackedSpawnMode({
-            requestedMode: result.mode,
+            requestedMode: result.status === "accepted" ? result.mode : undefined,
             threadRequested: thread,
           });
           const trackedCleanup = trackedSpawnMode === "session" ? "keep" : cleanup;
