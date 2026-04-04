@@ -6,6 +6,7 @@ import {
   createRunningTaskRun,
   failTaskRunByRunId,
 } from "../../tasks/detached-task-runtime.js";
+import { emitCronSelfDestruct } from "../../unified-events/integrations.js";
 import { createCronExecutionId } from "../run-id.js";
 import type { CronJob, CronJobCreate, CronJobPatch } from "../types.js";
 import {
@@ -422,6 +423,15 @@ export async function remove(
           job: removedJob,
           jobName: removedJob?.name,
           sessionKey: opts.agentSessionKey,
+        });
+        // Also emit to the unified event log for structured querying.
+        const sessionKey = opts.agentSessionKey ?? `cron:${id}`;
+        emitCronSelfDestruct({
+          sessionKey,
+          jobId: id,
+          jobName: job?.name,
+          reason: "task_completed",
+          agentSessionKey: opts.agentSessionKey,
         });
       } else {
         emit(state, { jobId: id, action: "removed", job: removedJob });

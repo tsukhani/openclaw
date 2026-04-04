@@ -12,6 +12,7 @@ import { appendEvent } from "./store.js";
 import type {
   ContextLoadEvent,
   ContextResource,
+  CronSelfDestructEvent,
   RoutingDecisionEvent,
   SessionLifecycleAction,
   SessionLifecycleLogEvent,
@@ -192,6 +193,32 @@ export function emitSessionLifecycle(params: {
     parentSessionKey: params.parentSessionKey,
     label: params.label,
     reason: params.reason,
+  };
+  void appendEvent(getBaseDir(), input).catch(() => undefined);
+}
+
+// ---------------------------------------------------------------------------
+// Cron self-destruct events
+// ---------------------------------------------------------------------------
+
+export function emitCronSelfDestruct(params: {
+  sessionKey: string;
+  jobId: string;
+  jobName?: string;
+  reason?: string;
+  agentSessionKey?: string;
+}): void {
+  if (!isEnabled()) {
+    return;
+  }
+  const input: Omit<CronSelfDestructEvent, "id" | "ts"> = {
+    kind: "cron-self-destruct",
+    sessionKey: params.sessionKey,
+    jobId: params.jobId,
+    jobName: params.jobName,
+    reason: params.reason,
+    removedAt: new Date().toISOString(),
+    agentSessionKey: params.agentSessionKey,
   };
   void appendEvent(getBaseDir(), input).catch(() => undefined);
 }

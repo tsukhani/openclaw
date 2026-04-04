@@ -53,6 +53,8 @@ function summarizeEvent(event: UnifiedEvent): string {
       return `${event.action}${event.label ? ` (${event.label})` : ""}`;
     case "verification":
       return `${event.toolName} → ${event.verificationStatus}`;
+    case "cron-self-destruct":
+      return `${event.jobName ?? event.jobId} self-destructed${event.reason ? ` (${event.reason})` : ""}`;
   }
 }
 

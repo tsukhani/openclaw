@@ -91,6 +91,20 @@ export type VerificationEvent = EventBase & {
   detail?: string;
 };
 
+// -- Cron self-destruct events -----------------------------------------------
+
+export type CronSelfDestructEvent = EventBase & {
+  kind: "cron-self-destruct";
+  jobId: string;
+  jobName?: string;
+  /** Why the job self-destructed (e.g. "task_completed"). */
+  reason?: string;
+  /** ISO timestamp when the job was removed. */
+  removedAt: string;
+  /** The session key of the agent that triggered self-destruct. */
+  agentSessionKey?: string;
+};
+
 // -- Discriminated union of all events ---------------------------------------
 
 export type UnifiedEvent =
@@ -99,7 +113,8 @@ export type UnifiedEvent =
   | ContextLoadEvent
   | RoutingDecisionEvent
   | SessionLifecycleLogEvent
-  | VerificationEvent;
+  | VerificationEvent
+  | CronSelfDestructEvent;
 
 export type UnifiedEventKind = UnifiedEvent["kind"];
 
