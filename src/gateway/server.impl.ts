@@ -54,6 +54,7 @@ import {
   stopTaskRegistryMaintenance,
 } from "../tasks/task-registry.maintenance.js";
 import { registerSessionLifecycleListener } from "../unified-events/integrations.js";
+import { registerBuiltinVerifiers } from "../unified-events/register-verifiers.js";
 import { createAuthRateLimiter, type AuthRateLimiter } from "./auth-rate-limit.js";
 import { resolveGatewayAuth } from "./auth.js";
 import { createGatewayAuxHandlers } from "./server-aux-handlers.js";
@@ -953,6 +954,7 @@ export async function startGatewayServer(
     // Register unified event log session lifecycle listener.
     if (!minimalTestGateway) {
       registerSessionLifecycleListener();
+      registerBuiltinVerifiers();
     }
 
     Object.assign(

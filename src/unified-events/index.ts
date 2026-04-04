@@ -45,6 +45,7 @@ export {
 
 export {
   emitToolCall,
+  emitToolCallAndVerify,
   emitContextLoad,
   emitRoutingDecision,
   emitSessionLifecycle,
@@ -53,3 +54,11 @@ export {
   setEnabledForTests,
   unregisterSessionLifecycleListenerForTests,
 } from "./integrations.js";
+
+export {
+  createWriteVerifier,
+  createExecVerifier,
+  createMessageVerifier,
+} from "./builtin-verifiers.js";
+
+export { registerBuiltinVerifiers, unregisterAllVerifiers } from "./register-verifiers.js";

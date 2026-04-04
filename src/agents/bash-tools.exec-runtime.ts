@@ -13,6 +13,7 @@ import { isDangerousHostInheritedEnvVarName } from "../infra/host-env-security.j
 import { findPathKey, mergePathPrepend } from "../infra/path-prepend.js";
 import { enqueueSystemEvent } from "../infra/system-events.js";
 import { scopedHeartbeatWakeOptions } from "../routing/session-key.js";
+import { emitToolCallAndVerify } from "../unified-events/integrations.js";
 import type { ProcessSession } from "./bash-process-registry.js";
 import type { ExecToolDetails } from "./bash-tools.exec-types.js";
 import type { BashSandboxConfig } from "./bash-tools.shared.js";
@@ -871,6 +872,21 @@ export async function runExecProcess(opts: {
         sessionKey: opts.sessionKey,
         target: diagnosticTarget,
       });
+
+      // Fire-and-forget verification after exec completion.
+      if (opts.sessionKey) {
+        emitToolCallAndVerify({
+          sessionKey: opts.sessionKey,
+          toolName: "exec",
+          toolParams: { command: opts.command, workdir: opts.workdir },
+          durationMs,
+          result:
+            outcome.status === "completed"
+              ? { status: "ok", summary: `exit ${outcome.exitCode}` }
+              : { status: "error", error: outcome.reason },
+        });
+      }
+
       return outcome;
     })
     .catch((err): ExecProcessOutcome => {

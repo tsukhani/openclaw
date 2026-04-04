@@ -18,6 +18,7 @@ import type {
   ToolCallEvent,
   ToolCallResult,
 } from "./types.js";
+import { runVerification } from "./verification-hooks.js";
 
 // ---------------------------------------------------------------------------
 // Base directory resolution
@@ -78,6 +79,47 @@ export function emitToolCall(params: {
     result: params.result,
   };
   void appendEvent(getBaseDir(), input).catch(() => undefined);
+}
+
+/**
+ * Emit a tool call event AND run the registered verifier (if any).
+ *
+ * Unlike `emitToolCall`, this awaits event persistence so the full
+ * `ToolCallEvent` (with `id` and `ts`) is available for the verifier.
+ * Verification failures are logged to stderr but never block the caller.
+ */
+export function emitToolCallAndVerify(params: {
+  sessionKey: string;
+  runId?: string;
+  toolName: string;
+  toolParams: Record<string, unknown>;
+  durationMs: number;
+  result: ToolCallResult;
+}): void {
+  if (!isEnabled()) {
+    return;
+  }
+  const baseDir = getBaseDir();
+  const input: Omit<ToolCallEvent, "id" | "ts"> = {
+    kind: "tool-call",
+    sessionKey: params.sessionKey,
+    runId: params.runId,
+    toolName: params.toolName,
+    params: params.toolParams,
+    durationMs: params.durationMs,
+    result: params.result,
+  };
+  void appendEvent(baseDir, input)
+    .then(async (event) => {
+      const verification = await runVerification(baseDir, event as ToolCallEvent);
+      if (verification?.status === "fail") {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[verification] ${params.toolName} failed: ${verification.detail ?? "unknown reason"}`,
+        );
+      }
+    })
+    .catch(() => undefined);
 }
 
 // ---------------------------------------------------------------------------
