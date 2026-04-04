@@ -6,7 +6,7 @@ import {
   createRunningTaskRun,
   failTaskRunByRunId,
 } from "../../tasks/detached-task-runtime.js";
-import { emitCronSelfDestruct } from "../../unified-events/integrations.js";
+import { emitCronManagement, emitCronSelfDestruct } from "../../unified-events/integrations.js";
 import { createCronExecutionId } from "../run-id.js";
 import type { CronJob, CronJobCreate, CronJobPatch } from "../types.js";
 import {
@@ -344,6 +344,15 @@ export async function add(state: CronServiceState, input: CronJobCreate) {
       job,
       nextRunAtMs: job.state.nextRunAtMs,
     });
+    emitCronManagement({
+      sessionKey: job.sessionKey ?? `cron:${job.id}`,
+      jobId: job.id,
+      jobName: job.name,
+      operation: "add",
+      schedule: job.schedule as unknown as Record<string, unknown>,
+      enabled: job.enabled,
+      nextRunAtMs: job.state.nextRunAtMs,
+    });
     return job;
   });
 }
@@ -394,6 +403,15 @@ export async function update(state: CronServiceState, id: string, patch: CronJob
       job,
       nextRunAtMs: job.state.nextRunAtMs,
     });
+    emitCronManagement({
+      sessionKey: job.sessionKey ?? `cron:${id}`,
+      jobId: id,
+      jobName: job.name,
+      operation: "update",
+      schedule: job.schedule as unknown as Record<string, unknown>,
+      enabled: job.enabled,
+      nextRunAtMs: job.state.nextRunAtMs,
+    });
     return job;
   });
 }
@@ -410,6 +428,7 @@ export async function remove(
     if (!state.store) {
       return { ok: false, removed: false } as const;
     }
+    // Capture job before removal for event logging.
     const removedJob = state.store.jobs.find((j) => j.id === id);
     state.store.jobs = state.store.jobs.filter((j) => j.id !== id);
     const removed = (state.store.jobs.length ?? 0) !== before;
@@ -436,6 +455,14 @@ export async function remove(
       } else {
         emit(state, { jobId: id, action: "removed", job: removedJob });
       }
+      emitCronManagement({
+        sessionKey: job?.sessionKey ?? opts?.agentSessionKey ?? `cron:${id}`,
+        jobId: id,
+        jobName: job?.name,
+        operation: "remove",
+        schedule: job?.schedule as unknown as Record<string, unknown>,
+        enabled: job?.enabled,
+      });
     }
     return { ok: true, removed } as const;
   });

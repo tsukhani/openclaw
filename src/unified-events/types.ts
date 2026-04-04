@@ -105,6 +105,20 @@ export type CronSelfDestructEvent = EventBase & {
   agentSessionKey?: string;
 };
 
+// -- Cron management events ---------------------------------------------------
+
+export type CronManagementOperation = "add" | "update" | "remove";
+
+export type CronManagementEvent = EventBase & {
+  kind: "cron-management";
+  jobId: string;
+  jobName?: string;
+  operation: CronManagementOperation;
+  schedule?: Record<string, unknown>;
+  enabled?: boolean;
+  nextRunAtMs?: number;
+};
+
 // -- Discriminated union of all events ---------------------------------------
 
 export type UnifiedEvent =
@@ -114,7 +128,8 @@ export type UnifiedEvent =
   | RoutingDecisionEvent
   | SessionLifecycleLogEvent
   | VerificationEvent
-  | CronSelfDestructEvent;
+  | CronSelfDestructEvent
+  | CronManagementEvent;
 
 export type UnifiedEventKind = UnifiedEvent["kind"];
 

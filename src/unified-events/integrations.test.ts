@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { emitSessionLifecycleEvent } from "../sessions/session-lifecycle-events.js";
 import {
   emitContextLoad,
+  emitCronManagement,
   emitRoutingDecision,
   emitSessionLifecycle,
   emitToolCall,
@@ -161,6 +162,82 @@ describe("emitSessionLifecycle", () => {
     expect(event.kind).toBe("session-lifecycle");
     if (event.kind === "session-lifecycle") {
       expect(event.action).toBe("start");
+    }
+  });
+});
+
+describe("emitCronManagement", () => {
+  it("writes a cron-management event for add operation", async () => {
+    emitCronManagement({
+      sessionKey: "cron:job-1",
+      jobId: "job-1",
+      jobName: "test-job",
+      operation: "add",
+      schedule: { kind: "cron", expr: "0 * * * *" },
+      enabled: true,
+      nextRunAtMs: 1700000000000,
+    });
+
+    await vi.waitFor(async () => {
+      const page = await queryEvents(tmpDir, "cron:job-1");
+      expect(page.total).toBe(1);
+    });
+
+    const page = await queryEvents(tmpDir, "cron:job-1");
+    const event = page.events[0];
+    expect(event.kind).toBe("cron-management");
+    if (event.kind === "cron-management") {
+      expect(event.jobId).toBe("job-1");
+      expect(event.jobName).toBe("test-job");
+      expect(event.operation).toBe("add");
+      expect(event.schedule).toEqual({ kind: "cron", expr: "0 * * * *" });
+      expect(event.enabled).toBe(true);
+      expect(event.nextRunAtMs).toBe(1700000000000);
+    }
+  });
+
+  it("writes a cron-management event for update operation", async () => {
+    emitCronManagement({
+      sessionKey: "cron:job-2",
+      jobId: "job-2",
+      jobName: "updated-job",
+      operation: "update",
+      enabled: false,
+    });
+
+    await vi.waitFor(async () => {
+      const page = await queryEvents(tmpDir, "cron:job-2");
+      expect(page.total).toBe(1);
+    });
+
+    const page = await queryEvents(tmpDir, "cron:job-2");
+    const event = page.events[0];
+    expect(event.kind).toBe("cron-management");
+    if (event.kind === "cron-management") {
+      expect(event.operation).toBe("update");
+      expect(event.enabled).toBe(false);
+    }
+  });
+
+  it("writes a cron-management event for remove operation", async () => {
+    emitCronManagement({
+      sessionKey: "cron:job-3",
+      jobId: "job-3",
+      jobName: "deleted-job",
+      operation: "remove",
+    });
+
+    await vi.waitFor(async () => {
+      const page = await queryEvents(tmpDir, "cron:job-3");
+      expect(page.total).toBe(1);
+    });
+
+    const page = await queryEvents(tmpDir, "cron:job-3");
+    const event = page.events[0];
+    expect(event.kind).toBe("cron-management");
+    if (event.kind === "cron-management") {
+      expect(event.operation).toBe("remove");
+      expect(event.jobName).toBe("deleted-job");
     }
   });
 });

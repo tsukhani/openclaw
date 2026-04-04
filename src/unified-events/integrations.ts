@@ -12,6 +12,8 @@ import { appendEvent } from "./store.js";
 import type {
   ContextLoadEvent,
   ContextResource,
+  CronManagementEvent,
+  CronManagementOperation,
   CronSelfDestructEvent,
   RoutingDecisionEvent,
   SessionLifecycleAction,
@@ -219,6 +221,35 @@ export function emitCronSelfDestruct(params: {
     reason: params.reason,
     removedAt: new Date().toISOString(),
     agentSessionKey: params.agentSessionKey,
+  };
+  void appendEvent(getBaseDir(), input).catch(() => undefined);
+}
+
+// ---------------------------------------------------------------------------
+// Cron management events (CRUD)
+// ---------------------------------------------------------------------------
+
+export function emitCronManagement(params: {
+  sessionKey: string;
+  jobId: string;
+  jobName?: string;
+  operation: CronManagementOperation;
+  schedule?: Record<string, unknown>;
+  enabled?: boolean;
+  nextRunAtMs?: number;
+}): void {
+  if (!isEnabled()) {
+    return;
+  }
+  const input: Omit<CronManagementEvent, "id" | "ts"> = {
+    kind: "cron-management",
+    sessionKey: params.sessionKey,
+    jobId: params.jobId,
+    jobName: params.jobName,
+    operation: params.operation,
+    schedule: params.schedule,
+    enabled: params.enabled,
+    nextRunAtMs: params.nextRunAtMs,
   };
   void appendEvent(getBaseDir(), input).catch(() => undefined);
 }
