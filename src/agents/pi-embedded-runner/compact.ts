@@ -1001,7 +1001,8 @@ export async function compactEmbeddedPiSessionDirect(
           // The SDK rejects compaction if the last entry is a compaction, but this is
           // too aggressive when context has grown back to threshold levels.
           const branchEntries = sessionManager.getBranch();
-          const lastEntry = branchEntries.length > 0 ? branchEntries[branchEntries.length - 1] : null;
+          const lastEntry =
+            branchEntries.length > 0 ? branchEntries[branchEntries.length - 1] : null;
           const isLastEntryCompaction = lastEntry?.type === "compaction";
 
           if (isLastEntryCompaction) {
