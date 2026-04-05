@@ -75,7 +75,15 @@ describe("provider env vars dynamic manifest metadata", () => {
       plugins: [
         {
           id: "external-fireworks",
-          origin: "global",
+          origin: "global" as const,
+          channels: [],
+          providers: ["fireworks"],
+          cliBackends: [],
+          skills: [],
+          hooks: [],
+          rootDir: "/tmp/external-fireworks",
+          source: "global",
+          manifestPath: "/tmp/external-fireworks/openclaw.plugin.json",
           providerAuthEnvVars: {
             fireworks: ["FIREWORKS_ALT_API_KEY"],
           },
