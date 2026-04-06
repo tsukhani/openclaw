@@ -58,10 +58,10 @@ The hook uses your configured LLM provider to generate slugs, so it works with a
 
 The hook supports optional configuration:
 
-| Option     | Type   | Default  | Description                                                              |
-| ---------- | ------ | -------- | ------------------------------------------------------------------------ |
-| `messages` | number | 15       | Number of user/assistant messages to include in the memory               |
-| `target`   | string | `"file"` | Storage target: `"file"` (markdown files) or `"lancedb"` (LanceDB store) |
+| Option     | Type   | Default  | Description                                                                         |
+| ---------- | ------ | -------- | ----------------------------------------------------------------------------------- |
+| `messages` | number | 15       | Number of user/assistant messages to include in the memory                          |
+| `target`   | string | `"file"` | Storage target: `"file"` (markdown files) or `"memory"` (memory plugin via Gateway) |
 
 ### File Target (Default)
 
@@ -83,9 +83,9 @@ Saves session context to markdown files in `<workspace>/memory/`:
 }
 ```
 
-### LanceDB Target
+### Memory Target
 
-Stores session summaries in LanceDB via the Gateway API instead of creating files:
+Stores session summaries via the active memory plugin (e.g. memory-neo4j) through the Gateway API instead of creating files:
 
 ```json
 {
@@ -94,7 +94,7 @@ Stores session summaries in LanceDB via the Gateway API instead of creating file
       "entries": {
         "session-memory": {
           "enabled": true,
-          "target": "lancedb",
+          "target": "memory",
           "messages": 15
         }
       }
@@ -103,21 +103,22 @@ Stores session summaries in LanceDB via the Gateway API instead of creating file
 }
 ```
 
-**LanceDB target features:**
+**Memory target features:**
 
-- Stores session context as searchable memory entries
+- Stores session context as searchable memory entries via the active memory plugin
 - Automatically truncates conversation content to 2000 chars
 - Includes date, time, session key, and LLM-generated slug
 - Category: `"fact"`, Importance: `0.7`
 - Requires Gateway API with `memory_store` tool available
 - Use `memory_recall` to search through stored sessions
+- Legacy config value `"lancedb"` is accepted as an alias for `"memory"`
 
 The hook automatically:
 
 - Uses your workspace directory (`~/.openclaw/workspace` by default) for file target
 - Uses your configured LLM for slug generation
 - Falls back to timestamp slugs if LLM is unavailable
-- Uses Gateway API at `localhost:<gateway.port>` with `gateway.auth.token` for LanceDB target
+- Uses Gateway API at `localhost:<gateway.port>` with `gateway.auth.token` for memory target
 
 ## Disabling
 

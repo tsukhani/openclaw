@@ -372,6 +372,66 @@ describe("session-memory hook", () => {
     expect(memoryContent).toContain("user: Normal message");
   });
 
+  it("strips channel envelope metadata from user messages", async () => {
+    const envelopedUserMessage = [
+      "<relevant-memories>",
+      "The following memories may be relevant to this conversation:",
+      "- [fact] Some stored fact about the user",
+      "</relevant-memories>",
+      "",
+      "Conversation info (untrusted metadata):",
+      "```json",
+      "{",
+      '  "message_id": "25266",',
+      '  "sender_id": "878224171",',
+      '  "sender": "Tarun"',
+      "}",
+      "```",
+      "",
+      "Sender (untrusted metadata):",
+      "```json",
+      "{",
+      '  "label": "Tarun (878224171)",',
+      '  "id": "878224171",',
+      '  "name": "Tarun"',
+      "}",
+      "```",
+      "",
+      "What is the weather today?",
+    ].join("\n");
+    const sessionContent = createMockSessionContent([
+      { role: "user", content: envelopedUserMessage },
+      { role: "assistant", content: "The weather is sunny" },
+    ]);
+    const memoryContent = await readSessionTranscript({ sessionContent });
+
+    expect(memoryContent).toContain("user: What is the weather today?");
+    expect(memoryContent).toContain("assistant: The weather is sunny");
+    expect(memoryContent).not.toContain("relevant-memories");
+    expect(memoryContent).not.toContain("untrusted metadata");
+    expect(memoryContent).not.toContain("878224171");
+    expect(memoryContent).not.toContain("sender_id");
+  });
+
+  it("strips relevant-memories blocks while keeping the actual message", async () => {
+    const messageWithMemories = [
+      "<relevant-memories>",
+      "- [fact] Some memory",
+      "</relevant-memories>",
+      "",
+      "Hello, can you help me?",
+    ].join("\n");
+    const sessionContent = createMockSessionContent([
+      { role: "user", content: messageWithMemories },
+      { role: "assistant", content: "Of course!" },
+    ]);
+    const memoryContent = await readSessionTranscript({ sessionContent });
+
+    expect(memoryContent).toContain("user: Hello, can you help me?");
+    expect(memoryContent).not.toContain("relevant-memories");
+    expect(memoryContent).not.toContain("Some memory");
+  });
+
   it("respects custom messages config (limits to N messages)", async () => {
     const entries = [];
     for (let i = 1; i <= 10; i++) {
@@ -615,7 +675,7 @@ describe("session-memory hook", () => {
     expect(memoryContent).toContain("assistant: Only message 2");
   });
 
-  describe("LanceDB target", () => {
+  describe("memory target", () => {
     let originalFetch: typeof global.fetch;
     let fetchCalls: Array<{ url: string; options: RequestInit }>;
 
@@ -637,7 +697,7 @@ describe("session-memory hook", () => {
       global.fetch = originalFetch;
     });
 
-    it("calls Gateway API with memory_store when target is lancedb", async () => {
+    it("calls Gateway API with memory_store when target is memory", async () => {
       const tempDir = await makeTempWorkspace("openclaw-session-memory-");
       const sessionsDir = path.join(tempDir, "sessions");
       await fs.mkdir(sessionsDir, { recursive: true });
@@ -661,7 +721,7 @@ describe("session-memory hook", () => {
         hooks: {
           internal: {
             entries: {
-              "session-memory": { enabled: true, target: "lancedb" },
+              "session-memory": { enabled: true, target: "memory" },
             },
           },
         },
@@ -696,7 +756,7 @@ describe("session-memory hook", () => {
       expect(body.args.text).toContain("assistant: Test answer");
     });
 
-    it("truncates content to 2000 chars for lancedb", async () => {
+    it("truncates content to 2000 chars for memory target", async () => {
       const tempDir = await makeTempWorkspace("openclaw-session-memory-");
       const sessionsDir = path.join(tempDir, "sessions");
       await fs.mkdir(sessionsDir, { recursive: true });
@@ -719,7 +779,7 @@ describe("session-memory hook", () => {
         hooks: {
           internal: {
             entries: {
-              "session-memory": { enabled: true, target: "lancedb" },
+              "session-memory": { enabled: true, target: "memory" },
             },
           },
         },
@@ -747,7 +807,7 @@ describe("session-memory hook", () => {
       expect(conversationText.length).toBeLessThan(2100); // 2000 + some overhead for truncation message
     });
 
-    it("does not create memory file when target is lancedb", async () => {
+    it("does not create memory file when target is memory", async () => {
       const tempDir = await makeTempWorkspace("openclaw-session-memory-");
       const sessionsDir = path.join(tempDir, "sessions");
       await fs.mkdir(sessionsDir, { recursive: true });
@@ -768,7 +828,7 @@ describe("session-memory hook", () => {
         hooks: {
           internal: {
             entries: {
-              "session-memory": { enabled: true, target: "lancedb" },
+              "session-memory": { enabled: true, target: "memory" },
             },
           },
         },
@@ -784,7 +844,7 @@ describe("session-memory hook", () => {
 
       await handler(event);
 
-      // SESSION_CONTEXT.md should not be created when using LanceDB target
+      // SESSION_CONTEXT.md should not be created when using memory target
       const contextPath = path.join(tempDir, "SESSION_CONTEXT.md");
       await expect(fs.access(contextPath)).rejects.toThrow();
     });
@@ -815,7 +875,7 @@ describe("session-memory hook", () => {
         hooks: {
           internal: {
             entries: {
-              "session-memory": { enabled: true, target: "lancedb" },
+              "session-memory": { enabled: true, target: "memory" },
             },
           },
         },
@@ -872,9 +932,59 @@ describe("session-memory hook", () => {
       const contextContent = await fs.readFile(contextPath, "utf-8");
       expect(contextContent.length).toBeGreaterThan(0);
 
-      // Gateway API (LanceDB) should not have been called (slug generation may still use fetch)
+      // Gateway API (memory target) should not have been called (slug generation may still use fetch)
       const gatewayCalls = fetchCalls.filter((c) => c.url.includes("/tools/invoke"));
       expect(gatewayCalls.length).toBe(0);
+    });
+
+    it("accepts legacy 'lancedb' target alias", async () => {
+      const tempDir = await makeTempWorkspace("openclaw-session-memory-");
+      const sessionsDir = path.join(tempDir, "sessions");
+      await fs.mkdir(sessionsDir, { recursive: true });
+
+      const sessionContent = createMockSessionContent([
+        { role: "user", content: "Legacy target test" },
+        { role: "assistant", content: "Should route to memory" },
+      ]);
+      const sessionFile = await writeWorkspaceFile({
+        dir: sessionsDir,
+        name: "test-session.jsonl",
+        content: sessionContent,
+      });
+
+      const cfg: OpenClawConfig = {
+        agents: { defaults: { workspace: tempDir } },
+        gateway: {
+          port: 18789,
+          auth: { token: "test-token-legacy" },
+        },
+        hooks: {
+          internal: {
+            entries: {
+              // oxlint-disable-next-line typescript/no-explicit-any
+              "session-memory": { enabled: true, target: "lancedb" as any },
+            },
+          },
+        },
+      };
+
+      const event = createHookEvent("command", "new", "agent:main:main", {
+        cfg,
+        previousSessionEntry: {
+          sessionId: "test-legacy",
+          sessionFile,
+        },
+      });
+
+      await handler(event);
+
+      // Should route to memory target (via legacy alias), not file target
+      const gatewayCalls = fetchCalls.filter((c) => c.url.includes("/tools/invoke"));
+      expect(gatewayCalls.length).toBe(1);
+
+      // SESSION_CONTEXT.md should not be created
+      const contextPath = path.join(tempDir, "SESSION_CONTEXT.md");
+      await expect(fs.access(contextPath)).rejects.toThrow();
     });
   });
 });

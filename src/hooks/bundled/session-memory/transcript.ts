@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { stripInboundMetadata } from "../../../auto-reply/reply/strip-inbound-meta.js";
 import { hasInterSessionUserProvenance } from "../../../sessions/input-provenance.js";
 
 function extractTextMessageContent(content: unknown): string | undefined {
@@ -19,6 +20,23 @@ function extractTextMessageContent(content: unknown): string | undefined {
     }
   }
   return undefined;
+}
+
+/**
+ * Strip `<relevant-memories>` / `<relevant_memories>` XML blocks injected by
+ * the memory plugin so session context captures only the user's actual words.
+ */
+const RELEVANT_MEMORIES_RE = /<relevant[-_]memories>[\s\S]*?<\/relevant[-_]memories>\s*/g;
+
+function stripChannelEnvelope(role: string, text: string): string {
+  let cleaned = text;
+  if (role === "user") {
+    // Strip inbound metadata (sender JSON, conversation info, timestamps, etc.)
+    cleaned = stripInboundMetadata(cleaned);
+    // Strip memory-plugin injected context blocks.
+    cleaned = cleaned.replace(RELEVANT_MEMORIES_RE, "");
+  }
+  return cleaned.trim();
 }
 
 export async function getRecentSessionContent(
@@ -44,8 +62,12 @@ export async function getRecentSessionContent(
             if (role === "user" && hasInterSessionUserProvenance(msg)) {
               continue;
             }
-            const text = extractTextMessageContent(msg.content);
-            if (text && !text.startsWith("/")) {
+            const rawText = extractTextMessageContent(msg.content);
+            if (!rawText || rawText.startsWith("/")) {
+              continue;
+            }
+            const text = stripChannelEnvelope(role, rawText);
+            if (text) {
               allMessages.push(`${role}: ${text}`);
             }
           }

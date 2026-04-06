@@ -3,7 +3,7 @@
  *
  * Saves session context when /new or /reset command is triggered.
  * Default target: writes SESSION_CONTEXT.md in the workspace root (overwrite).
- * LanceDB target: stores to LanceDB via Gateway API with LLM-generated slug.
+ * Memory target: stores via the active memory plugin through the Gateway API.
  */
 
 import fs from "node:fs/promises";
@@ -49,9 +49,11 @@ function resolveDisplaySessionKey(params: {
 }
 
 /**
- * Save session to LanceDB via Gateway API
+ * Save session context to the memory plugin via the Gateway tools API.
+ * The actual storage backend depends on which memory plugin is active
+ * (e.g. memory-neo4j, memory-lancedb).
  */
-async function saveToLanceDB(params: {
+async function saveToMemory(params: {
   cfg: OpenClawConfig;
   sessionKey: string;
   slug: string;
@@ -107,7 +109,7 @@ async function saveToLanceDB(params: {
     throw new Error(`Gateway API call failed: ${response.status} ${errorText}`);
   }
 
-  log.debug("Successfully stored to LanceDB via Gateway API");
+  log.debug("Successfully stored session context via Gateway memory tool");
 }
 
 /**
@@ -191,7 +193,9 @@ const saveSessionToMemory: HookHandler = async (event) => {
       typeof hookConfig?.messages === "number" && hookConfig.messages > 0
         ? hookConfig.messages
         : 15;
-    const target = hookConfig?.target === "lancedb" ? "lancedb" : "file";
+    // Accept "memory" (preferred) or "lancedb" (legacy alias) as the memory-plugin target.
+    const rawTarget = hookConfig?.target;
+    const target = rawTarget === "memory" || rawTarget === "lancedb" ? "memory" : "file";
 
     log.debug("Storage target resolved", { target });
 
@@ -230,24 +234,24 @@ const saveSessionToMemory: HookHandler = async (event) => {
     }
 
     // Route to appropriate storage target
-    if (target === "lancedb") {
-      // Store in LanceDB via Gateway API
+    if (target === "memory") {
+      // Store via the active memory plugin (e.g. memory-neo4j) through the Gateway API.
       if (!cfg) {
-        throw new Error("Config not available for LanceDB storage");
+        throw new Error("Config not available for memory storage");
       }
       if (!sessionContent) {
-        log.debug("No session content available, skipping LanceDB storage");
+        log.debug("No session content available, skipping memory storage");
         return;
       }
 
-      await saveToLanceDB({
+      await saveToMemory({
         cfg,
         sessionKey: event.sessionKey,
         slug,
         sessionContent,
         timestamp: now,
       });
-      log.info(`Session context stored in LanceDB: ${slug}`);
+      log.info(`Session context stored in memory: ${slug}`);
     } else {
       // Write session context to SESSION_CONTEXT.md (overwrite, not append).
       // This file is read by the session-context hook at bootstrap to provide

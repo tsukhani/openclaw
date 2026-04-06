@@ -52,9 +52,10 @@ const CONTEXT_FILE_ORDER = new Map<string, number>([
   ["tools.md", 50],
   ["bootstrap.md", 60],
   ["memory.md", 70],
+  ["session_context.md", 75],
 ]);
 
-const DYNAMIC_CONTEXT_FILE_BASENAMES = new Set(["heartbeat.md"]);
+const DYNAMIC_CONTEXT_FILE_BASENAMES = new Set(["heartbeat.md", "session_context.md"]);
 const DEFAULT_HEARTBEAT_PROMPT_CONTEXT_BLOCK =
   "Default heartbeat prompt:\n`Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.`";
 function normalizeContextFilePath(pathValue: string): string {
