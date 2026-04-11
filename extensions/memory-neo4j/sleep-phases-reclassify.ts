@@ -77,7 +77,9 @@ export async function runEntityReclassification(
     onProgress,
   } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
   if (!config.enabled) {
     logger.info("memory-neo4j: [sleep] Phase 9 skipped — extraction not enabled");
     return;
@@ -95,6 +97,7 @@ export async function runEntityReclassification(
     let iterations = 0;
     // L8: Track processed entity IDs to avoid re-processing across batches
     const processedIds = new Set<string>();
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     while (hasMore && !abortSignal?.aborted) {
       if (++iterations > MAX_RECLASSIFICATION_ITERATIONS) {
         logger.warn(
@@ -193,7 +196,9 @@ export async function runEntityReclassification(
       }
 
       // L8: Mark all entities in this batch as processed
-      for (const e of entities) processedIds.add(e.id);
+      for (const e of entities) {
+        processedIds.add(e.id);
+      }
     }
 
     logger.info(
@@ -223,7 +228,9 @@ export async function runRelationshipReclassification(
     onProgress,
   } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
   if (!config.enabled) {
     logger.info("memory-neo4j: [sleep] Phase 9b skipped — extraction not enabled");
     return;
@@ -241,6 +248,7 @@ export async function runRelationshipReclassification(
     let iterations = 0;
     // C2: Track processed relationship pairs to avoid re-processing (matches entity pattern at line 97)
     const processedPairs = new Set<string>();
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     while (hasMore && !abortSignal?.aborted) {
       if (++iterations > MAX_RECLASSIFICATION_ITERATIONS) {
         logger.warn(
@@ -359,7 +367,9 @@ export async function runRelationshipReclassification(
       }
 
       // C2: Mark all relationships in this batch as processed
-      for (const r of relationships) processedPairs.add(`${r.sourceName}::${r.targetName}`);
+      for (const r of relationships) {
+        processedPairs.add(`${r.sourceName}::${r.targetName}`);
+      }
     }
 
     logger.info(

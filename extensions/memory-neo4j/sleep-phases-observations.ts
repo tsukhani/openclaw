@@ -93,7 +93,9 @@ export async function runObservationGeneration(
   );
 
   for (const entityName of staleEntities) {
-    if (abortSignal?.aborted) break;
+    if (abortSignal?.aborted) {
+      break;
+    }
 
     try {
       // Collect memory texts for this entity
@@ -103,7 +105,9 @@ export async function runObservationGeneration(
         entityName,
         MAX_MEMORIES_PER_ENTITY,
       );
-      if (memories.length === 0) continue;
+      if (memories.length === 0) {
+        continue;
+      }
 
       // Check if observation already exists (for created vs updated tracking)
       const existingCheck = await session.executeRead((tx) =>
@@ -141,7 +145,9 @@ export async function runObservationGeneration(
         `memory-neo4j: [sleep] observation ${isUpdate ? "updated" : "created"} for "${entityName}" (${memories.length} memories)`,
       );
     } catch (err) {
-      if (abortSignal?.aborted) break;
+      if (abortSignal?.aborted) {
+        break;
+      }
       logger.warn(
         `memory-neo4j: [sleep] observation generation failed for "${entityName}": ${String(err)}`,
       );

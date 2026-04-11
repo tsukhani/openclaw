@@ -48,7 +48,9 @@ function createMockApi(): {
     api,
     getHandler: (event: string) => {
       const h = handlers.get(event);
-      if (!h) throw new Error(`No handler registered for event: ${event}`);
+      if (!h) {
+        throw new Error(`No handler registered for event: ${event}`);
+      }
       return h;
     },
   };

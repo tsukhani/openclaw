@@ -260,7 +260,9 @@ export async function fetchMemoriesForTemporalCheck(
  * Prevents re-checking the same memories on subsequent sleep cycles within 24h.
  */
 export async function markTemporalChecked(session: Session, ids: string[]): Promise<void> {
-  if (ids.length === 0) return;
+  if (ids.length === 0) {
+    return;
+  }
   await session.executeWrite((tx) =>
     tx.run(
       `UNWIND $ids AS id

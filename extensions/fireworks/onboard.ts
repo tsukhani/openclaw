@@ -17,7 +17,7 @@ const fireworksPresetAppliers = createDefaultModelsPresetAppliers({
     return {
       providerId: "fireworks",
       api: defaultProvider.api ?? "openai-completions",
-      baseUrl: defaultProvider.baseUrl,
+      baseUrl: defaultProvider.baseUrl ?? "",
       defaultModels: buildFireworksCatalogModels(),
       defaultModelId: FIREWORKS_DEFAULT_MODEL_ID,
       aliases: [{ modelRef: FIREWORKS_DEFAULT_MODEL_REF, alias: "Kimi K2.5 Turbo" }],

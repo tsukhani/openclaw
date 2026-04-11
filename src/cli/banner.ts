@@ -3,7 +3,7 @@ import { resolveCommitHash, resolveUpstreamCommitHash } from "../infra/git-commi
 import { visibleWidth } from "../terminal/ansi.js";
 import { isRich, theme } from "../terminal/theme.js";
 import { hasRootVersionAlias } from "./argv.js";
-import { parseTaglineMode, readCliBannerTaglineMode } from "./banner-config-lite.js";
+import { parseTaglineMode } from "./banner-config-lite.js";
 import { pickTagline, type TaglineMode, type TaglineOptions } from "./tagline.js";
 
 type BannerOptions = TaglineOptions & {

@@ -174,7 +174,9 @@ function buildScheduler(options: {
   function scheduleNext(): void {
     const intervalMs = cfg.sleepCycle.autoIntervalMs ?? 10_800_000;
     autoSleepTimerId = setTimeout(async () => {
-      if (abortController.signal.aborted) return;
+      if (abortController.signal.aborted) {
+        return;
+      }
       if (sleepCycleRunning) {
         logger.debug?.("memory-neo4j: auto sleep-cycle skipped (already running)");
         scheduleNext();
@@ -191,7 +193,9 @@ function buildScheduler(options: {
         logger.error(`memory-neo4j: auto sleep-cycle error — ${String(err)}`);
       } finally {
         sleepCycleRunning = false;
-        if (!abortController.signal.aborted) scheduleNext();
+        if (!abortController.signal.aborted) {
+          scheduleNext();
+        }
       }
     }, intervalMs);
   }

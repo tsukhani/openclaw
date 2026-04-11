@@ -72,7 +72,9 @@ export async function rateImportance(
     return Math.max(0.1, Math.min(0.85, clamped / 10));
   } catch (err) {
     // H5: Re-throw AbortError — deliberate cancellation must propagate to callers
-    if (err instanceof Error && err.name === "AbortError") throw err;
+    if (err instanceof Error && err.name === "AbortError") {
+      throw err;
+    }
     return 0.5;
   }
 }
@@ -150,7 +152,9 @@ Return JSON: {"classification": "stale"|"lasting", "reason": "brief explanation"
     return "lasting";
   } catch (err) {
     // H5: Re-throw AbortError — deliberate cancellation must propagate to callers
-    if (err instanceof Error && err.name === "AbortError") throw err;
+    if (err instanceof Error && err.name === "AbortError") {
+      throw err;
+    }
     return "lasting";
   }
 }

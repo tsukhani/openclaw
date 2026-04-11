@@ -74,8 +74,12 @@ function createMockSession(
             return {
               records: memories.map((m) => ({
                 get: (key: string) => {
-                  if (key === "id") return m.id;
-                  if (key === "text") return m.text;
+                  if (key === "id") {
+                    return m.id;
+                  }
+                  if (key === "text") {
+                    return m.text;
+                  }
                   return null;
                 },
               })),
@@ -192,7 +196,7 @@ describe("sleep-phases-observations", () => {
       const logger = createMockLogger();
 
       // Pre-populate existing observation for "Bob"
-      (session._existingObservations as Set<string>).add("Bob");
+      session._existingObservations.add("Bob");
 
       callLlm.mockResolvedValue("Bob is a manager at TechCo who likes coffee.");
 
@@ -309,7 +313,9 @@ describe("sleep-phases-observations", () => {
       let callCount = 0;
       callLlm.mockImplementation(async () => {
         callCount++;
-        if (callCount === 2) throw new Error("LLM timeout");
+        if (callCount === 2) {
+          throw new Error("LLM timeout");
+        }
         return "A valid summary.";
       });
 

@@ -18,9 +18,15 @@ function activeSignals(signals: {
   graph?: { rank: number; score: number };
 }): Set<"vector" | "bm25" | "graph"> {
   const active = new Set<"vector" | "bm25" | "graph">();
-  if (signals.vector && signals.vector.score > 0) active.add("vector");
-  if (signals.bm25 && signals.bm25.score > 0) active.add("bm25");
-  if (signals.graph && signals.graph.score > 0) active.add("graph");
+  if (signals.vector && signals.vector.score > 0) {
+    active.add("vector");
+  }
+  if (signals.bm25 && signals.bm25.score > 0) {
+    active.add("bm25");
+  }
+  if (signals.graph && signals.graph.score > 0) {
+    active.add("graph");
+  }
   return active;
 }
 
@@ -34,9 +40,15 @@ function bestSingleSignalRank(signals: {
   graph?: { rank: number; score: number };
 }): number {
   let best = Infinity;
-  if (signals.vector && signals.vector.rank > 0) best = Math.min(best, signals.vector.rank);
-  if (signals.bm25 && signals.bm25.rank > 0) best = Math.min(best, signals.bm25.rank);
-  if (signals.graph && signals.graph.rank > 0) best = Math.min(best, signals.graph.rank);
+  if (signals.vector && signals.vector.rank > 0) {
+    best = Math.min(best, signals.vector.rank);
+  }
+  if (signals.bm25 && signals.bm25.rank > 0) {
+    best = Math.min(best, signals.bm25.rank);
+  }
+  if (signals.graph && signals.graph.rank > 0) {
+    best = Math.min(best, signals.graph.rank);
+  }
   return best;
 }
 
@@ -67,7 +79,9 @@ export function computeSignalAttributionStats(
     const goldSet = new Set(c.goldIds);
 
     for (const mem of c.retrieved) {
-      if (!goldSet.has(mem.id)) continue;
+      if (!goldSet.has(mem.id)) {
+        continue;
+      }
       total++;
 
       if (!mem.signals) {
@@ -83,9 +97,13 @@ export function computeSignalAttributionStats(
         // Retrieved without a signal score (edge case — exclude from attribution)
         unknownSignal++;
       } else if (count === 1) {
-        if (active.has("vector")) vectorOnly++;
-        else if (active.has("bm25")) bm25Only++;
-        else graphOnly++;
+        if (active.has("vector")) {
+          vectorOnly++;
+        } else if (active.has("bm25")) {
+          bm25Only++;
+        } else {
+          graphOnly++;
+        }
       } else {
         multiSignal++;
         // Check RRF uplift: fused rank (mem.rank) vs best single-signal rank

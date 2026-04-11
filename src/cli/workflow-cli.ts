@@ -43,6 +43,8 @@ function statusColor(status: WorkflowStatus): string {
       return theme.warn(status);
     case "planned":
       return theme.muted(status);
+    default:
+      return String(status);
   }
 }
 

@@ -164,7 +164,9 @@ export async function getLowestSupportRule(
       { agentId },
     ),
   );
-  if (result.records.length === 0) return null;
+  if (result.records.length === 0) {
+    return null;
+  }
   return result.records[0].get("r").properties as RuleNode;
 }
 
@@ -284,7 +286,7 @@ export async function inferredFactExists(
   agentId: string,
 ): Promise<boolean> {
   // Sort for canonical comparison
-  const sorted = [...groundingMemoryIds].sort();
+  const sorted = [...groundingMemoryIds].toSorted();
   const result = await session.executeRead((tx) =>
     tx.run(
       `MATCH (f:InferredFact {ruleId: $ruleId, agentId: $agentId})

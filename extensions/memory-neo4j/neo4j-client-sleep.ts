@@ -211,7 +211,9 @@ export async function findDuplicateClusters(
   const duplicateClusters = Array.from(clusters.values()).filter((ids) => ids.length >= 2);
   const clusteredIds = new Set<string>();
   for (const ids of duplicateClusters) {
-    for (const id of ids) clusteredIds.add(id);
+    for (const id of ids) {
+      clusteredIds.add(id);
+    }
   }
 
   const textMap = new Map<string, string>();

@@ -39,7 +39,9 @@ export async function runLabelPropagation(
     ),
   );
 
-  if (graphResult.records.length === 0) return [];
+  if (graphResult.records.length === 0) {
+    return [];
+  }
 
   // Build adjacency list and initialize labels
   const labels = new Map<string, string>(); // entityId → label
@@ -56,7 +58,9 @@ export async function runLabelPropagation(
   for (let iter = 0; iter < maxIter; iter++) {
     let changed = false;
     for (const [entityId, nbrs] of neighbors) {
-      if (nbrs.length === 0) continue;
+      if (nbrs.length === 0) {
+        continue;
+      }
 
       // Count labels among neighbors
       const labelCounts = new Map<string, number>();
@@ -83,13 +87,17 @@ export async function runLabelPropagation(
       }
     }
 
-    if (!changed) break; // converged
+    if (!changed) {
+      break;
+    } // converged
   }
 
   // Step 3: Group entities by label, filter by minSize
   const clusters = new Map<string, string[]>();
   for (const [entityId, label] of labels) {
-    if (!clusters.has(label)) clusters.set(label, []);
+    if (!clusters.has(label)) {
+      clusters.set(label, []);
+    }
     clusters.get(label)!.push(entityId);
   }
 

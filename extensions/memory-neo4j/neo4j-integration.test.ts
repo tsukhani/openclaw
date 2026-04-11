@@ -46,7 +46,9 @@ describe.skipIf(!INTEGRATION_ENABLED)("neo4j-integration", () => {
   });
 
   afterAll(async () => {
-    if (driver) await driver.close();
+    if (driver) {
+      await driver.close();
+    }
   });
 
   beforeEach(async () => {
@@ -72,7 +74,7 @@ describe.skipIf(!INTEGRATION_ENABLED)("neo4j-integration", () => {
         await storeMemory(session, {
           id,
           text: "Integration test memory",
-          embedding: new Array(1536).fill(0.1),
+          embedding: Array.from({ length: 1536 }, () => 0.1),
           importance: 0.8,
           category: "fact",
           source: "user",
@@ -97,7 +99,7 @@ describe.skipIf(!INTEGRATION_ENABLED)("neo4j-integration", () => {
         const input = {
           id,
           text: "Idempotent memory",
-          embedding: new Array(1536).fill(0.1),
+          embedding: Array.from({ length: 1536 }, () => 0.1),
           importance: 0.7,
           category: "fact" as const,
           source: "user" as const,
@@ -124,7 +126,7 @@ describe.skipIf(!INTEGRATION_ENABLED)("neo4j-integration", () => {
         await storeMemory(session, {
           id,
           text: "To be deleted",
-          embedding: new Array(1536).fill(0.1),
+          embedding: Array.from({ length: 1536 }, () => 0.1),
           importance: 0.5,
           category: "other",
           source: "user",
@@ -149,7 +151,7 @@ describe.skipIf(!INTEGRATION_ENABLED)("neo4j-integration", () => {
         await storeMemory(session, {
           id,
           text: "Quarantined memory",
-          embedding: new Array(1536).fill(0.1),
+          embedding: Array.from({ length: 1536 }, () => 0.1),
           importance: 0.5,
           category: "other",
           source: "auto-capture",
@@ -356,7 +358,7 @@ describe.skipIf(!INTEGRATION_ENABLED)("neo4j-integration", () => {
         await storeMemory(session, {
           id: randomUUID(),
           text: "Kubernetes deployment strategy for production cluster",
-          embedding: new Array(1536).fill(0.1),
+          embedding: Array.from({ length: 1536 }, () => 0.1),
           importance: 0.8,
           category: "fact",
           source: "user",
@@ -366,7 +368,7 @@ describe.skipIf(!INTEGRATION_ENABLED)("neo4j-integration", () => {
         await storeMemory(session, {
           id: randomUUID(),
           text: "React component lifecycle and hooks tutorial",
-          embedding: new Array(1536).fill(0.2),
+          embedding: Array.from({ length: 1536 }, () => 0.2),
           importance: 0.7,
           category: "fact",
           source: "user",
@@ -403,7 +405,7 @@ describe.skipIf(!INTEGRATION_ENABLED)("neo4j-integration", () => {
         await storeMemory(session, {
           id: memId,
           text: "Alice works at Acme Corp",
-          embedding: new Array(1536).fill(0.1),
+          embedding: Array.from({ length: 1536 }, () => 0.1),
           importance: 0.8,
           category: "fact",
           source: "user",
@@ -468,7 +470,7 @@ describe.skipIf(!INTEGRATION_ENABLED)("neo4j-integration", () => {
       const makeInput = (id: string, text: string) => ({
         id,
         text,
-        embedding: new Array(1536).fill(0.1),
+        embedding: Array.from({ length: 1536 }, () => 0.1),
         importance: 0.7,
         category: "fact" as const,
         source: "user" as const,

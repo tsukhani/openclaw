@@ -94,8 +94,11 @@ export type PluginRuntime = PluginRuntimeCore & {
   channel: PluginRuntimeChannel;
 };
 
+import type { OpenClawConfig } from "../../config/config.js";
+
 export type CreatePluginRuntimeOptions = {
   subagent?: PluginRuntime["subagent"];
   nodes?: PluginRuntime["nodes"];
   allowGatewaySubagentBinding?: boolean;
+  cfg?: OpenClawConfig;
 };

@@ -125,7 +125,9 @@ export class RuleLearner {
 
     // Step 2: For each sampled edge, walk paths and discover patterns
     for (const edge of sampledEdges) {
-      if (Date.now() - startTime > timeLimit) break;
+      if (Date.now() - startTime > timeLimit) {
+        break;
+      }
 
       const patterns = await this.walkAndGeneralize(session, agentId, edge, maxRuleLength);
 
@@ -506,7 +508,9 @@ Only propose rules that are semantically meaningful. Return ONLY the JSON array.
         const relTypes = rec.get("relTypes") as string[];
         const nodeTypes = rec.get("nodeTypes") as string[];
 
-        if (relTypes.length < 2) continue;
+        if (relTypes.length < 2) {
+          continue;
+        }
 
         // Generalize: replace specific entities with typed variables
         const varNames = nodeTypes.map((_, i) => String.fromCharCode(120 + i)); // x, y, z, ...

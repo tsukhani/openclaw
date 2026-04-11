@@ -88,8 +88,12 @@ function createMockSession(
             return {
               records: candidates.map((c) => ({
                 get: (key: string) => {
-                  if (key === "entityName") return c.entityName;
-                  if (key === "observationSummary") return c.observationSummary;
+                  if (key === "entityName") {
+                    return c.entityName;
+                  }
+                  if (key === "observationSummary") {
+                    return c.observationSummary;
+                  }
                   return null;
                 },
               })),
@@ -100,8 +104,12 @@ function createMockSession(
             return {
               records: memories.map((m) => ({
                 get: (key: string) => {
-                  if (key === "id") return m.id;
-                  if (key === "text") return m.text;
+                  if (key === "id") {
+                    return m.id;
+                  }
+                  if (key === "text") {
+                    return m.text;
+                  }
                   return null;
                 },
               })),
@@ -114,12 +122,24 @@ function createMockSession(
             return {
               records: matching.map((o) => ({
                 get: (key: string) => {
-                  if (key === "id") return `opinion-${o.topic}`;
-                  if (key === "topic") return o.topic;
-                  if (key === "belief") return o.belief;
-                  if (key === "confidence") return o.confidence;
-                  if (key === "supportingMemoryIds") return o.supportingMemoryIds;
-                  if (key === "contradictingMemoryIds") return o.contradictingMemoryIds;
+                  if (key === "id") {
+                    return `opinion-${o.topic}`;
+                  }
+                  if (key === "topic") {
+                    return o.topic;
+                  }
+                  if (key === "belief") {
+                    return o.belief;
+                  }
+                  if (key === "confidence") {
+                    return o.confidence;
+                  }
+                  if (key === "supportingMemoryIds") {
+                    return o.supportingMemoryIds;
+                  }
+                  if (key === "contradictingMemoryIds") {
+                    return o.contradictingMemoryIds;
+                  }
                   return null;
                 },
               })),
@@ -514,7 +534,9 @@ describe("sleep-phases-reflect", () => {
       let callCount = 0;
       callLlm.mockImplementation(async () => {
         callCount++;
-        if (callCount === 2) throw new Error("LLM timeout");
+        if (callCount === 2) {
+          throw new Error("LLM timeout");
+        }
         return JSON.stringify([
           {
             topic: "test",

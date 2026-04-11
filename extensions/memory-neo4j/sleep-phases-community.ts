@@ -41,9 +41,7 @@ export async function runCommunityDetection(
 ): Promise<CommunityDetectionResult> {
   // Accept either a full MemoryNeo4jConfig or a CommunityDetectionConfig sub-object
   const communityConfig: CommunityDetectionConfig | undefined =
-    "communityDetection" in cfg
-      ? (cfg as MemoryNeo4jConfig).communityDetection
-      : (cfg as CommunityDetectionConfig);
+    "communityDetection" in cfg ? cfg.communityDetection : (cfg as CommunityDetectionConfig);
   if (!communityConfig?.enabled) {
     return { communitiesFound: 0, entitiesGrouped: 0, communitiesRemoved: 0 };
   }
@@ -83,8 +81,10 @@ export async function runCommunityDetection(
   let totalEntities = 0;
 
   for (const memberIds of clusters) {
-    if (abortSignal?.aborted) break;
-    const sortedMembers = [...memberIds].sort();
+    if (abortSignal?.aborted) {
+      break;
+    }
+    const sortedMembers = [...memberIds].toSorted();
     const communityId = createHash("sha256")
       .update(sortedMembers.join(":"))
       .digest("hex")
@@ -93,7 +93,7 @@ export async function runCommunityDetection(
     const entityNames = memberIds
       .map((id) => nameMap.get(id))
       .filter((e): e is { name: string; relCount: number } => e != null)
-      .sort((a, b) => b.relCount - a.relCount)
+      .toSorted((a, b) => b.relCount - a.relCount)
       .slice(0, 5)
       .map((e) => e.name);
     const name =

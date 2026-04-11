@@ -796,8 +796,8 @@ describe("session-memory hook", () => {
       await handler(event);
 
       // Verify content was truncated (filter to Gateway API calls only)
-      const gatewayCalls = fetchCalls.filter((c) => c.url.includes("/tools/invoke"));
-      const body = JSON.parse(gatewayCalls[0].options.body as string);
+      const gatewayCall = fetchCalls.find((c) => c.url.includes("/tools/invoke"));
+      const body = JSON.parse((gatewayCall?.options.body ?? "{}") as string);
       expect(body.args.text).toContain("[...truncated to 2000 chars]");
       // Full content would be > 2000, but text should be <= 2000 + metadata + truncation notice
       const contentLines = body.args.text.split("\n");
@@ -910,7 +910,6 @@ describe("session-memory hook", () => {
         hooks: {
           internal: {
             entries: {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               "session-memory": { enabled: true, target: "invalid" as any },
             },
           },
@@ -961,7 +960,6 @@ describe("session-memory hook", () => {
         hooks: {
           internal: {
             entries: {
-              // oxlint-disable-next-line typescript/no-explicit-any
               "session-memory": { enabled: true, target: "lancedb" as any },
             },
           },

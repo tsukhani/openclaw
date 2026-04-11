@@ -27,7 +27,9 @@ export async function runRuleLearning(
   result: SleepCycleResult,
   abortSignal?: AbortSignal,
 ): Promise<void> {
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   const minEntities = reasoningCfg?.minEntitiesForLearning ?? 10;
   const timeLimitSeconds = reasoningCfg?.phaseTimeLimitSeconds ?? 60;
@@ -84,7 +86,9 @@ export async function runRuleMaterialization(
   result: SleepCycleResult,
   abortSignal?: AbortSignal,
 ): Promise<void> {
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   const session = await db.createSession();
   try {
@@ -106,7 +110,9 @@ export async function runRuleMaterialization(
 
     let factsInferred = 0;
     for (const rule of rules) {
-      if (abortSignal?.aborted) break;
+      if (abortSignal?.aborted) {
+        break;
+      }
 
       try {
         // Evaluate rule and count bindings (dry-run equivalent)
@@ -160,7 +166,9 @@ export async function runConsistencyAudit(
   result: SleepCycleResult,
   abortSignal?: AbortSignal,
 ): Promise<void> {
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   logger.info("memory-neo4j: [sleep] Phase 16: Consistency Audit");
 
@@ -228,7 +236,9 @@ export async function runCausalModelUpdate(
   result: SleepCycleResult,
   abortSignal?: AbortSignal,
 ): Promise<void> {
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   logger.info("memory-neo4j: [sleep] Phase 17: Causal Model Update");
 

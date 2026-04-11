@@ -82,7 +82,9 @@ function deepMergePreset(
 ): Record<string, unknown> {
   const result: Record<string, unknown> = { ...preset };
   for (const [key, userVal] of Object.entries(user)) {
-    if (key === "preset") continue; // strip the preset key itself from merged output
+    if (key === "preset") {
+      continue;
+    } // strip the preset key itself from merged output
     const presetVal = result[key];
     if (
       userVal != null &&
@@ -545,7 +547,9 @@ export function resolveExtractionConfig(
 /** Build a TypeBox object schema that accepts only the listed keys (all optional). */
 function allowedKeys(...keys: string[]) {
   const props: Record<string, ReturnType<typeof Type.Optional>> = {};
-  for (const k of keys) props[k] = Type.Optional(Type.Unknown());
+  for (const k of keys) {
+    props[k] = Type.Optional(Type.Unknown());
+  }
   return Type.Object(props, { additionalProperties: false });
 }
 
@@ -638,7 +642,9 @@ const RawConfigSchema = allowedKeys(...TOP_LEVEL_KEYS);
 /** Validate a sub-section object against its allowed-keys schema. */
 function checkSubSection(raw: unknown, name: string) {
   const schema = SUB_SCHEMAS[name];
-  if (!schema) return;
+  if (!schema) {
+    return;
+  }
   const obj = (raw ?? {}) as Record<string, unknown>;
   if (!Value.Check(schema, obj)) {
     const allowed = new Set(Object.keys(schema.properties));
@@ -658,14 +664,16 @@ const VALID_NEO4J_SCHEMES = [
 
 /** Compile a regex pattern string with length guard and error wrapping. */
 function compileRegex(pattern: string | undefined, fieldName: string): RegExp | undefined {
-  if (!pattern) return undefined;
+  if (!pattern) {
+    return undefined;
+  }
   if (pattern.length > 200) {
     throw new Error(`memory-neo4j config: ${fieldName} too long (max 200 chars)`);
   }
   try {
     return new RegExp(pattern);
   } catch (e) {
-    throw new Error(`memory-neo4j config: invalid ${fieldName} regex — ${String(e)}`);
+    throw new Error(`memory-neo4j config: invalid ${fieldName} regex — ${String(e)}`, { cause: e });
   }
 }
 
@@ -690,7 +698,9 @@ function parseRelTypeArray(
 ): string[] | undefined {
   if (Array.isArray(raw)) {
     const filtered = raw.filter((t): t is string => typeof t === "string" && t.length > 0);
-    if (filtered.length > 0) validateRelTypes(filtered, fieldName);
+    if (filtered.length > 0) {
+      validateRelTypes(filtered, fieldName);
+    }
     return filtered;
   }
   if (raw !== undefined && (rejectNonArray || raw !== null)) {
@@ -705,7 +715,9 @@ function parsePositiveInt(
   fieldName: string,
   defaultVal?: number,
 ): number | undefined {
-  if (typeof raw !== "number") return defaultVal;
+  if (typeof raw !== "number") {
+    return defaultVal;
+  }
   if (raw < 1 || !Number.isInteger(raw)) {
     throw new Error(`${fieldName} must be a positive integer, got: ${raw}`);
   }
@@ -755,10 +767,13 @@ export const memoryNeo4jConfigSchema = {
 
     // -- neo4j --
     const neo4jRaw = cfg.neo4j as Record<string, unknown> | undefined;
-    if (!neo4jRaw || typeof neo4jRaw !== "object")
+    if (!neo4jRaw || typeof neo4jRaw !== "object") {
       throw new Error("neo4j config section is required");
+    }
     checkSubSection(neo4jRaw, "neo4j");
-    if (typeof neo4jRaw.uri !== "string" || !neo4jRaw.uri) throw new Error("neo4j.uri is required");
+    if (typeof neo4jRaw.uri !== "string" || !neo4jRaw.uri) {
+      throw new Error("neo4j.uri is required");
+    }
     const neo4jUri = resolveEnvVars(neo4jRaw.uri);
     if (!VALID_NEO4J_SCHEMES.some((s) => neo4jUri.startsWith(s))) {
       throw new Error(
@@ -828,7 +843,7 @@ export const memoryNeo4jConfigSchema = {
           : undefined;
       const exConcurrency =
         typeof extractionRaw.concurrency === "number" && extractionRaw.concurrency > 0
-          ? Math.floor(extractionRaw.concurrency as number)
+          ? Math.floor(extractionRaw.concurrency)
           : undefined;
       const exLocalNer =
         typeof extractionRaw.localNerEnabled === "boolean"
@@ -836,7 +851,7 @@ export const memoryNeo4jConfigSchema = {
           : undefined;
       const exMaxTokens =
         typeof extractionRaw.maxTokens === "number" && extractionRaw.maxTokens > 0
-          ? Math.floor(extractionRaw.maxTokens as number)
+          ? Math.floor(extractionRaw.maxTokens)
           : undefined;
       if (exApiKey || exModel || exBaseUrl) {
         extraction = {
@@ -865,8 +880,11 @@ export const memoryNeo4jConfigSchema = {
         }
         if (val && typeof val === "object" && "halfLifeDays" in val) {
           const hl = (val as Record<string, unknown>).halfLifeDays;
-          if (typeof hl === "number" && hl > 0) decayCurves[cat] = { halfLifeDays: hl };
-          else throw new Error(`decayCurves.${cat}.halfLifeDays must be a positive number`);
+          if (typeof hl === "number" && hl > 0) {
+            decayCurves[cat] = { halfLifeDays: hl };
+          } else {
+            throw new Error(`decayCurves.${cat}.halfLifeDays must be a positive number`);
+          }
         }
       }
     }
@@ -892,7 +910,6 @@ export const memoryNeo4jConfigSchema = {
     // -- sleepCycle --
     const sleepCycleRaw = section(cfg, "sleepCycle");
     if (sleepCycleRaw?.auto !== undefined || sleepCycleRaw?.autoIntervalMs !== undefined) {
-      // eslint-disable-next-line no-console
       console.warn(
         "memory-neo4j: sleepCycle.auto and sleepCycle.autoIntervalMs are deprecated and ignored. " +
           'Use sleepCycle.schedule (cron expression, e.g. "0 3 * * *") instead.',
@@ -928,8 +945,9 @@ export const memoryNeo4jConfigSchema = {
     // -- recencyWeight --
     let recencyWeight = 0.1;
     if (typeof cfg.recencyWeight === "number") {
-      if (cfg.recencyWeight < 0)
+      if (cfg.recencyWeight < 0) {
         throw new Error(`recencyWeight must be >= 0, got: ${cfg.recencyWeight}`);
+      }
       recencyWeight = cfg.recencyWeight;
     }
 
@@ -1003,7 +1021,7 @@ export const memoryNeo4jConfigSchema = {
     }
 
     // -- cache --
-    const cacheRaw = section(cfg, "cache") as Record<string, unknown> | undefined;
+    const cacheRaw = section(cfg, "cache");
     const cache: MemoryNeo4jConfig["cache"] =
       cacheRaw?.enabled === true
         ? {
@@ -1018,13 +1036,14 @@ export const memoryNeo4jConfigSchema = {
         : undefined;
 
     // -- trustScoring --
-    const trustRaw = section(cfg, "trustScoring") as Record<string, unknown> | undefined;
+    const trustRaw = section(cfg, "trustScoring");
     const trustScoring: MemoryNeo4jConfig["trustScoring"] = {
       enabled: trustRaw?.enabled !== false,
       // H10: Validate that sourceDefaults values are numbers in [0, 1]
       sourceDefaults: (() => {
-        if (!trustRaw?.sourceDefaults || typeof trustRaw.sourceDefaults !== "object")
+        if (!trustRaw?.sourceDefaults || typeof trustRaw.sourceDefaults !== "object") {
           return undefined;
+        }
         const raw = trustRaw.sourceDefaults as Record<string, unknown>;
         const validated: Record<string, number> = {};
         for (const [key, val] of Object.entries(raw)) {
@@ -1037,7 +1056,7 @@ export const memoryNeo4jConfigSchema = {
     };
 
     // -- communityDetection --
-    const communityRaw = section(cfg, "communityDetection") as Record<string, unknown> | undefined;
+    const communityRaw = section(cfg, "communityDetection");
     const communityDetection: MemoryNeo4jConfig["communityDetection"] =
       communityRaw?.enabled === true
         ? {
@@ -1060,7 +1079,7 @@ export const memoryNeo4jConfigSchema = {
         : undefined;
 
     // -- episodicMemory --
-    const episodicRaw = section(cfg, "episodicMemory") as Record<string, unknown> | undefined;
+    const episodicRaw = section(cfg, "episodicMemory");
     const episodicMemory: MemoryNeo4jConfig["episodicMemory"] =
       episodicRaw?.enabled === true
         ? {
@@ -1075,12 +1094,14 @@ export const memoryNeo4jConfigSchema = {
         : undefined;
 
     // -- instructionDetection --
-    const instrRaw = section(cfg, "instructionDetection") as Record<string, unknown> | undefined;
+    const instrRaw = section(cfg, "instructionDetection");
 
     // -- disposition (OP-188) --
-    const dispositionRaw = section(cfg, "disposition") as Record<string, unknown> | undefined;
+    const dispositionRaw = section(cfg, "disposition");
     const parseDispositionParam = (raw: unknown, name: string): number => {
-      if (raw === undefined || raw === null) return 3;
+      if (raw === undefined || raw === null) {
+        return 3;
+      }
       if (typeof raw !== "number" || !Number.isInteger(raw) || raw < 1 || raw > 5) {
         throw new Error(`disposition.${name} must be an integer 1–5, got: ${String(raw)}`);
       }
@@ -1095,11 +1116,13 @@ export const memoryNeo4jConfigSchema = {
       : undefined;
 
     // -- signals --
-    const signalsRaw = section(cfg, "signals") as Record<string, unknown> | undefined;
+    const signalsRaw = section(cfg, "signals");
     let signals: MemoryNeo4jConfig["signals"];
     if (signalsRaw) {
       const parseSignalWeight = (raw: unknown, name: string): number | undefined => {
-        if (raw === undefined || raw === null) return undefined;
+        if (raw === undefined || raw === null) {
+          return undefined;
+        }
         if (typeof raw !== "number") {
           throw new Error(`signals.${name} must be a number, got: ${String(raw)}`);
         }

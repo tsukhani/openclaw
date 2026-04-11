@@ -294,6 +294,7 @@ export async function runEval(
             if (consecutiveSearchErrors > 5) {
               throw new Error(
                 `Eval terminated: ${consecutiveSearchErrors} consecutive search failures. Last error: ${errMsg}`,
+                { cause: err },
               );
             }
             // Skip this case but continue the run
@@ -694,7 +695,9 @@ async function storeTestMemories(
   tc: TestCase,
   agentId: string,
 ): Promise<string[]> {
-  if (tc.memories.length === 0) return [];
+  if (tc.memories.length === 0) {
+    return [];
+  }
 
   // Batch embed all memory texts
   const texts = tc.memories.map((m) => m.text);

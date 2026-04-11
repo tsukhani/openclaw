@@ -60,7 +60,9 @@ export type EvaluationBinding = {
 
 /** Aggregate edge confidences using the rule's formula. */
 export function aggregateConfidence(confidences: number[], formula: ConfidenceFormula): number {
-  if (confidences.length === 0) return 1.0;
+  if (confidences.length === 0) {
+    return 1.0;
+  }
   switch (formula) {
     case "min":
       return Math.min(...confidences);
@@ -158,7 +160,7 @@ export class RuleEngine {
         const memoryIds = (rec.get("memoryIds") as string[]) ?? [];
         const memoryTexts = (rec.get("memoryTexts") as string[]) ?? [];
         const confidences = (rec.get("confidences") as number[]) ?? [];
-        const bindingKey = `${rule.id}:${[...memoryIds].sort().join(",")}`;
+        const bindingKey = `${rule.id}:${[...memoryIds].toSorted().join(",")}`;
         return { memoryIds, memoryTexts, confidences, bindingKey };
       });
     } catch (err) {
@@ -200,7 +202,9 @@ export class RuleEngine {
 
         for (const binding of bindings) {
           // Cycle detection: skip if we've seen this exact (rule, binding) pair
-          if (seenBindings.has(binding.bindingKey)) continue;
+          if (seenBindings.has(binding.bindingKey)) {
+            continue;
+          }
           seenBindings.add(binding.bindingKey);
 
           // Check if consequent already exists
@@ -211,14 +215,16 @@ export class RuleEngine {
               binding.memoryIds,
               agentId,
             );
-            if (exists) continue;
+            if (exists) {
+              continue;
+            }
           }
 
           // Compute confidence
           const confidence = computeChainConfidence(
             rule.confidence,
             binding.confidences,
-            rule.confidenceFormula as ConfidenceFormula,
+            rule.confidenceFormula,
             iteration,
             depthDecay,
           );

@@ -49,7 +49,9 @@ export async function recordRetrievals(
   flushFn: () => Promise<void>,
   logger: Logger,
 ): Promise<void> {
-  if (memoryIds.length === 0) return;
+  if (memoryIds.length === 0) {
+    return;
+  }
   // Buffer retrieval IDs instead of writing immediately
   state.buffer.push(...memoryIds);
   // Flush if buffer exceeds threshold and no flush is already in-flight.
@@ -75,7 +77,9 @@ export function scheduleRetrievalFlush(
   flushFn: () => Promise<void>,
   logger: Logger,
 ): void {
-  if (state.flushTimer) return;
+  if (state.flushTimer) {
+    return;
+  }
   state.flushTimer = setTimeout(() => {
     flushFn().catch((err) => {
       logger.debug?.(`memory-neo4j: retrieval flush failed: ${String(err)}`);
@@ -97,7 +101,9 @@ export async function flushRetrievalBuffer(
   retryOnTransient: <T>(fn: () => Promise<T>) => Promise<T>,
   withSession: <T>(fn: (session: import("neo4j-driver").Session) => Promise<T>) => Promise<T>,
 ): Promise<void> {
-  if (state.flushInProgress || state.buffer.length === 0) return;
+  if (state.flushInProgress || state.buffer.length === 0) {
+    return;
+  }
   state.flushInProgress = true;
   try {
     if (state.flushTimer) {
@@ -110,8 +116,12 @@ export async function flushRetrievalBuffer(
     state.buffer = [];
     // Deduplicate and count occurrences
     const counts = new Map<string, number>();
-    for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
-    if (!driver) return;
+    for (const id of ids) {
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    if (!driver) {
+      return;
+    }
     try {
       await retryOnTransient(() =>
         withSession((s) => Search.recordRetrievals(s, [...counts.entries()])),

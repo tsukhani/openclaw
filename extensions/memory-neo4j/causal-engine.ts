@@ -521,7 +521,9 @@ Return ONLY the JSON array, no other text.`;
   ): { id: string; name: string; value?: string } | undefined {
     const lower = name.toLowerCase();
     for (const node of dag.nodes.values()) {
-      if (node.name.toLowerCase() === lower) return node;
+      if (node.name.toLowerCase() === lower) {
+        return node;
+      }
     }
     return undefined;
   }
@@ -542,8 +544,12 @@ Return ONLY the JSON array, no other text.`;
 
     while (queue.length > 0) {
       const current = queue.shift()!;
-      if (current.id === targetId) return current.path;
-      if (visited.has(current.id)) continue;
+      if (current.id === targetId) {
+        return current.path;
+      }
+      if (visited.has(current.id)) {
+        continue;
+      }
       visited.add(current.id);
 
       for (const edge of edges) {
@@ -570,7 +576,9 @@ Return ONLY the JSON array, no other text.`;
       .filter((e) => e.targetId === interventionId)
       .map((e) => dag.nodes.get(e.sourceId)?.name ?? e.sourceId);
 
-    if (parents.length === 0) return [];
+    if (parents.length === 0) {
+      return [];
+    }
 
     return [
       `Adjustment set: {${parents.join(", ")}} (parents of intervention variable)`,
@@ -588,7 +596,9 @@ Return ONLY the JSON array, no other text.`;
     const adj = new Map<string, string[]>();
 
     for (const edge of edges) {
-      if (!adj.has(edge.sourceId)) adj.set(edge.sourceId, []);
+      if (!adj.has(edge.sourceId)) {
+        adj.set(edge.sourceId, []);
+      }
       adj.get(edge.sourceId)!.push(edge.targetId);
     }
 
@@ -611,7 +621,9 @@ Return ONLY the JSON array, no other text.`;
           return true;
         }
         if (!visited.has(neighbor)) {
-          if (dfs(neighbor)) return true;
+          if (dfs(neighbor)) {
+            return true;
+          }
         }
       }
 

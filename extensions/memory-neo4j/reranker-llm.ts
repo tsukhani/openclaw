@@ -44,7 +44,9 @@ Scores must be numbers between 0 and 1.`;
 /** Format a date string concisely for the LLM prompt (e.g. "2026-03-06"). */
 function formatDate(iso?: string): string {
   // L4: slice() never throws on strings — removed unnecessary try/catch
-  if (!iso) return "unknown";
+  if (!iso) {
+    return "unknown";
+  }
   return iso.slice(0, 10); // YYYY-MM-DD
 }
 
@@ -65,7 +67,9 @@ export async function llmRerank(
   isTemporal: boolean = false,
   signal?: AbortSignal,
 ): Promise<LocalRerankResult[]> {
-  if (candidates.length === 0) return [];
+  if (candidates.length === 0) {
+    return [];
+  }
 
   if (!config) {
     // H6: Preserve original ordering with descending scores instead of zeroing
@@ -91,7 +95,9 @@ export async function llmRerank(
       if (text.length > 400) {
         text = text.slice(0, 400);
         const lastSpace = text.lastIndexOf(" ");
-        if (lastSpace > 300) text = text.slice(0, lastSpace);
+        if (lastSpace > 300) {
+          text = text.slice(0, lastSpace);
+        }
       }
       if (isTemporal && (item.validFrom ?? item.createdAt)) {
         const date = formatDate(item.validFrom ?? item.createdAt);
@@ -140,7 +146,9 @@ export async function llmRerank(
       .replace(/\n?```$/m, "")
       .trim();
     const result = JSON.parse(jsonStr) as unknown;
-    if (!Array.isArray(result)) throw new Error("Expected array");
+    if (!Array.isArray(result)) {
+      throw new Error("Expected array");
+    }
     parsed = (result as Array<unknown>).map((item) => {
       const r = item as { index?: unknown; score?: unknown };
       if (typeof r.index !== "number" || typeof r.score !== "number") {

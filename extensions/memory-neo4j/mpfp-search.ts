@@ -93,7 +93,9 @@ async function traversePattern(
   options: Required<Pick<MpfpOptions, "alpha" | "topKNeighbors" | "threshold">>,
   provenanceEnabled = false,
 ): Promise<TraversalHit[]> {
-  if (seedNodeIds.length === 0 || pattern.length === 0) return [];
+  if (seedNodeIds.length === 0 || pattern.length === 0) {
+    return [];
+  }
 
   // Build the Cypher traversal dynamically based on pattern length.
   // Each hop follows a specific edge type with fan-out limiting.
@@ -227,7 +229,9 @@ async function bridgeEntitiesToMemories(
   agentId: string,
   entityHits: TraversalHit[],
 ): Promise<SearchSignalResult[]> {
-  if (entityHits.length === 0) return [];
+  if (entityHits.length === 0) {
+    return [];
+  }
 
   const entityIds = entityHits.map((h) => h.nodeId);
   const scoreByEntity = new Map(entityHits.map((h) => [h.nodeId, h.score]));
@@ -287,7 +291,9 @@ export async function mpfpSearch(
   mode: MpfpMode = "both",
   options: MpfpOptions = {},
 ): Promise<SearchSignalResult[]> {
-  if (seedNodeIds.length === 0) return [];
+  if (seedNodeIds.length === 0) {
+    return [];
+  }
 
   const alpha = options.alpha ?? DEFAULT_ALPHA;
   const topKNeighbors = options.topKNeighbors ?? DEFAULT_TOP_K_NEIGHBORS;
@@ -426,13 +432,17 @@ async function fetchMemoryMetadata(
   agentId: string,
   hits: TraversalHit[],
 ): Promise<SearchSignalResult[]> {
-  if (hits.length === 0) return [];
+  if (hits.length === 0) {
+    return [];
+  }
 
   const ids = [...new Set(hits.map((h) => h.nodeId))];
   const scoreById = new Map<string, number>();
   for (const h of hits) {
     const existing = scoreById.get(h.nodeId) ?? 0;
-    if (h.score > existing) scoreById.set(h.nodeId, h.score);
+    if (h.score > existing) {
+      scoreById.set(h.nodeId, h.score);
+    }
   }
 
   const result = await session.executeRead((tx) =>

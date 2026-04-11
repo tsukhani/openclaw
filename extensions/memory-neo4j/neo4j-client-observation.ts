@@ -108,7 +108,9 @@ export async function getObservationsForEntities(
   agentId: string,
   entityNames: string[],
 ): Promise<Array<{ entityName: string; summary: string; memoryIds: string[] }>> {
-  if (entityNames.length === 0) return [];
+  if (entityNames.length === 0) {
+    return [];
+  }
   const result = await session.executeRead((tx) =>
     tx.run(
       `UNWIND $entityNames AS name

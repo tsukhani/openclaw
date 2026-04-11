@@ -182,11 +182,19 @@ export function registerMemoryTools(
           const text = results
             .map((r, i) => {
               const base = `${i + 1}. [${r.category}] ${r.text} (${(r.score * 100).toFixed(0)}%)`;
-              if (!r.signals) return base;
+              if (!r.signals) {
+                return base;
+              }
               const parts: string[] = [];
-              if (r.signals.vector.rank > 0) parts.push(`vec:#${r.signals.vector.rank}`);
-              if (r.signals.bm25.rank > 0) parts.push(`bm25:#${r.signals.bm25.rank}`);
-              if (r.signals.graph.rank > 0) parts.push(`graph:#${r.signals.graph.rank}`);
+              if (r.signals.vector.rank > 0) {
+                parts.push(`vec:#${r.signals.vector.rank}`);
+              }
+              if (r.signals.bm25.rank > 0) {
+                parts.push(`bm25:#${r.signals.bm25.rank}`);
+              }
+              if (r.signals.graph.rank > 0) {
+                parts.push(`graph:#${r.signals.graph.rank}`);
+              }
               return parts.length > 0 ? `${base} [${parts.join(" ")}]` : base;
             })
             .join("\n");

@@ -116,7 +116,6 @@ export function emitToolCallAndVerify(params: {
     .then(async (event) => {
       const verification = await runVerification(baseDir, event as ToolCallEvent);
       if (verification?.status === "fail") {
-        // eslint-disable-next-line no-console
         console.warn(
           `[verification] ${params.toolName} failed: ${verification.detail ?? "unknown reason"}`,
         );

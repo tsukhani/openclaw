@@ -23,6 +23,10 @@ export type PluginHookBeforePromptBuildEvent = {
   prompt: string;
   /** Session messages prepared for this run. */
   messages: unknown[];
+  /** Model's total context window in tokens (when available after model resolution). */
+  contextWindowTokens?: number;
+  /** Estimated tokens currently used in context. */
+  estimatedUsedTokens?: number;
 };
 
 export type PluginHookBeforePromptBuildResult = {

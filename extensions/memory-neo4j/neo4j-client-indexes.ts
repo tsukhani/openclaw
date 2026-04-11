@@ -204,7 +204,9 @@ export async function reindex(
       await fetchSession.close();
     }
 
-    if (page.length === 0) break;
+    if (page.length === 0) {
+      break;
+    }
     lastId = page[page.length - 1].id;
 
     // Re-embed this page in batches
@@ -236,7 +238,9 @@ export async function reindex(
     totalMemories += page.length;
     progress("memories", totalMemories, totalMemories);
 
-    if (page.length < PAGE_SIZE) break;
+    if (page.length < PAGE_SIZE) {
+      break;
+    }
   }
 
   // Step 2: Drop old index and recreate with current dimensions

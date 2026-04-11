@@ -43,7 +43,9 @@ export async function retryWithBackoff<T>(fn: () => Promise<T>, opts: RetryOptio
   } = opts;
   let lastError: unknown;
 
-  if (maxAttempts < 1) throw new Error("retryWithBackoff: maxAttempts must be >= 1");
+  if (maxAttempts < 1) {
+    throw new Error("retryWithBackoff: maxAttempts must be >= 1");
+  }
   // L1/L4: Validate baseDelayMs to prevent NaN propagation or negative delays
   if (!Number.isFinite(baseDelayMs) || baseDelayMs < 0) {
     throw new Error(
@@ -60,12 +62,16 @@ export async function retryWithBackoff<T>(fn: () => Promise<T>, opts: RetryOptio
       }
 
       // Non-retryable errors throw immediately
-      if (isRetryable && !isRetryable(err)) throw err;
+      if (isRetryable && !isRetryable(err)) {
+        throw err;
+      }
 
       lastError = err;
 
       // Last attempt exhausted — throw
-      if (attempt >= maxAttempts - 1) throw err;
+      if (attempt >= maxAttempts - 1) {
+        throw err;
+      }
 
       const base =
         backoffExponent !== undefined
@@ -89,8 +95,9 @@ export async function retryWithBackoff<T>(fn: () => Promise<T>, opts: RetryOptio
 
 /** Promise-based delay that rejects on abort signal. */
 export function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
-  if (signal?.aborted)
+  if (signal?.aborted) {
     return Promise.reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+  }
   return new Promise<void>((resolve, reject) => {
     const onAbort = () => {
       clearTimeout(timer);
@@ -101,7 +108,9 @@ export function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> 
       resolve();
     }, ms);
     // L31: Allow Node.js process to exit while timer is pending
-    if (typeof timer === "object" && "unref" in timer) timer.unref();
+    if (typeof timer === "object" && "unref" in timer) {
+      timer.unref();
+    }
     signal?.addEventListener("abort", onAbort, { once: true });
   });
 }
@@ -116,7 +125,9 @@ export function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> 
  * constructor.name may differ across realms/bundlers. Message-based fallback covers all cases.
  */
 export function isTransientNeo4jError(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
+  if (!(err instanceof Error)) {
+    return false;
+  }
   const errCode = (err as unknown as Record<string, unknown>).code as string | undefined;
   return (
     err.message.includes("DeadlockDetected") ||

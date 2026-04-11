@@ -18,7 +18,6 @@ import {
   detectInterpreterInlineEvalArgv,
 } from "../infra/exec-inline-eval.js";
 import type { SafeBinProfile } from "../infra/exec-safe-bin-policy.js";
-import { logInfo } from "../logger.js";
 import { recordPermissionDecision } from "../security/permission-decisions.js";
 import { markBackgrounded, tail } from "./bash-process-registry.js";
 import {

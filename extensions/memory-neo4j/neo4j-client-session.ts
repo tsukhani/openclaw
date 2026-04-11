@@ -28,7 +28,9 @@ export async function withSession<T>(
   getDriver: () => Driver | null,
   abortSignal?: AbortSignal,
 ): Promise<T> {
-  if (abortSignal?.aborted) throw new DOMException("Aborted", "AbortError");
+  if (abortSignal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
   await ensureInitialized();
   // M2: Guard against concurrent close() nullifying driver after init
   const driver = getDriver();

@@ -17,7 +17,9 @@ import type { Logger } from "./schema.js";
 let h64ToString: ((input: string) => string) | null = null;
 let h64InitPromise: Promise<void> | null = null;
 async function ensureH64Init(): Promise<void> {
-  if (h64ToString) return;
+  if (h64ToString) {
+    return;
+  }
   if (!h64InitPromise) {
     h64InitPromise = xxhashInit().then((xxhash) => {
       h64ToString = xxhash.h64ToString;
@@ -27,10 +29,11 @@ async function ensureH64Init(): Promise<void> {
 }
 function getH64ToStringSync(): (input: string) => string {
   // L5: More descriptive error for debugging async initialization issues
-  if (!h64ToString)
+  if (!h64ToString) {
     throw new Error(
       "memory-neo4j: xxhash not initialized — ensureH64Init() must be awaited before calling sync hash functions",
     );
+  }
   return h64ToString;
 }
 
@@ -86,9 +89,13 @@ class EmbeddingCache {
 /** Concurrency for Ollama embedding requests (configurable via OLLAMA_NUM_PARALLEL) */
 const OLLAMA_EMBED_CONCURRENCY = (() => {
   const envVal = process.env.OLLAMA_NUM_PARALLEL;
-  if (envVal === undefined) return 4;
+  if (envVal === undefined) {
+    return 4;
+  }
   const parsed = parseInt(envVal, 10);
-  if (Number.isNaN(parsed)) return 4;
+  if (Number.isNaN(parsed)) {
+    return 4;
+  }
   return Math.max(1, Math.min(32, parsed));
 })();
 
@@ -194,7 +201,9 @@ export class Embeddings {
 
     // H5: Dedup concurrent API calls for the same text — second caller awaits the first's promise
     const existing = this.inflight.get(input);
-    if (existing) return existing;
+    if (existing) {
+      return existing;
+    }
 
     const promise = this.doEmbed(input);
     this.inflight.set(input, promise);
@@ -317,7 +326,9 @@ export class Embeddings {
               embeddings.push(...nextResult);
             } catch {
               // Chunk failed — fill with empty arrays
-              for (let k = 0; k < nextChunk.length; k++) embeddings.push([]);
+              for (let k = 0; k < nextChunk.length; k++) {
+                embeddings.push([]);
+              }
             }
           }
           return embeddings;
@@ -443,7 +454,7 @@ export class Embeddings {
       );
     }
     // Sort by index to ensure correct order
-    return [...response.data].sort((a, b) => a.index - b.index).map((d) => d.embedding);
+    return [...response.data].toSorted((a, b) => a.index - b.index).map((d) => d.embedding);
   }
 
   // Timeout for Ollama embedding fetch calls to prevent hanging indefinitely
@@ -509,7 +520,9 @@ export function cosineSimilarity(a: number[], b: number[]): number {
     normB += b[i] * b[i];
   }
   const denom = Math.sqrt(normA) * Math.sqrt(normB);
-  if (denom === 0) return 0;
+  if (denom === 0) {
+    return 0;
+  }
   const sim = dot / denom;
   return Number.isFinite(sim) ? sim : 0;
 }

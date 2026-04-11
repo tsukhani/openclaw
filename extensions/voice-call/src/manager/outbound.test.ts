@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { CallManagerContext } from "./context.js";
 
 const {
   addTranscriptEntryMock,

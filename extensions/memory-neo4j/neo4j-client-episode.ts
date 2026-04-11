@@ -133,7 +133,9 @@ export async function deleteExpiredEpisodes(
       return toJsNumber(result.records[0]?.get("deleted"));
     });
     totalDeleted += deleted;
-    if (deleted < DELETE_BATCH_SIZE) break;
+    if (deleted < DELETE_BATCH_SIZE) {
+      break;
+    }
   }
   return totalDeleted;
 }

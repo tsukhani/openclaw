@@ -40,7 +40,9 @@ const INTERNAL_ENTITY_FIELDS = new Set([
  * at debug level when a logger is available via the module-level holder.
  */
 function truncateEntityName(name: string): string {
-  if (name.length <= MAX_ENTITY_NAME_LENGTH) return name;
+  if (name.length <= MAX_ENTITY_NAME_LENGTH) {
+    return name;
+  }
   // Debug-level — callers don't inject a logger here, and truncation is normal for LLM output
   globalThis.console?.debug?.(
     `memory-neo4j: truncated entity name from ${name.length} to ${MAX_ENTITY_NAME_LENGTH} chars`,
@@ -85,7 +87,9 @@ export async function updateExtractionStatusBatch(
   status: ExtractionStatus,
   options?: { incrementRetries?: boolean },
 ): Promise<void> {
-  if (ids.length === 0) return;
+  if (ids.length === 0) {
+    return;
+  }
   const retryClause = options?.incrementRetries
     ? ", m.extractionRetries = coalesce(m.extractionRetries, 0) + 1"
     : "";
@@ -177,7 +181,9 @@ export async function batchEntityOperations(
         .map((e) => {
           const safeProps: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(e.properties!)) {
-            if (/^[a-z_][a-z0-9_]*$/.test(k) && !INTERNAL_ENTITY_FIELDS.has(k)) safeProps[k] = v;
+            if (/^[a-z_][a-z0-9_]*$/.test(k) && !INTERNAL_ENTITY_FIELDS.has(k)) {
+              safeProps[k] = v;
+            }
           }
           return { name: truncateEntityName(e.name.trim().toLowerCase()), props: safeProps };
         })
@@ -472,7 +478,9 @@ export async function incrementTaggingRetriesBatch(
   session: Session,
   memoryIds: string[],
 ): Promise<void> {
-  if (memoryIds.length === 0) return;
+  if (memoryIds.length === 0) {
+    return;
+  }
   await session.executeWrite((tx) =>
     tx.run(
       `UNWIND $ids AS id
@@ -724,7 +732,9 @@ export async function batchMergeEntityPairs(
   pairs: Array<{ keepId: string; removeId: string }>,
   logger?: { warn: (msg: string) => void },
 ): Promise<number> {
-  if (pairs.length === 0) return 0;
+  if (pairs.length === 0) {
+    return 0;
+  }
 
   // Split into chunks to avoid transaction timeouts on large batches
   let merged = 0;
@@ -1177,7 +1187,9 @@ export async function reconcileEntityRelationshipCounts(session: Session): Promi
     );
     const updated = toJsNumber(result.records[0]?.get("updated"));
     totalUpdated += updated;
-    if (updated < BATCH_SIZE) break;
+    if (updated < BATCH_SIZE) {
+      break;
+    }
   }
   return totalUpdated;
 }

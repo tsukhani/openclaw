@@ -54,8 +54,12 @@ export class Neo4jMemoryClient {
 
   // — Connection & Initialization —
   async ensureInitialized(): Promise<void> {
-    if (this.driver && this.indexesReady) return;
-    if (this.initPromise) return this.initPromise;
+    if (this.driver && this.indexesReady) {
+      return;
+    }
+    if (this.initPromise) {
+      return this.initPromise;
+    }
     this.initPromise = this.doInitialize().catch((err) => {
       // Reset so subsequent calls retry instead of returning cached rejection
       this.initPromise = null;
@@ -91,7 +95,9 @@ export class Neo4jMemoryClient {
       let redacted: string;
       try {
         const u = new URL(this.uri);
-        if (u.password) u.password = "***";
+        if (u.password) {
+          u.password = "***";
+        }
         redacted = u.toString();
       } catch {
         redacted = this.uri.replace(/:\/\/[^:]+:[^@]+@/, "://<redacted>@");
@@ -238,7 +244,9 @@ export class Neo4jMemoryClient {
    * @returns Number of memories actually stored
    */
   async storeManyMemories(inputs: StoreMemoryInput[]): Promise<number> {
-    if (inputs.length === 0) return 0;
+    if (inputs.length === 0) {
+      return 0;
+    }
     // OP-97: Write-time credential scan — filter out any secrets before persisting
     const safe = inputs.filter((inp) => {
       const match = detectCredential(inp.text);
@@ -257,7 +265,9 @@ export class Neo4jMemoryClient {
       }
       return true;
     });
-    if (safe.length === 0) return 0;
+    if (safe.length === 0) {
+      return 0;
+    }
     const count = await this.retryOnTransient(() =>
       this.withSession((s) => Memory.storeManyMemories(s, safe)),
     );
@@ -265,7 +275,9 @@ export class Neo4jMemoryClient {
     if (count > 0) {
       const agents = new Set(safe.map((inp) => inp.agentId).filter(Boolean));
       if (agents.size > 0 && this.searchCache) {
-        for (const agent of agents) this.searchCache.invalidateAgent(agent);
+        for (const agent of agents) {
+          this.searchCache.invalidateAgent(agent);
+        }
       } else {
         this.searchCache?.clear();
       }
@@ -275,11 +287,15 @@ export class Neo4jMemoryClient {
   async deleteMemory(id: string, agentId?: string): Promise<boolean> {
     // Validate UUID format to prevent injection
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(id)) throw new Error(`Invalid memory ID format: ${id}`);
+    if (!uuidRegex.test(id)) {
+      throw new Error(`Invalid memory ID format: ${id}`);
+    }
     const deleted = await this.retryOnTransient(() =>
       this.withSession((s) => Memory.deleteMemory(s, id, agentId)),
     );
-    if (deleted) this.searchCache?.clear();
+    if (deleted) {
+      this.searchCache?.clear();
+    }
     return deleted;
   }
   async countMemories(agentId?: string): Promise<number> {
@@ -369,7 +385,9 @@ export class Neo4jMemoryClient {
     dateRangeStart?: string,
     dateRangeEnd?: string,
   ): Promise<SearchSignalResult[]> {
-    if (!query.trim()) return [];
+    if (!query.trim()) {
+      return [];
+    }
     return this.withSearchFallback(
       "BM25 search",
       () =>
@@ -449,7 +467,9 @@ export class Neo4jMemoryClient {
     abortSignal?: AbortSignal,
     parsedChain?: import("./possessive-chain.js").PossessiveChain,
   ): Promise<SearchSignalResult[]> {
-    if (!query.trim()) return [];
+    if (!query.trim()) {
+      return [];
+    }
     return this.withSearchFallback(
       "graph search",
       () =>
@@ -489,7 +509,9 @@ export class Neo4jMemoryClient {
     options: MpfpOptions = {},
     abortSignal?: AbortSignal,
   ): Promise<SearchSignalResult[]> {
-    if (seedNodeIds.length === 0) return [];
+    if (seedNodeIds.length === 0) {
+      return [];
+    }
     return this.withSearchFallback(
       "MPFP search",
       () =>
@@ -521,7 +543,9 @@ export class Neo4jMemoryClient {
     memoryIds: string[],
     abortSignal?: AbortSignal,
   ): Promise<Search.EpisodeMetadata[]> {
-    if (memoryIds.length === 0) return [];
+    if (memoryIds.length === 0) {
+      return [];
+    }
     return this.withSearchFallback(
       "episode enrich",
       () => this.withSession((s) => Search.episodeEnrich(s, memoryIds), abortSignal),
@@ -566,7 +590,9 @@ export class Neo4jMemoryClient {
     status: ExtractionStatus,
     options?: { incrementRetries?: boolean },
   ): Promise<void> {
-    if (ids.length === 0) return;
+    if (ids.length === 0) {
+      return;
+    }
     return this.withSession((s) => Entity.updateExtractionStatusBatch(s, ids, status, options));
   }
   /** Batch all entity operations from an extraction result into a single managed transaction. */
@@ -625,7 +651,9 @@ export class Neo4jMemoryClient {
   }
   /** Batch-increment tagging retry counters for multiple memories. Reduces N round-trips to 1. */
   async incrementTaggingRetriesBatch(memoryIds: string[]): Promise<void> {
-    if (memoryIds.length === 0) return;
+    if (memoryIds.length === 0) {
+      return;
+    }
     return this.withSession((s) => Entity.incrementTaggingRetriesBatch(s, memoryIds));
   }
   // — Sleep Cycle: Deduplication —
@@ -682,7 +710,9 @@ export class Neo4jMemoryClient {
   }
   /** Delete decayed memories and decrement entity mention counts. */
   async pruneMemories(memoryIds: string[]): Promise<number> {
-    if (memoryIds.length === 0) return 0;
+    if (memoryIds.length === 0) {
+      return 0;
+    }
     return this.retryOnTransient(() => this.withSession((s) => Sleep.pruneMemories(s, memoryIds)));
   }
   // — Sleep Cycle: Orphan Cleanup —
@@ -694,7 +724,9 @@ export class Neo4jMemoryClient {
   }
   /** Delete orphaned entities and their relationships. */
   async deleteOrphanEntities(entityIds: string[]): Promise<number> {
-    if (entityIds.length === 0) return 0;
+    if (entityIds.length === 0) {
+      return 0;
+    }
     return this.withSession((s) => Sleep.deleteOrphanEntities(s, entityIds));
   }
   /** Return the most-used tag names (used by 2+ memories) for prompt vocabulary injection. */
@@ -720,7 +752,9 @@ export class Neo4jMemoryClient {
   }
   /** Delete orphaned tags. */
   async deleteOrphanTags(tagIds: string[]): Promise<number> {
-    if (tagIds.length === 0) return 0;
+    if (tagIds.length === 0) {
+      return 0;
+    }
     return this.withSession((s) => Sleep.deleteOrphanTags(s, tagIds));
   }
   /** Find tags with exactly 1 TAGGED relationship, older than minAgeDays. Single-use tags add noise. */
@@ -767,7 +801,9 @@ export class Neo4jMemoryClient {
   }
   /** Batch-clear multiple PENDING_CONFLICT relationships. Reduces N round-trips to 1. */
   async clearPendingConflictsBatch(pairs: Array<{ idA: string; idB: string }>): Promise<void> {
-    if (pairs.length === 0) return;
+    if (pairs.length === 0) {
+      return;
+    }
     return this.withSession((s) => Sleep.clearPendingConflictsBatch(s, pairs));
   }
   /** Increment the retry counter on a PENDING_CONFLICT relationship. */
@@ -781,7 +817,9 @@ export class Neo4jMemoryClient {
   }
   /** Batch-invalidate multiple memories in a single Cypher query. Prefer this over sequential invalidateMemory calls. */
   async invalidateMemories(ids: string[]): Promise<void> {
-    if (ids.length === 0) return;
+    if (ids.length === 0) {
+      return;
+    }
     await this.withSession((s) => Sleep.invalidateMemories(s, ids));
     // H4: Invalidate cache after batch-invalidation (mirrors singular invalidateMemory above)
     this.searchCache?.clear();
@@ -892,7 +930,9 @@ export class Neo4jMemoryClient {
     agentId: string,
     entityNames: string[],
   ): Promise<Array<{ entityName: string; summary: string; memoryIds: string[] }>> {
-    if (entityNames.length === 0) return [];
+    if (entityNames.length === 0) {
+      return [];
+    }
     return this.withSession((s) => Observation.getObservationsForEntities(s, agentId, entityNames));
   }
   /** Collect memory texts connected to an entity via EXTRACTED_FROM. */
@@ -949,7 +989,9 @@ export class Neo4jMemoryClient {
       supportingMemoryIds: string[];
     }>
   > {
-    if (topics.length === 0) return [];
+    if (topics.length === 0) {
+      return [];
+    }
     return this.withSession((s) => Opinion.getOpinionsForTopics(s, agentId, topics));
   }
   /** Find stale opinions where new evidence has arrived since last reflection. */
@@ -1060,7 +1102,9 @@ export class Neo4jMemoryClient {
   }
   /** Batch-merge multiple entity pairs in a single transaction (OP-106). @returns Number of pairs merged */
   async batchMergeEntityPairs(pairs: Array<{ keepId: string; removeId: string }>): Promise<number> {
-    if (pairs.length === 0) return 0;
+    if (pairs.length === 0) {
+      return 0;
+    }
     return this.retryOnTransient(() =>
       this.withSession((s) => Entity.batchMergeEntityPairs(s, pairs)),
     );
@@ -1097,7 +1141,9 @@ export class Neo4jMemoryClient {
   }
   /** Delete memories by IDs (DETACH DELETE). Used by the sleep cycle credential scanner. @returns Number of memories deleted */
   async deleteMemoriesByIds(ids: string[]): Promise<number> {
-    if (ids.length === 0) return 0;
+    if (ids.length === 0) {
+      return 0;
+    }
     return this.withSession((s) => Memory.deleteMemoriesByIds(s, ids));
   }
   /** Search memories by keywords using the fulltext (BM25) index. */
@@ -1106,7 +1152,9 @@ export class Neo4jMemoryClient {
     limit: number = 50,
     agentId?: string,
   ): Promise<Array<{ id: string; text: string; category: string }>> {
-    if (keywords.length === 0) return [];
+    if (keywords.length === 0) {
+      return [];
+    }
     return this.withSession((s) => Memory.searchMemoriesByKeywords(s, keywords, limit, agentId));
   }
   /** Reconcile relationshipCount for all entities by counting entity-entity relationships. @returns Number of entities updated */

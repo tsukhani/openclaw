@@ -126,6 +126,7 @@ export type ModelProviderConfig = {
   injectNumCtxForOpenAICompat?: boolean;
   headers?: Record<string, SecretInput>;
   authHeader?: boolean;
+  request?: ConfiguredModelProviderRequest;
   models?: ModelDefinitionConfig[];
 };
 

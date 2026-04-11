@@ -64,10 +64,14 @@ export function buildFreshnessSignal(
       continue;
     }
     const validFromMs = new Date(c.validFrom).getTime();
-    if (Number.isNaN(validFromMs)) continue; // M9: skip malformed date strings
+    if (Number.isNaN(validFromMs)) {
+      continue;
+    } // M9: skip malformed date strings
     const createdAtMs = c.createdAt ? new Date(c.createdAt).getTime() : NaN;
     // M7: Skip when createdAt is missing/malformed — NaN comparison would bypass the 7-day guard
-    if (Number.isNaN(createdAtMs)) continue;
+    if (Number.isNaN(createdAtMs)) {
+      continue;
+    }
     // Only apply freshness when validFrom was explicitly set to differ from createdAt
     if (Math.abs(validFromMs - createdAtMs) <= SEVEN_DAYS_MS) {
       continue;

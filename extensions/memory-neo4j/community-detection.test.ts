@@ -84,7 +84,7 @@ describe("runLabelPropagation", () => {
     expect(clusters.length).toBe(2);
 
     // Both clusters should have exactly 3 members
-    const sizes = clusters.map((c) => c.length).sort();
+    const sizes = clusters.map((c) => c.length).toSorted();
     expect(sizes).toEqual([3, 3]);
 
     // Verify group membership: each cluster should contain all members of one group

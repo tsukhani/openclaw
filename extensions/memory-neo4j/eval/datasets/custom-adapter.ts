@@ -56,6 +56,7 @@ export async function loadCustomDataset(opts: CustomDatasetOptions = {}): Promis
     } catch (err) {
       throw new Error(
         `Failed to load fixture file "${filepath}": ${err instanceof Error ? err.message : String(err)}`,
+        { cause: err },
       );
     }
     const fixture = JSON.parse(raw) as FixtureFile;
@@ -63,7 +64,9 @@ export async function loadCustomDataset(opts: CustomDatasetOptions = {}): Promis
       throw new Error(`Fixture file "${filename}" is missing "test_cases" array`);
     }
     const cases = fixture.test_cases.filter((tc) => !opts.ability || tc.ability === opts.ability);
-    for (const tc of cases) validateTestCase(tc, filename);
+    for (const tc of cases) {
+      validateTestCase(tc, filename);
+    }
     return cases;
   }
 
@@ -83,6 +86,7 @@ export async function loadCustomDataset(opts: CustomDatasetOptions = {}): Promis
     } catch (err) {
       throw new Error(
         `Failed to load fixture file "${filepath}": ${err instanceof Error ? err.message : String(err)}`,
+        { cause: err },
       );
     }
 
@@ -92,6 +96,7 @@ export async function loadCustomDataset(opts: CustomDatasetOptions = {}): Promis
     } catch (err) {
       throw new Error(
         `Failed to parse fixture file "${filepath}": ${err instanceof Error ? err.message : String(err)}`,
+        { cause: err },
       );
     }
 
@@ -110,13 +115,24 @@ export async function loadCustomDataset(opts: CustomDatasetOptions = {}): Promis
 
 /** Validate a test case loaded from fixtures. */
 function validateTestCase(tc: TestCase, source: string): void {
-  if (!tc.id) throw new Error(`${source}: test case missing "id"`);
-  if (!tc.ability) throw new Error(`${source}/${tc.id}: missing "ability"`);
-  if (!tc.question) throw new Error(`${source}/${tc.id}: missing "question"`);
-  if (!tc.golden_answer) throw new Error(`${source}/${tc.id}: missing "golden_answer"`);
-  if (!Array.isArray(tc.memories)) throw new Error(`${source}/${tc.id}: "memories" must be array`);
-  if (!Array.isArray(tc.gold_memory_ids))
+  if (!tc.id) {
+    throw new Error(`${source}: test case missing "id"`);
+  }
+  if (!tc.ability) {
+    throw new Error(`${source}/${tc.id}: missing "ability"`);
+  }
+  if (!tc.question) {
+    throw new Error(`${source}/${tc.id}: missing "question"`);
+  }
+  if (!tc.golden_answer) {
+    throw new Error(`${source}/${tc.id}: missing "golden_answer"`);
+  }
+  if (!Array.isArray(tc.memories)) {
+    throw new Error(`${source}/${tc.id}: "memories" must be array`);
+  }
+  if (!Array.isArray(tc.gold_memory_ids)) {
     throw new Error(`${source}/${tc.id}: "gold_memory_ids" must be array`);
+  }
 
   // Skip gold_memory_id validation when memories array is empty (production mode —
   // memories exist in Neo4j, not in the fixture's memories array)

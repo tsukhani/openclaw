@@ -20,7 +20,9 @@ describe("parsePossessiveChain", () => {
     it("parses 'my wife's older son's phone number' with selfEntityName", () => {
       const result = parsePossessiveChain("What is my wife's older son's phone number?", "tarun");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
 
       expect(result.seedEntity).toBe("tarun");
       expect(result.steps).toHaveLength(2);
@@ -36,7 +38,9 @@ describe("parsePossessiveChain", () => {
     it("parses 'Alice's manager's email address'", () => {
       const result = parsePossessiveChain("Alice's manager's email address");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
 
       expect(result.seedEntity).toBe("alice");
       expect(result.steps).toHaveLength(1);
@@ -49,7 +53,9 @@ describe("parsePossessiveChain", () => {
     it("parses 'my mother's sister's birthday'", () => {
       const result = parsePossessiveChain("my mother's sister's birthday", "tarun");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
 
       expect(result.seedEntity).toBe("tarun");
       expect(result.steps).toHaveLength(2);
@@ -66,7 +72,9 @@ describe("parsePossessiveChain", () => {
     it("parses 3-step chain: my wife's brother's son's name", () => {
       const result = parsePossessiveChain("What is my wife's brother's son's name?", "tarun");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
 
       expect(result.seedEntity).toBe("tarun");
       expect(result.steps).toHaveLength(3);
@@ -85,7 +93,9 @@ describe("parsePossessiveChain", () => {
     it("replaces 'my' with selfEntityName as possessive", () => {
       const result = parsePossessiveChain("my wife's son's phone", "tarun");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.seedEntity).toBe("tarun");
     });
 
@@ -99,21 +109,27 @@ describe("parsePossessiveChain", () => {
     it("strips 'What is' prefix", () => {
       const result = parsePossessiveChain("What is John's wife's email?");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.seedEntity).toBe("john");
     });
 
     it("strips 'Who is' prefix", () => {
       const result = parsePossessiveChain("Who is Sarah's husband's boss?");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.seedEntity).toBe("sarah");
     });
 
     it("strips trailing question marks", () => {
       const result = parsePossessiveChain("John's wife's phone???");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.target).toBe("phone");
     });
   });
@@ -122,14 +138,18 @@ describe("parsePossessiveChain", () => {
     it("maps 'wife' to MARRIED_TO", () => {
       const result = parsePossessiveChain("John's wife's phone");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.steps[0].relTypes).toContain("MARRIED_TO");
     });
 
     it("maps 'son' to PARENT_OF and CHILD_OF", () => {
       const result = parsePossessiveChain("John's son's email");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.steps[0].relTypes).toContain("PARENT_OF");
       expect(result.steps[0].relTypes).toContain("CHILD_OF");
     });
@@ -137,14 +157,18 @@ describe("parsePossessiveChain", () => {
     it("maps 'boss' to REPORTS_TO", () => {
       const result = parsePossessiveChain("John's boss's email");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.steps[0].relTypes).toContain("REPORTS_TO");
     });
 
     it("falls back to empty relTypes for unknown terms", () => {
       const result = parsePossessiveChain("John's neighbor's dog's name");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.steps[0].description).toBe("neighbor");
       expect(result.steps[0].relTypes).toEqual([]);
     });
@@ -154,21 +178,27 @@ describe("parsePossessiveChain", () => {
     it("maps 'phone number' to 'phone'", () => {
       const result = parsePossessiveChain("John's wife's phone number");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.targetPropertyKey).toBe("phone");
     });
 
     it("maps 'email address' to 'email'", () => {
       const result = parsePossessiveChain("John's wife's email address");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.targetPropertyKey).toBe("email");
     });
 
     it("returns null for unknown target", () => {
       const result = parsePossessiveChain("John's wife's favorite color");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       expect(result.targetPropertyKey).toBeNull();
     });
   });
@@ -189,7 +219,9 @@ describe("parsePossessiveChain", () => {
     it("extracts 'older' from 'older son'", () => {
       const result = parsePossessiveChain("John's wife's older son's phone");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       const sonStep = result.steps.find((s) => s.description === "son");
       expect(sonStep).toBeDefined();
       expect(sonStep!.qualifiers).toContain("older");
@@ -198,7 +230,9 @@ describe("parsePossessiveChain", () => {
     it("extracts 'younger' from 'younger daughter'", () => {
       const result = parsePossessiveChain("John's wife's younger daughter's email");
       expect(result.isChain).toBe(true);
-      if (!result.isChain) return;
+      if (!result.isChain) {
+        return;
+      }
       const step = result.steps.find((s) => s.description === "daughter");
       expect(step).toBeDefined();
       expect(step!.qualifiers).toContain("younger");
@@ -247,7 +281,9 @@ describe("decomposeChainQuery", () => {
 
     const result = await decomposeChainQuery("my wife's son's phone", fakeConfig, "tarun");
     expect(result.isChain).toBe(true);
-    if (!result.isChain) return;
+    if (!result.isChain) {
+      return;
+    }
 
     expect(result.seedEntity).toBe("tarun");
     expect(result.steps).toHaveLength(2);
@@ -265,7 +301,9 @@ describe("decomposeChainQuery", () => {
 
     const result = await decomposeChainQuery("Alice's manager's email", fakeConfig);
     expect(result.isChain).toBe(true);
-    if (!result.isChain) return;
+    if (!result.isChain) {
+      return;
+    }
     expect(result.seedEntity).toBe("alice");
     expect(result.steps[0].relTypes).toEqual(["REPORTS_TO"]);
   });
@@ -315,7 +353,9 @@ describe("decomposeChainQuery", () => {
 
     const result = await decomposeChainQuery("my wife's phone", fakeConfig, "tarun");
     expect(result.isChain).toBe(true);
-    if (!result.isChain) return;
+    if (!result.isChain) {
+      return;
+    }
     expect(result.steps[0].relTypes).toEqual(["MARRIED_TO"]);
   });
 
@@ -324,7 +364,9 @@ describe("decomposeChainQuery", () => {
 
     const result = await decomposeChainQuery("my wife's son's phone", fakeConfig, "tarun");
     expect(result.isChain).toBe(false);
-    if (result.isChain) return;
+    if (result.isChain) {
+      return;
+    }
     expect(result.reason).toContain("LLM decomposition failed");
   });
 });

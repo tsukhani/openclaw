@@ -46,7 +46,9 @@ export function shouldAbstain(candidates: ScoredMemory[], queryType: string): bo
   let maxScore = -Infinity;
   let sumScore = 0;
   for (const c of candidates) {
-    if (c.score > maxScore) maxScore = c.score;
+    if (c.score > maxScore) {
+      maxScore = c.score;
+    }
     sumScore += c.score;
   }
   const meanScore = sumScore / candidates.length;

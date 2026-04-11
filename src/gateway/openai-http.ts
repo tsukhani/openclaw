@@ -654,7 +654,6 @@ export async function handleOpenAiHttpRequest(
 
   setSseHeaders(res);
 
-  const created = Math.floor(Date.now() / 1000);
   let wroteRole = false;
   let wroteStopChunk = false;
   let sawAssistantDelta = false;
@@ -694,22 +693,6 @@ export async function handleOpenAiHttpRequest(
     finalizeRequested = true;
     maybeFinalize();
   };
-
-  /** Send a final chunk with finish_reason and then [DONE]. */
-  function finishStream(finishReason: string = "stop") {
-    if (res.writableEnded || res.destroyed) {
-      return;
-    }
-    writeSse(res, {
-      id: runId,
-      object: "chat.completion.chunk",
-      created,
-      model,
-      choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
-    });
-    writeDone(res);
-    res.end();
-  }
 
   const unsubscribe = onAgentEvent((evt) => {
     if (evt.runId !== runId) {

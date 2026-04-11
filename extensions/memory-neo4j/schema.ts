@@ -561,14 +561,22 @@ export function sanitizeRelationshipType(type: string): string | null {
     .trim()
     .toUpperCase()
     .replace(/[\s-]+/g, "_");
-  if (normalized.length === 0) return null;
+  if (normalized.length === 0) {
+    return null;
+  }
   // M10: Cap relationship type length to prevent unwieldy Cypher identifiers
-  if (normalized.length > 64) return null;
+  if (normalized.length > 64) {
+    return null;
+  }
   // M3: Allow digits in relationship types (e.g. RELATES_TO_V2, HAS_3_ITEMS)
   // Must start with a letter to be a valid Cypher identifier
-  if (!/^[A-Z][A-Z0-9_]*$/.test(normalized)) return null;
+  if (!/^[A-Z][A-Z0-9_]*$/.test(normalized)) {
+    return null;
+  }
   // Reject trailing underscores
-  if (normalized.endsWith("_")) return null;
+  if (normalized.endsWith("_")) {
+    return null;
+  }
   return normalized;
 }
 
@@ -624,8 +632,12 @@ export function safeCypherRelType(type: string): string {
  * not plain JS numbers. A TypeScript `as number` cast does not convert at runtime.
  */
 export function toJsNumber(raw: unknown): number {
-  if (raw == null) return 0;
-  if (typeof raw === "number") return raw;
+  if (raw == null) {
+    return 0;
+  }
+  if (typeof raw === "number") {
+    return raw;
+  }
   return Number(raw);
 }
 

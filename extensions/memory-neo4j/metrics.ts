@@ -124,8 +124,10 @@ export class LoggingMetricsCollector implements MetricsCollector {
     }
 
     for (const [k, values] of this.histograms) {
-      if (values.length === 0) continue;
-      const sorted = [...values].sort((a, b) => a - b);
+      if (values.length === 0) {
+        continue;
+      }
+      const sorted = [...values].toSorted((a, b) => a - b);
       const len = sorted.length;
       summary[`${k}.count`] = len;
       summary[`${k}.p50`] = sorted[Math.min(Math.floor((len - 1) * 0.5), len - 1)] ?? sorted[0];

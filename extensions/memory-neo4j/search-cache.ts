@@ -29,7 +29,9 @@ export type SearchCacheOptions = {
 let h64ToString: ((input: string) => string) | null = null;
 let h64InitPromise: Promise<void> | null = null;
 async function getH64ToString(): Promise<(input: string) => string> {
-  if (h64ToString) return h64ToString;
+  if (h64ToString) {
+    return h64ToString;
+  }
   if (!h64InitPromise) {
     h64InitPromise = xxhashInit().then((xxhash) => {
       h64ToString = xxhash.h64ToString;
@@ -86,7 +88,9 @@ export class QueryResultCache {
     const key = await QueryResultCache.hashKey(query, agentId, options);
     const cached = this.map.get(key);
 
-    if (!cached) return undefined;
+    if (!cached) {
+      return undefined;
+    }
 
     // Check TTL
     if (Date.now() >= cached.expiresAt) {
@@ -140,10 +144,14 @@ export class QueryResultCache {
    */
   invalidateAgent(agentId: string): number {
     const keys = this.agentKeys.get(agentId);
-    if (!keys) return 0;
+    if (!keys) {
+      return 0;
+    }
     let removed = 0;
     for (const key of keys) {
-      if (this.map.delete(key)) removed++;
+      if (this.map.delete(key)) {
+        removed++;
+      }
     }
     this.agentKeys.delete(agentId);
     return removed;
@@ -170,8 +178,12 @@ export class QueryResultCache {
 
   private removeFromAgentIndex(agentId: string, key: string): void {
     const keys = this.agentKeys.get(agentId);
-    if (!keys) return;
+    if (!keys) {
+      return;
+    }
     keys.delete(key);
-    if (keys.size === 0) this.agentKeys.delete(agentId);
+    if (keys.size === 0) {
+      this.agentKeys.delete(agentId);
+    }
   }
 }

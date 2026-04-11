@@ -104,9 +104,13 @@ export function expandBm25Query(query: string): string {
         return word;
       }
       // Possessives: don't expand (proper nouns)
-      if (clean.endsWith("'s")) return word;
+      if (clean.endsWith("'s")) {
+        return word;
+      }
       const variants = morphVariants(clean);
-      if (variants.length <= 1) return word;
+      if (variants.length <= 1) {
+        return word;
+      }
       return `(${variants.join(" OR ")})${suffix}`;
     })
     .join(" ");

@@ -47,7 +47,9 @@ const WORD_TO_NUMBER: Record<string, number> = {
 
 function parseNumber(s: string): number | null {
   const n = WORD_TO_NUMBER[s.toLowerCase()];
-  if (n != null) return n;
+  if (n != null) {
+    return n;
+  }
   const parsed = parseInt(s, 10);
   return Number.isNaN(parsed) ? null : parsed;
 }
@@ -146,7 +148,9 @@ const DAY_KEYWORD_RE = /\b(yesterday|today|tomorrow)\b/i;
 
 function matchDayKeyword(query: string, now: Date): TemporalMatch | null {
   const m = DAY_KEYWORD_RE.exec(query);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
   const word = m[1].toLowerCase();
   const base = startOfDay(now);
   let target: Date;
@@ -172,7 +176,9 @@ const RELATIVE_PERIOD_RE = /\b(last|this|next)\s+(week|month|year)\b/i;
 
 function matchRelativePeriod(query: string, now: Date): TemporalMatch | null {
   const m = RELATIVE_PERIOD_RE.exec(query);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
   const modifier = m[1].toLowerCase();
   const unit = m[2].toLowerCase();
 
@@ -220,9 +226,13 @@ const LAST_N_RE = new RegExp(
 
 function matchLastN(query: string, now: Date): TemporalMatch | null {
   const m = LAST_N_RE.exec(query);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
   const n = parseNumber(m[1]);
-  if (n == null || n <= 0) return null;
+  if (n == null || n <= 0) {
+    return null;
+  }
   const unit = m[2].toLowerCase().replace(/s$/, "");
 
   let startDate: Date;
@@ -249,9 +259,13 @@ const AGO_RE = new RegExp(`\\b${NUMBER_PATTERN}\\s+(days?|weeks?|months?)\\s+ago
 
 function matchAgo(query: string, now: Date): TemporalMatch | null {
   const m = AGO_RE.exec(query);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
   const n = parseNumber(m[1]);
-  if (n == null || n <= 0) return null;
+  if (n == null || n <= 0) {
+    return null;
+  }
   const unit = m[2].toLowerCase().replace(/s$/, "");
 
   let target: Date;
@@ -299,7 +313,9 @@ function matchNamedMonth(query: string, now: Date): TemporalMatch | null {
   let m = IN_MONTH_RE.exec(query);
   if (m) {
     const month = parseMonth(m[1]);
-    if (month == null) return null;
+    if (month == null) {
+      return null;
+    }
     const year = m[2] ? parseInt(m[2], 10) : now.getFullYear();
     const startDate = new Date(year, month, 1);
     const endDate = endOfMonth(startDate);
@@ -317,15 +333,21 @@ function matchNamedMonth(query: string, now: Date): TemporalMatch | null {
   if (m) {
     const modifier = m[1].toLowerCase();
     const month = parseMonth(m[2]);
-    if (month == null) return null;
+    if (month == null) {
+      return null;
+    }
 
     let year = now.getFullYear();
     if (modifier === "last") {
       // If the month hasn't occurred yet this year, go back an extra year
-      if (month >= now.getMonth()) year--;
+      if (month >= now.getMonth()) {
+        year--;
+      }
     } else {
       // next: if month already passed, go forward a year
-      if (month <= now.getMonth()) year++;
+      if (month <= now.getMonth()) {
+        year++;
+      }
     }
 
     const startDate = new Date(year, month, 1);
@@ -344,7 +366,9 @@ function matchNamedMonth(query: string, now: Date): TemporalMatch | null {
 
 function matchYear(query: string, _now: Date): TemporalMatch | null {
   const m = IN_YEAR_RE.exec(query);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
   const year = parseInt(m[1], 10);
   return {
     startDate: startOfYear(new Date(year, 0, 1)),
@@ -364,7 +388,9 @@ const BEFORE_AFTER_RE = new RegExp(
 
 function matchBeforeAfter(query: string, now: Date): TemporalMatch | null {
   const m = BEFORE_AFTER_RE.exec(query);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
 
   const direction = m[1].toLowerCase(); // before, after, since
   let pivotStart: Date;
@@ -373,21 +399,27 @@ function matchBeforeAfter(query: string, now: Date): TemporalMatch | null {
   if (m[2] && m[3]) {
     // "before/after January 2025"
     const month = parseMonth(m[2]);
-    if (month == null) return null;
+    if (month == null) {
+      return null;
+    }
     const year = parseInt(m[3], 10);
     pivotStart = new Date(year, month, 1);
     pivotEnd = endOfMonth(pivotStart);
   } else if (m[4] && m[5]) {
     // "before/after March 15" or "March 15th"
     const month = parseMonth(m[4]);
-    if (month == null) return null;
+    if (month == null) {
+      return null;
+    }
     const day = parseInt(m[5], 10);
     pivotStart = new Date(now.getFullYear(), month, day);
     pivotEnd = endOfDay(pivotStart);
   } else if (m[6]) {
     // "before/after January"
     const month = parseMonth(m[6]);
-    if (month == null) return null;
+    if (month == null) {
+      return null;
+    }
     pivotStart = new Date(now.getFullYear(), month, 1);
     pivotEnd = endOfMonth(pivotStart);
   } else if (m[7]) {
@@ -405,7 +437,9 @@ function matchBeforeAfter(query: string, now: Date): TemporalMatch | null {
   } else if (m[8] && m[9]) {
     // "before/after 3 days ago"
     const n = parseNumber(m[8]);
-    if (n == null || n <= 0) return null;
+    if (n == null || n <= 0) {
+      return null;
+    }
     const unit = m[9].toLowerCase().replace(/s$/, "");
     if (unit === "day") {
       pivotStart = startOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() - n));
@@ -450,11 +484,15 @@ const BETWEEN_MONTH_RE = new RegExp(
 
 function matchBetween(query: string, now: Date): TemporalMatch | null {
   const m = BETWEEN_MONTH_RE.exec(query);
-  if (!m) return null;
+  if (!m) {
+    return null;
+  }
 
   const month1 = parseMonth(m[1]);
   const month2 = parseMonth(m[3]);
-  if (month1 == null || month2 == null) return null;
+  if (month1 == null || month2 == null) {
+    return null;
+  }
 
   const year1 = m[2] ? parseInt(m[2], 10) : now.getFullYear();
   const year2 = m[4] ? parseInt(m[4], 10) : now.getFullYear();
@@ -540,7 +578,9 @@ function extractEntities(query: string): string[] {
  */
 function wordCount(s: string): number {
   const trimmed = s.trim();
-  if (!trimmed) return 0;
+  if (!trimmed) {
+    return 0;
+  }
   return trimmed.split(/\s+/).length;
 }
 
@@ -549,7 +589,9 @@ function wordCount(s: string): number {
  * Requires 3+ words total, with at least one content word (3+ chars, not a stop word).
  */
 function isMeaningfulSubQuery(s: string): boolean {
-  if (wordCount(s) < 3) return false;
+  if (wordCount(s) < 3) {
+    return false;
+  }
   const STOP_WORDS = new Set([
     "and",
     "the",
@@ -598,7 +640,9 @@ export function decomposeQuery(query: string): QueryDecomposition {
   };
 
   const trimmed = query.trim();
-  if (!trimmed) return result;
+  if (!trimmed) {
+    return result;
+  }
 
   const entities = extractEntities(trimmed);
 
@@ -653,11 +697,15 @@ export function decomposeQuery(query: string): QueryDecomposition {
     }
   }
 
-  if (subQueries.length < 2) return result;
+  if (subQueries.length < 2) {
+    return result;
+  }
 
   // Filter out sub-queries that are too short
   subQueries = subQueries.filter((s) => isMeaningfulSubQuery(s));
-  if (subQueries.length < 2) return result;
+  if (subQueries.length < 2) {
+    return result;
+  }
 
   // Preserve entity context: if an entity appears in one sub-query but not others,
   // prepend it to the sub-queries that lack it.

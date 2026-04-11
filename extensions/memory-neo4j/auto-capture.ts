@@ -182,7 +182,9 @@ async function runAutoCapture(
   signal?: AbortSignal,
   decompose: boolean = false,
 ): Promise<void> {
-  if (signal?.aborted) return;
+  if (signal?.aborted) {
+    return;
+  }
   try {
     const t0 = performance.now();
     let stored = 0;
@@ -196,7 +198,9 @@ async function runAutoCapture(
     const retained: string[] = [];
     for (const text of userMessages) {
       const gated = passesAttentionGate(text);
-      if (gated !== null) retained.push(gated);
+      if (gated !== null) {
+        retained.push(gated);
+      }
     }
 
     const tGate = performance.now();
@@ -236,13 +240,17 @@ async function runAutoCapture(
       }
     }
     // Batch embed all at once
-    if (signal?.aborted) return;
+    if (signal?.aborted) {
+      return;
+    }
     const vectors = allTexts.length > 0 ? await embeddings.embedBatch(allTexts) : [];
     const tEmbed = performance.now();
 
     // Process each with pre-computed vector
     for (let i = 0; i < allMeta.length; i++) {
-      if (signal?.aborted) break;
+      if (signal?.aborted) {
+        break;
+      }
       try {
         const meta = allMeta[i];
         // C4: Skip messages with empty embedding vectors — they would be stored
@@ -265,8 +273,12 @@ async function runAutoCapture(
           logger,
           vec,
         );
-        if (result.stored) stored++;
-        if (result.semanticDeduped) semanticDeduped++;
+        if (result.stored) {
+          stored++;
+        }
+        if (result.semanticDeduped) {
+          semanticDeduped++;
+        }
       } catch (err) {
         logger.debug?.(`memory-neo4j: auto-capture item failed: ${String(err)}`);
       }
@@ -275,9 +287,15 @@ async function runAutoCapture(
 
     // Track gate rejections and outcomes
     const rejectedGate = userMessages.length - retained.length;
-    if (rejectedGate > 0) metrics.record("memories_rejected_gate", rejectedGate);
-    if (stored > 0) metrics.record("memories_stored", stored);
-    if (semanticDeduped > 0) metrics.record("memories_deduped", semanticDeduped);
+    if (rejectedGate > 0) {
+      metrics.record("memories_rejected_gate", rejectedGate);
+    }
+    if (stored > 0) {
+      metrics.record("memories_stored", stored);
+    }
+    if (semanticDeduped > 0) {
+      metrics.record("memories_deduped", semanticDeduped);
+    }
 
     const totalMs = tProcess - t0;
     const gateMs = tGate - t0;

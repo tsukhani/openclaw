@@ -38,7 +38,9 @@ export async function runDedup(
     onProgress,
   } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   onPhaseStart?.("dedup");
   logger.info("memory-neo4j: [sleep] Phase 1: Deduplication (vector + semantic)");
@@ -67,8 +69,12 @@ export async function runDedup(
     const mediumSimPairs: DedupPair[] = [];
 
     for (const cluster of allClusters) {
-      if (abortSignal?.aborted) break;
-      if (!cluster.similarities || cluster.memoryIds.length < 2) continue;
+      if (abortSignal?.aborted) {
+        break;
+      }
+      if (!cluster.similarities || cluster.memoryIds.length < 2) {
+        continue;
+      }
 
       // Record metadata for every member in this cluster
       for (let i = 0; i < cluster.memoryIds.length; i++) {
@@ -85,7 +91,9 @@ export async function runDedup(
         for (let j = i + 1; j < cluster.memoryIds.length; j++) {
           const pairKey = makePairKey(cluster.memoryIds[i], cluster.memoryIds[j]);
           const sim = cluster.similarities.get(pairKey);
-          if (sim === undefined) continue;
+          if (sim === undefined) {
+            continue;
+          }
           if (sim >= dedupThreshold) {
             // Only this specific pair qualifies for unconditional vector merge
             highSimEdges.push([cluster.memoryIds[i], cluster.memoryIds[j]]);
@@ -112,7 +120,9 @@ export async function runDedup(
     result.dedup.clustersFound = highSimComponents.length;
 
     for (const component of highSimComponents) {
-      if (abortSignal?.aborted) break;
+      if (abortSignal?.aborted) {
+        break;
+      }
 
       const { deletedCount } = await db.mergeMemoryCluster(component.ids, component.importances);
       result.dedup.memoriesMerged += deletedCount;
@@ -154,6 +164,7 @@ export async function runDedup(
       // Process pairs in concurrent batches
       const invalidatedIds = new Set<string>();
 
+      // oxlint-disable-next-line eslint/no-unmodified-loop-condition
       for (let i = 0; i < allPairs.length && !abortSignal?.aborted; i += llmConcurrency) {
         const batch = allPairs.slice(i, i + llmConcurrency);
 
@@ -162,7 +173,9 @@ export async function runDedup(
           (p) => !invalidatedIds.has(p.idA) && !invalidatedIds.has(p.idB),
         );
 
-        if (activeBatch.length === 0) continue;
+        if (activeBatch.length === 0) {
+          continue;
+        }
 
         const outcomes = await Promise.allSettled(
           activeBatch.map((p) =>
@@ -179,7 +192,9 @@ export async function runDedup(
             (outcomes[k] as PromiseFulfilledResult<boolean>).value
           ) {
             // Skip if either side was invalidated by an earlier result in this batch
-            if (invalidatedIds.has(pair.idA) || invalidatedIds.has(pair.idB)) continue;
+            if (invalidatedIds.has(pair.idA) || invalidatedIds.has(pair.idB)) {
+              continue;
+            }
 
             const keepId = pair.importanceA >= pair.importanceB ? pair.idA : pair.idB;
             const removeId = keepId === pair.idA ? pair.idB : pair.idA;
@@ -226,7 +241,9 @@ function buildConnectedComponents(
   const parent = new Map<string, string>();
 
   function find(x: string): string {
-    if (!parent.has(x)) parent.set(x, x);
+    if (!parent.has(x)) {
+      parent.set(x, x);
+    }
     const p = parent.get(x)!;
     if (p !== x) {
       // Path compression
@@ -240,7 +257,9 @@ function buildConnectedComponents(
   function union(x: string, y: string): void {
     const px = find(x);
     const py = find(y);
-    if (px !== py) parent.set(px, py);
+    if (px !== py) {
+      parent.set(px, py);
+    }
   }
 
   for (const [a, b] of edges) {
@@ -251,7 +270,9 @@ function buildConnectedComponents(
   const groups = new Map<string, string[]>();
   for (const id of parent.keys()) {
     const root = find(id);
-    if (!groups.has(root)) groups.set(root, []);
+    if (!groups.has(root)) {
+      groups.set(root, []);
+    }
     groups.get(root)!.push(id);
   }
 
@@ -285,7 +306,9 @@ export async function runConflictDetection(
 
   // M9: Conflict detection is independent of semantic dedup — don't skip it
   // when skipSemanticDedup=true. Only skip on abort.
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   onPhaseStart?.("conflict");
   logger.info("memory-neo4j: [sleep] Phase 1c: Conflict Detection");
@@ -295,6 +318,7 @@ export async function runConflictDetection(
     result.conflict.pairsFound = pairs.length;
 
     // Process conflict pairs in parallel chunks of llmConcurrency
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     for (let i = 0; i < pairs.length && !abortSignal?.aborted; i += llmConcurrency) {
       const chunk = pairs.slice(i, i + llmConcurrency);
       const outcomes = await Promise.allSettled(
@@ -304,10 +328,14 @@ export async function runConflictDetection(
       );
 
       for (let k = 0; k < outcomes.length; k++) {
-        if (abortSignal?.aborted) break;
+        if (abortSignal?.aborted) {
+          break;
+        }
         const pair = chunk[k];
         const outcome = outcomes[k];
-        if (outcome.status !== "fulfilled") continue;
+        if (outcome.status !== "fulfilled") {
+          continue;
+        }
 
         const decision = outcome.value;
         if (decision === "a") {
@@ -359,7 +387,9 @@ export async function runEntityDedup(
 ): Promise<void> {
   const { agentId, abortSignal, onPhaseStart, onProgress } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   onPhaseStart?.("entityDedup");
   logger.info("memory-neo4j: [sleep] Phase 1d: Entity Deduplication");
@@ -383,8 +413,12 @@ export async function runEntityDedup(
       const removedIds = new Set<string>();
       const eligiblePairs: typeof pairs = [];
       for (const pair of pairs) {
-        if (abortSignal?.aborted) break;
-        if (removedIds.has(pair.keepId) || removedIds.has(pair.removeId)) continue;
+        if (abortSignal?.aborted) {
+          break;
+        }
+        if (removedIds.has(pair.keepId) || removedIds.has(pair.removeId)) {
+          continue;
+        }
         eligiblePairs.push(pair);
         removedIds.add(pair.removeId);
       }

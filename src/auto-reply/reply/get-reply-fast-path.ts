@@ -302,5 +302,6 @@ export function initFastReplySessionState(params: {
     bodyStripped,
     triggerBodyNormalized,
     previousSessionEntry,
+    compactTriggered: false,
   };
 }

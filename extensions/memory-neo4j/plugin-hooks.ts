@@ -42,7 +42,9 @@ function isSystemPrompt(prompt: string): boolean {
   // L9: Only check short prompts (< 2000 chars) — longer user messages are unlikely
   // to be system prompts and checking them increases false-positive risk from
   // user text accidentally containing marker strings.
-  if (prompt.length > 2000) return false;
+  if (prompt.length > 2000) {
+    return false;
+  }
   return SYSTEM_PROMPT_MARKERS.some((marker) => prompt.includes(marker));
 }
 
@@ -80,12 +82,16 @@ export function cleanupSelfEntityWatchers(): void {
  * Falls back gracefully if watch fails (TTL still provides invalidation).
  */
 function watchUserMd(workspaceDir: string): void {
-  if (selfEntityWatchers.has(workspaceDir)) return;
+  if (selfEntityWatchers.has(workspaceDir)) {
+    return;
+  }
   const userMdPath = path.join(workspaceDir, "USER.md");
   try {
     const watcher = fsSync.watch(userMdPath, () => {
       const existing = selfEntityDebounceTimers.get(workspaceDir);
-      if (existing) clearTimeout(existing);
+      if (existing) {
+        clearTimeout(existing);
+      }
       const timer = setTimeout(() => {
         selfEntityDebounceTimers.delete(workspaceDir);
         selfEntityCache.delete(workspaceDir);
@@ -145,7 +151,9 @@ export async function resolveSelfEntityName(workspaceDir: string): Promise<strin
         oldestKey = key;
       }
     }
-    if (oldestKey !== undefined) selfEntityCache.delete(oldestKey);
+    if (oldestKey !== undefined) {
+      selfEntityCache.delete(oldestKey);
+    }
   }
   selfEntityCache.set(workspaceDir, { name, expiresAt: Date.now() + SELF_ENTITY_CACHE_TTL_MS });
   return name;
@@ -318,7 +326,7 @@ export function registerMemoryHooks(
         const agentId = ctx.agentId || "default";
         const usagePercent = (event.estimatedUsedTokens / event.contextWindowTokens) * 100;
 
-        if (usagePercent >= refreshThreshold!) {
+        if (usagePercent >= refreshThreshold) {
           const lastRefreshTokens = midSessionRefreshAt.get(sessionKey) ?? 0;
           const tokensSinceRefresh = event.estimatedUsedTokens - lastRefreshTokens;
           if (tokensSinceRefresh < MIN_TOKENS_SINCE_REFRESH) {

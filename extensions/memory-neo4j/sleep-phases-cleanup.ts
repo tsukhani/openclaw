@@ -23,7 +23,9 @@ export async function runOrphanCleanup(
 ): Promise<void> {
   const { agentId, abortSignal, singleUseTagMinAgeDays = 14, onPhaseStart, onProgress } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   onPhaseStart?.("cleanup");
   logger.info("memory-neo4j: [sleep] Phase 4: Orphan Cleanup");
@@ -39,37 +41,52 @@ export async function runOrphanCleanup(
     }
 
     // H13: Paginated orphan entity cleanup — loop until no more orphans found
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     while (!abortSignal?.aborted) {
       const orphanEntities = await db.findOrphanEntities();
-      if (orphanEntities.length === 0) break;
+      if (orphanEntities.length === 0) {
+        break;
+      }
       const deleted = await db.deleteOrphanEntities(orphanEntities.map((e) => e.id));
       result.cleanup.entitiesRemoved += deleted;
       onProgress?.(
         "cleanup",
         `Removed ${deleted} orphan entities (total: ${result.cleanup.entitiesRemoved})`,
       );
-      if (orphanEntities.length < 500) break; // last page
+      if (orphanEntities.length < 500) {
+        break;
+      } // last page
     }
 
     // H13: Paginated orphan tag cleanup
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     while (!abortSignal?.aborted) {
       const orphanTags = await db.findOrphanTags();
-      if (orphanTags.length === 0) break;
+      if (orphanTags.length === 0) {
+        break;
+      }
       const deleted = await db.deleteOrphanTags(orphanTags.map((t) => t.id));
       result.cleanup.tagsRemoved += deleted;
-      if (orphanTags.length < 500) break; // last page
+      if (orphanTags.length < 500) {
+        break;
+      } // last page
     }
     if (result.cleanup.tagsRemoved > 0) {
       onProgress?.("cleanup", `Removed ${result.cleanup.tagsRemoved} orphan tags`);
     }
 
     // H13: Paginated single-use tag cleanup
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     while (!abortSignal?.aborted) {
       const singleUseTags = await db.findSingleUseTags(singleUseTagMinAgeDays);
-      if (singleUseTags.length === 0) break;
+      if (singleUseTags.length === 0) {
+        break;
+      }
       const deleted = await db.deleteOrphanTags(singleUseTags.map((t) => t.id));
       result.cleanup.singleUseTagsRemoved += deleted;
-      if (singleUseTags.length < 500) break; // last page
+      if (singleUseTags.length < 500) {
+        break;
+      } // last page
     }
     if (result.cleanup.singleUseTagsRemoved > 0) {
       onProgress?.(
@@ -102,7 +119,9 @@ export async function runNoiseCleanup(
   // but we keep the parameter for signature consistency.
   void result;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   onPhaseStart?.("noiseCleanup");
   logger.info("memory-neo4j: [sleep] Phase 5: Noise Pattern Cleanup");
@@ -124,7 +143,9 @@ export async function runNoiseCleanup(
 
     let noiseRemoved = 0;
     for (const pattern of noisePatterns) {
-      if (abortSignal?.aborted) break;
+      if (abortSignal?.aborted) {
+        break;
+      }
       noiseRemoved += await db.deleteMemoriesByPattern(pattern, agentId);
     }
 
@@ -150,7 +171,9 @@ export async function runCredentialScan(
 ): Promise<void> {
   const { agentId, abortSignal, onPhaseStart, onProgress } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   onPhaseStart?.("credentialScan");
   logger.info("memory-neo4j: [sleep] Phase 5b: Credential Scanning");
@@ -164,7 +187,9 @@ export async function runCredentialScan(
     let cursorId = "";
 
     while (true) {
-      if (abortSignal?.aborted) break;
+      if (abortSignal?.aborted) {
+        break;
+      }
 
       const batch = await db.fetchMemoriesForCredentialScan(
         cursorTs,
@@ -172,7 +197,9 @@ export async function runCredentialScan(
         CREDENTIAL_SCAN_BATCH,
         agentId,
       );
-      if (batch.length === 0) break;
+      if (batch.length === 0) {
+        break;
+      }
 
       result.credentialScan.memoriesScanned += batch.length;
 
@@ -194,7 +221,9 @@ export async function runCredentialScan(
         result.credentialScan.memoriesRemoved += deletedInThisBatch;
       }
 
-      if (batch.length < CREDENTIAL_SCAN_BATCH) break; // last page
+      if (batch.length < CREDENTIAL_SCAN_BATCH) {
+        break;
+      } // last page
       // Advance composite cursor to (createdAt, id) of the last record in this batch
       const lastRecord = batch[batch.length - 1];
       cursorTs = lastRecord.createdAt;

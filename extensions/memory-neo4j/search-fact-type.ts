@@ -28,12 +28,20 @@ const OBSERVATION_INTENT_RE = /\b(observation|observations|profile|profiles|summ
  * Simple keyword-based — no LLM call.
  */
 export function detectFactTypeIntent(query: string): FactType | null {
-  if (OPINION_INTENT_RE.test(query)) return "opinion";
-  if (EXPERIENCE_INTENT_RE.test(query)) return "experience";
+  if (OPINION_INTENT_RE.test(query)) {
+    return "opinion";
+  }
+  if (EXPERIENCE_INTENT_RE.test(query)) {
+    return "experience";
+  }
   // Check observation before world — world's "what is" pattern is broad and would
   // shadow observation-specific keywords like "profile" and "summary".
-  if (OBSERVATION_INTENT_RE.test(query)) return "observation";
-  if (WORLD_INTENT_RE.test(query)) return "world";
+  if (OBSERVATION_INTENT_RE.test(query)) {
+    return "observation";
+  }
+  if (WORLD_INTENT_RE.test(query)) {
+    return "world";
+  }
   return null;
 }
 

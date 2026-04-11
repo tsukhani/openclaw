@@ -138,6 +138,15 @@ const memoryNeo4jPlugin = {
           entitiesCount = counts.entities;
         }
         const manager = {
+          async search() {
+            // Search is exposed via registered memory tools, not through the
+            // doctor/status manager interface. Return an empty list here.
+            return [];
+          },
+          async readFile() {
+            // Memory-neo4j does not expose file reads via the manager surface.
+            return { text: "", path: "" };
+          },
           status() {
             return {
               backend: "builtin" as const,
@@ -256,7 +265,9 @@ const memoryNeo4jPlugin = {
           const tz = cfg.sleepCycle.tz ?? "local";
           // M10: Croner's protect:true prevents overlapping runs — no manual guard needed
           cronJob = new Cron(schedule, { timezone: tz, protect: true }, async () => {
-            if (abortRef.controller.signal.aborted) return;
+            if (abortRef.controller.signal.aborted) {
+              return;
+            }
             try {
               api.logger.info("memory-neo4j: starting auto sleep-cycle");
               await runSleepCycle(db, embeddings, extractionConfig, api.logger, {
@@ -318,13 +329,15 @@ const memoryNeo4jPlugin = {
           let drainTimer: ReturnType<typeof setTimeout> | undefined;
           try {
             await Promise.race([
-              Promise.allSettled([...outstandingCaptures]),
+              Promise.allSettled(outstandingCaptures),
               new Promise((resolve) => {
                 drainTimer = setTimeout(resolve, DRAIN_TIMEOUT_MS);
               }),
             ]);
           } finally {
-            if (drainTimer) clearTimeout(drainTimer);
+            if (drainTimer) {
+              clearTimeout(drainTimer);
+            }
           }
           if (outstandingCaptures.size > 0) {
             api.logger.warn(

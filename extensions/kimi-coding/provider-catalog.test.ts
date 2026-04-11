@@ -8,6 +8,6 @@ describe("kimi provider catalog", () => {
     expect(provider.api).toBe("anthropic-messages");
     expect(provider.baseUrl).toBe("https://api.kimi.com/coding/");
     expect(provider.headers).toEqual({ "User-Agent": "claude-code/0.1.0" });
-    expect(provider.models.map((model) => model.id)).toEqual(["kimi-code", "k2p5"]);
+    expect(provider.models?.map((model) => model.id)).toEqual(["kimi-code", "k2p5"]);
   });
 });

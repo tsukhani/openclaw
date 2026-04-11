@@ -40,7 +40,9 @@ export async function localRerank(
   signal?: AbortSignal,
   serviceUrl: string = DEFAULT_SERVICE_URL,
 ): Promise<LocalRerankResult[]> {
-  if (documents.length === 0) return [];
+  if (documents.length === 0) {
+    return [];
+  }
 
   const response = await fetch(`${serviceUrl}/rerank`, {
     method: "POST",
@@ -97,7 +99,9 @@ export async function localRerankExtraction(
   signal?: AbortSignal,
   serviceUrl: string = DEFAULT_SERVICE_URL,
 ): Promise<LocalRerankResult[]> {
-  if (documents.length === 0) return [];
+  if (documents.length === 0) {
+    return [];
+  }
 
   // Rewrite question to declarative assertion form for better cross-encoder scoring.
   // Cross-encoders trained on passage retrieval score (query, passage) pairs better

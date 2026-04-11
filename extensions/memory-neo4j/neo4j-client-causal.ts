@@ -102,7 +102,9 @@ export async function getCausalModel(
       { modelId, agentId },
     ),
   );
-  if (result.records.length === 0) return null;
+  if (result.records.length === 0) {
+    return null;
+  }
   return result.records[0].get("cm").properties as CausalModelNode;
 }
 

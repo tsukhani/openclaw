@@ -53,12 +53,18 @@ type LlmMessage = { role: string; content: string };
  * "model not found" warnings on every call before falling through to HTTP.
  */
 function useNativeRouting(config: ExtractionConfig): boolean {
-  if (!_pluginLlm) return false;
+  if (!_pluginLlm) {
+    return false;
+  }
   // When the extraction config already has direct credentials (API key + base URL),
   // skip native gateway routing — the HTTP path works without the gateway's model
   // registry, avoiding redundant "returned null" fallback round-trips.
-  if (config.apiKey && config.baseUrl) return false;
-  if (!config.baseUrl) return true;
+  if (config.apiKey && config.baseUrl) {
+    return false;
+  }
+  if (!config.baseUrl) {
+    return true;
+  }
   try {
     const hostname = new URL(config.baseUrl).hostname;
     return (
@@ -96,13 +102,17 @@ export async function callLlm(
       // Non-null result means the call succeeded — return it.
       // Null means the call failed silently (model not found, auth error, etc.) —
       // fall through to HTTP so the direct-API path gets a chance.
-      if (nativeResult !== null) return nativeResult;
+      if (nativeResult !== null) {
+        return nativeResult;
+      }
       globalThis.console?.debug?.(
         "memory-neo4j: native LLM call returned null, falling back to HTTP",
       );
     } catch (err) {
       // H3: Re-throw AbortError — deliberate cancellation should not fall through to HTTP
-      if (err instanceof Error && err.name === "AbortError") throw err;
+      if (err instanceof Error && err.name === "AbortError") {
+        throw err;
+      }
       // Log and fall through to direct HTTP as fallback
       const msg = err instanceof Error ? err.message : String(err);
       globalThis.console?.debug?.(
@@ -134,13 +144,17 @@ export async function callLlmStream(
         messages as Array<{ role: "user" | "assistant" | "system"; content: string }>,
         { abortSignal },
       );
-      if (nativeResult !== null) return nativeResult;
+      if (nativeResult !== null) {
+        return nativeResult;
+      }
       globalThis.console?.debug?.(
         "memory-neo4j: native LLM call returned null, falling back to HTTP",
       );
     } catch (err) {
       // H3: Re-throw AbortError — deliberate cancellation should not fall through to HTTP
-      if (err instanceof Error && err.name === "AbortError") throw err;
+      if (err instanceof Error && err.name === "AbortError") {
+        throw err;
+      }
       // Log and fall through to direct HTTP as fallback
       const msg = err instanceof Error ? err.message : String(err);
       globalThis.console?.debug?.(
@@ -165,10 +179,16 @@ const MAX_SSE_ACCUMULATED_BYTES = 256 * 1024; // 256 KB — generous for JSON ex
 
 /** Safely extract text from an Anthropic Messages API response. */
 function extractAnthropicText(data: unknown): string | null {
-  if (typeof data !== "object" || data === null || !("content" in data)) return null;
-  if (!Array.isArray(data.content)) return null;
+  if (typeof data !== "object" || data === null || !("content" in data)) {
+    return null;
+  }
+  if (!Array.isArray(data.content)) {
+    return null;
+  }
   for (const block of data.content) {
-    if (typeof block !== "object" || block === null) continue;
+    if (typeof block !== "object" || block === null) {
+      continue;
+    }
     if (
       "type" in block &&
       block.type === "text" &&
@@ -183,32 +203,56 @@ function extractAnthropicText(data: unknown): string | null {
 
 /** Safely extract delta text from an Anthropic SSE content_block_delta event. */
 function extractAnthropicDelta(data: unknown): string | null {
-  if (typeof data !== "object" || data === null) return null;
-  if (!("type" in data) || data.type !== "content_block_delta") return null;
-  if (!("delta" in data) || typeof data.delta !== "object" || data.delta === null) return null;
-  if (!("text" in data.delta) || typeof data.delta.text !== "string") return null;
+  if (typeof data !== "object" || data === null) {
+    return null;
+  }
+  if (!("type" in data) || data.type !== "content_block_delta") {
+    return null;
+  }
+  if (!("delta" in data) || typeof data.delta !== "object" || data.delta === null) {
+    return null;
+  }
+  if (!("text" in data.delta) || typeof data.delta.text !== "string") {
+    return null;
+  }
   return data.delta.text;
 }
 
 /** Safely extract content from an OpenAI-compatible chat completion response. */
 function extractOpenAIContent(data: unknown): string | null {
-  if (typeof data !== "object" || data === null || !("choices" in data)) return null;
-  if (!Array.isArray(data.choices) || data.choices.length === 0) return null;
+  if (typeof data !== "object" || data === null || !("choices" in data)) {
+    return null;
+  }
+  if (!Array.isArray(data.choices) || data.choices.length === 0) {
+    return null;
+  }
   const first: unknown = data.choices[0];
-  if (typeof first !== "object" || first === null || !("message" in first)) return null;
+  if (typeof first !== "object" || first === null || !("message" in first)) {
+    return null;
+  }
   const msg: unknown = first.message;
-  if (typeof msg !== "object" || msg === null || !("content" in msg)) return null;
+  if (typeof msg !== "object" || msg === null || !("content" in msg)) {
+    return null;
+  }
   return typeof msg.content === "string" ? msg.content : null;
 }
 
 /** Safely extract delta content from an OpenAI-compatible streaming chunk. */
 function extractOpenAIDelta(data: unknown): string | null {
-  if (typeof data !== "object" || data === null || !("choices" in data)) return null;
-  if (!Array.isArray(data.choices) || data.choices.length === 0) return null;
+  if (typeof data !== "object" || data === null || !("choices" in data)) {
+    return null;
+  }
+  if (!Array.isArray(data.choices) || data.choices.length === 0) {
+    return null;
+  }
   const first: unknown = data.choices[0];
-  if (typeof first !== "object" || first === null || !("delta" in first)) return null;
+  if (typeof first !== "object" || first === null || !("delta" in first)) {
+    return null;
+  }
   const delta: unknown = first.delta;
-  if (typeof delta !== "object" || delta === null || !("content" in delta)) return null;
+  if (typeof delta !== "object" || delta === null || !("content" in delta)) {
+    return null;
+  }
   return typeof delta.content === "string" ? delta.content : null;
 }
 
@@ -247,10 +291,16 @@ const _httpsWarned = new Set<string>();
 function warnIfInsecureTransport(baseUrl: string): void {
   try {
     const url = new URL(baseUrl);
-    if (url.protocol !== "http:") return;
+    if (url.protocol !== "http:") {
+      return;
+    }
     const host = url.hostname;
-    if (host === "localhost" || host === "127.0.0.1" || host === "::1") return;
-    if (_httpsWarned.has(baseUrl)) return;
+    if (host === "localhost" || host === "127.0.0.1" || host === "::1") {
+      return;
+    }
+    if (_httpsWarned.has(baseUrl)) {
+      return;
+    }
     _httpsWarned.add(baseUrl);
     globalThis.console?.warn?.(
       `memory-neo4j: LLM baseUrl "${baseUrl}" uses plain HTTP — API key will be sent unencrypted. Use HTTPS for non-localhost endpoints.`,
@@ -268,9 +318,13 @@ function warnIfInsecureTransport(baseUrl: string): void {
 function supportsJsonMode(baseUrl: string): boolean {
   try {
     const { hostname } = new URL(baseUrl);
-    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") return false;
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+      return false;
+    }
     // Ollama Cloud endpoints also don't reliably support response_format
-    if (hostname === "ollama.com" || hostname.endsWith(".ollama.com")) return false;
+    if (hostname === "ollama.com" || hostname.endsWith(".ollama.com")) {
+      return false;
+    }
     return true;
   } catch {
     return true;
@@ -325,7 +379,9 @@ async function readSSEStream(
         reader.cancel().catch(() => {});
         return false;
       }
-      if (done) break;
+      if (done) {
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
@@ -333,9 +389,13 @@ async function readSSEStream(
 
       for (const line of lines) {
         const trimmed = line.trim();
-        if (!trimmed.startsWith("data: ")) continue;
+        if (!trimmed.startsWith("data: ")) {
+          continue;
+        }
         const data = trimmed.slice(6);
-        if (data === "[DONE]") continue;
+        if (data === "[DONE]") {
+          continue;
+        }
         onData(data);
       }
     }
@@ -466,7 +526,9 @@ async function anthropicStreamRequest(
           // Skip malformed SSE chunks
         }
       });
-      if (!ok) return null;
+      if (!ok) {
+        return null;
+      }
 
       return accumulated || null;
     } catch (err) {
@@ -566,7 +628,9 @@ async function parseStreaming(
       // Skip malformed SSE chunks
     }
   });
-  if (!ok) return null;
+  if (!ok) {
+    return null;
+  }
 
   return accumulated || null;
 }
@@ -625,14 +689,22 @@ export function isTransientError(err: unknown): boolean {
   // Duck-type: DOMException may not pass `instanceof Error` in forked
   // vitest workers or cross-realm contexts, so accept any object with
   // a `name` and `message` string.
-  if (typeof err !== "object" || err === null) return false;
-  if (!("name" in err) || typeof err.name !== "string") return false;
-  if (!("message" in err) || typeof err.message !== "string") return false;
+  if (typeof err !== "object" || err === null) {
+    return false;
+  }
+  if (!("name" in err) || typeof err.name !== "string") {
+    return false;
+  }
+  if (!("message" in err) || typeof err.message !== "string") {
+    return false;
+  }
 
   const name = err.name;
   const msg = err.message.toLowerCase();
   // AbortError = deliberate cancellation by the caller, NOT transient — do not retry
-  if (name === "AbortError") return false;
+  if (name === "AbortError") {
+    return false;
+  }
   return (
     name === "TimeoutError" ||
     msg.includes("timeout") ||

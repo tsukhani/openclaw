@@ -45,15 +45,25 @@ export function shouldCapture(text: string): boolean {
   const trimmed = text.trim();
 
   // Rule 1: Too short
-  if (trimmed.length < 15) return false;
+  if (trimmed.length < 15) {
+    return false;
+  }
 
   // Rule 2: Greeting/filler/particle patterns (full-message match)
-  if (NOISE_PATTERNS.GREETING_WORD.test(trimmed)) return false;
-  if (NOISE_PATTERNS.FILLER_PHRASE.test(trimmed)) return false;
-  if (NOISE_PATTERNS.PARTICLE.test(trimmed)) return false;
+  if (NOISE_PATTERNS.GREETING_WORD.test(trimmed)) {
+    return false;
+  }
+  if (NOISE_PATTERNS.FILLER_PHRASE.test(trimmed)) {
+    return false;
+  }
+  if (NOISE_PATTERNS.PARTICLE.test(trimmed)) {
+    return false;
+  }
 
   // Rule 3: System markup (starts-with)
-  if (NOISE_PATTERNS.SYSTEM_MARKUP.test(trimmed)) return false;
+  if (NOISE_PATTERNS.SYSTEM_MARKUP.test(trimmed)) {
+    return false;
+  }
 
   // Rule 5: Pure JSON blob — check before code-dump rule since JSON may span many lines
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
@@ -66,27 +76,35 @@ export function shouldCapture(text: string): boolean {
   }
 
   // Pure XML declaration
-  if (trimmed.startsWith("<?xml")) return false;
+  if (trimmed.startsWith("<?xml")) {
+    return false;
+  }
 
   // Rule 6: Tool output patterns (any line)
-  if (NOISE_PATTERNS.TOOL_OUTPUT.test(trimmed)) return false;
+  if (NOISE_PATTERNS.TOOL_OUTPUT.test(trimmed)) {
+    return false;
+  }
 
   // Rule 7: Repetitive content — all tokens are the same word/phrase
   const tokens = trimmed.split(/\s+/).filter(Boolean);
   if (tokens.length >= 3) {
     const lower = tokens.map((t) => t.toLowerCase());
     const unique = new Set(lower);
-    if (unique.size === 1) return false;
+    if (unique.size === 1) {
+      return false;
+    }
   }
 
   // Rule 4: Code dump — >60% of lines start with whitespace or code-special chars,
   // total lines >10, and no sentence-ending punctuation anywhere (would indicate prose)
   const lines = trimmed.split("\n");
   if (lines.length > 10) {
-    const codeLineCount = lines.filter((l) => /^[\s\t]|^[{}\[\]<>/|\\*#@!]/.test(l)).length;
+    const codeLineCount = lines.filter((l) => /^[\s\t]|^[{}[\]<>/|\\*#@!]/.test(l)).length;
     const codeFraction = codeLineCount / lines.length;
     const hasSentenceEnding = lines.some((l) => /[.!?]\s*$/.test(l.trim()));
-    if (codeFraction > 0.6 && !hasSentenceEnding) return false;
+    if (codeFraction > 0.6 && !hasSentenceEnding) {
+      return false;
+    }
   }
 
   return true;

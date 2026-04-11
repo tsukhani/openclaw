@@ -414,7 +414,7 @@ describe("microsoft-foundry plugin", () => {
     expect(
       config.models?.providers?.["microsoft-foundry"]?.models?.map((model) => model.id),
     ).toEqual(["alias-one", "alias-two"]);
-    expect(config.models?.providers?.["microsoft-foundry"]?.models[0]?.input).toEqual([
+    expect(config.models?.providers?.["microsoft-foundry"]?.models?.[0]?.input).toEqual([
       "text",
       "image",
     ]);
@@ -450,10 +450,9 @@ describe("microsoft-foundry plugin", () => {
       authMethod: "entra-id",
     });
 
-    expect(result.configPatch?.models?.providers?.["microsoft-foundry"]?.models[0]?.input).toEqual([
-      "text",
-      "image",
-    ]);
+    expect(
+      result.configPatch?.models?.providers?.["microsoft-foundry"]?.models?.[0]?.input,
+    ).toEqual(["text", "image"]);
   });
 
   it("normalizes stale resolved Foundry rows to provider-owned image capability metadata", () => {

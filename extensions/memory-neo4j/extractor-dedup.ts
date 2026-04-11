@@ -75,7 +75,9 @@ export async function isSemanticDuplicate(
     return parsed.verdict === "duplicate";
   } catch (err) {
     // H5: Re-throw AbortError — deliberate cancellation must propagate to callers
-    if (err instanceof Error && err.name === "AbortError") throw err;
+    if (err instanceof Error && err.name === "AbortError") {
+      throw err;
+    }
     return false;
   }
 }
@@ -131,7 +133,9 @@ export async function isContradiction(
     return parsed.verdict === "contradiction";
   } catch (err) {
     // H5: Re-throw AbortError — deliberate cancellation must propagate to callers
-    if (err instanceof Error && err.name === "AbortError") throw err;
+    if (err instanceof Error && err.name === "AbortError") {
+      throw err;
+    }
     return false;
   }
 }

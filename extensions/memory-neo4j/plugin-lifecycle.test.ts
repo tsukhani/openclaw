@@ -74,7 +74,7 @@ vi.mock("./neo4j-client.js", () => {
 
 vi.mock("./embeddings.js", () => {
   class MockEmbeddings {
-    embed = vi.fn().mockResolvedValue(new Array(768).fill(0.1));
+    embed = vi.fn().mockResolvedValue(Array.from({ length: 768 }, () => 0.1));
   }
   return { Embeddings: MockEmbeddings };
 });
@@ -202,7 +202,9 @@ function getToolExecute(
   toolName: string,
 ): (toolCallId: string, params: unknown) => Promise<unknown> {
   const factory = tools.get(toolName);
-  if (!factory) throw new Error(`Tool "${toolName}" not registered`);
+  if (!factory) {
+    throw new Error(`Tool "${toolName}" not registered`);
+  }
   const tool = factory({ agentId: "test-agent", sessionKey: "test-session" });
   return tool.execute;
 }

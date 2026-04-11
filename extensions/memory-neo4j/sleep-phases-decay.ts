@@ -33,7 +33,9 @@ export async function runDecay(
     onProgress,
   } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   onPhaseStart?.("decay");
   logger.info("memory-neo4j: [sleep] Phase 3: Decay & Pruning");
@@ -83,7 +85,9 @@ export async function runTemporalStaleness(
     onProgress,
   } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   if (!config.enabled) {
     logger.info("memory-neo4j: [sleep] Phase 3b skipped — extraction not enabled");
@@ -103,6 +107,7 @@ export async function runTemporalStaleness(
     const toRemove: string[] = [];
 
     // Process in parallel batches
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     for (let i = 0; i < candidates.length && !abortSignal?.aborted; i += llmConcurrency) {
       const batch = candidates.slice(i, i + llmConcurrency);
 
@@ -178,8 +183,12 @@ export async function runPendingConflictRetry(
     onProgress,
   } = options;
 
-  if (abortSignal?.aborted) return;
-  if (!config.enabled) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
+  if (!config.enabled) {
+    return;
+  }
   if (skipPendingConflictRetry) {
     logger.info("memory-neo4j: [sleep] Phase 3d skipped — pending conflict retry disabled");
     return;
@@ -197,6 +206,7 @@ export async function runPendingConflictRetry(
       return;
     }
 
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     for (let i = 0; i < pairs.length && !abortSignal?.aborted; i += llmConcurrency) {
       const chunk = pairs.slice(i, i + llmConcurrency);
       const outcomes = await Promise.allSettled(
@@ -211,10 +221,14 @@ export async function runPendingConflictRetry(
       const toIncrement: Array<{ idA: string; idB: string }> = [];
 
       for (let k = 0; k < outcomes.length; k++) {
-        if (abortSignal?.aborted) break;
+        if (abortSignal?.aborted) {
+          break;
+        }
         const pair = chunk[k];
         const outcome = outcomes[k];
-        if (outcome.status !== "fulfilled") continue;
+        if (outcome.status !== "fulfilled") {
+          continue;
+        }
 
         const decision = outcome.value;
 
@@ -304,9 +318,13 @@ export async function runRetroactiveConflictScan(
     onPhaseStart,
   } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
-  if (!config.enabled) return; // no log — orchestrator handles skip message if needed
+  if (!config.enabled) {
+    return;
+  } // no log — orchestrator handles skip message if needed
 
   if (skipRetroactiveConflictScan) {
     logger.info("memory-neo4j: [sleep] Phase 3c skipped — retroactive conflict scan disabled");
@@ -327,6 +345,7 @@ export async function runRetroactiveConflictScan(
     result.retroactiveConflictScan.memoriesScanned = candidates.length;
 
     const CONFLICT_CHUNK = 5;
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     for (let i = 0; i < candidates.length && !abortSignal?.aborted; i += CONFLICT_CHUNK) {
       const chunk = candidates.slice(i, i + CONFLICT_CHUNK).filter((m) => m.embedding?.length);
 

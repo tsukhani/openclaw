@@ -294,9 +294,15 @@ describe("Neo4jMemoryClient", () => {
         records: [
           {
             get: vi.fn((key) => {
-              if (key === "id") return "mem-1";
-              if (key === "text") return "similar text";
-              if (key === "similarity") return 0.96;
+              if (key === "id") {
+                return "mem-1";
+              }
+              if (key === "text") {
+                return "similar text";
+              }
+              if (key === "similarity") {
+                return 0.96;
+              }
               return null;
             }),
           },
@@ -344,9 +350,15 @@ describe("Neo4jMemoryClient", () => {
         records: [
           {
             get: vi.fn((key) => {
-              if (key === "id") return "mem-1";
-              if (key === "text") return "similar text";
-              if (key === "similarity") return 0.96;
+              if (key === "id") {
+                return "mem-1";
+              }
+              if (key === "text") {
+                return "similar text";
+              }
+              if (key === "similarity") {
+                return 0.96;
+              }
               return null;
             }),
           },
@@ -369,17 +381,29 @@ describe("Neo4jMemoryClient", () => {
         records: [
           {
             get: vi.fn((key) => {
-              if (key === "id") return "mem-1";
-              if (key === "text") return "text 1";
-              if (key === "similarity") return 0.99;
+              if (key === "id") {
+                return "mem-1";
+              }
+              if (key === "text") {
+                return "text 1";
+              }
+              if (key === "similarity") {
+                return 0.99;
+              }
               return null;
             }),
           },
           {
             get: vi.fn((key) => {
-              if (key === "id") return "mem-2";
-              if (key === "text") return "text 2";
-              if (key === "similarity") return 0.97;
+              if (key === "id") {
+                return "mem-2";
+              }
+              if (key === "text") {
+                return "text 2";
+              }
+              if (key === "similarity") {
+                return 0.97;
+              }
               return null;
             }),
           },
@@ -405,25 +429,43 @@ describe("Neo4jMemoryClient", () => {
         records: [
           {
             get: vi.fn((key) => {
-              if (key === "id") return "m1";
-              if (key === "text") return "text1";
-              if (key === "importance") return 0.5;
+              if (key === "id") {
+                return "m1";
+              }
+              if (key === "text") {
+                return "text1";
+              }
+              if (key === "importance") {
+                return 0.5;
+              }
               return null;
             }),
           },
           {
             get: vi.fn((key) => {
-              if (key === "id") return "m2";
-              if (key === "text") return "text2";
-              if (key === "importance") return 0.6;
+              if (key === "id") {
+                return "m2";
+              }
+              if (key === "text") {
+                return "text2";
+              }
+              if (key === "importance") {
+                return 0.6;
+              }
               return null;
             }),
           },
           {
             get: vi.fn((key) => {
-              if (key === "id") return "m3";
-              if (key === "text") return "text3";
-              if (key === "importance") return 0.7;
+              if (key === "id") {
+                return "m3";
+              }
+              if (key === "text") {
+                return "text3";
+              }
+              if (key === "importance") {
+                return 0.7;
+              }
               return null;
             }),
           },
@@ -436,17 +478,29 @@ describe("Neo4jMemoryClient", () => {
         records: [
           {
             get: vi.fn((key) => {
-              if (key === "sourceId") return "m1";
-              if (key === "matchId") return "m2";
-              if (key === "score") return 0.97;
+              if (key === "sourceId") {
+                return "m1";
+              }
+              if (key === "matchId") {
+                return "m2";
+              }
+              if (key === "score") {
+                return 0.97;
+              }
               return null;
             }),
           },
           {
             get: vi.fn((key) => {
-              if (key === "sourceId") return "m2";
-              if (key === "matchId") return "m3";
-              if (key === "score") return 0.96;
+              if (key === "sourceId") {
+                return "m2";
+              }
+              if (key === "matchId") {
+                return "m3";
+              }
+              if (key === "score") {
+                return 0.96;
+              }
               return null;
             }),
           },
@@ -475,8 +529,12 @@ describe("Neo4jMemoryClient", () => {
       // Create many memories
       const manyRecords = Array.from({ length: 100 }, (_, i) => ({
         get: vi.fn((key) => {
-          if (key === "id") return `m${i}`;
-          if (key === "importance") return 0.5;
+          if (key === "id") {
+            return `m${i}`;
+          }
+          if (key === "importance") {
+            return 0.5;
+          }
           return null;
         }),
       }));
@@ -486,9 +544,15 @@ describe("Neo4jMemoryClient", () => {
       // Mock batch query returning many pairs (exceeds 2000 safety cap)
       const manyPairs = Array.from({ length: 2100 }, (_, i) => ({
         get: vi.fn((key) => {
-          if (key === "sourceId") return `m${i % 100}`;
-          if (key === "matchId") return `m${(i + 1) % 100}`;
-          if (key === "score") return 0.97;
+          if (key === "sourceId") {
+            return `m${i % 100}`;
+          }
+          if (key === "matchId") {
+            return `m${(i + 1) % 100}`;
+          }
+          if (key === "score") {
+            return 0.97;
+          }
           return null;
         }),
       }));
@@ -1204,8 +1268,12 @@ describe("Neo4jMemoryClient", () => {
           records: [
             {
               get: vi.fn((key) => {
-                if (key === "eid") return "elem-1";
-                if (key === "score") return 0.9;
+                if (key === "eid") {
+                  return "elem-1";
+                }
+                if (key === "score") {
+                  return 0.9;
+                }
                 return null;
               }),
             },

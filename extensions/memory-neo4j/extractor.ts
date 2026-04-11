@@ -101,7 +101,9 @@ const ENTITY_EXTRACTION_SYSTEM_WITH_CONTEXT =
 
 /** Build a "Previously extracted entities" context block for the LLM user message. */
 function buildPreExtractedContext(local: ExtractionResult): string {
-  if (local.entities.length === 0) return "";
+  if (local.entities.length === 0) {
+    return "";
+  }
   const entries = local.entities.map((e) => `${e.name} (${e.type})`).join(", ");
   return `Previously extracted entities (verified): ${entries}`;
 }
@@ -178,7 +180,9 @@ export const MAX_EXTRACTION_TEXT_CHARS = 4000;
 const ROLE_INJECTION_PATTERN = /^(system|assistant|user|human|ai)\s*:/i;
 
 export function sanitizeMemoryText(text: string): string {
-  if (!text || typeof text !== "string") return "";
+  if (!text || typeof text !== "string") {
+    return "";
+  }
   const truncated =
     text.length > MAX_EXTRACTION_TEXT_CHARS ? text.slice(0, MAX_EXTRACTION_TEXT_CHARS) : text;
   return truncated
@@ -230,7 +234,7 @@ export async function extractEntities(
   const sanitized = sanitizeMemoryText(text);
 
   // Stage 0+1: local extraction (regex + NER) — fast, free
-  const localNerEnabled = config.localNerEnabled !== false;
+  const localNerEnabled = config.localNerEnabled;
   const localResult = await extractLocal(sanitized, localNerEnabled, logger);
   const hasLocalEntities = localResult.entities.length > 0;
 
@@ -318,7 +322,9 @@ export async function extractTagsOnly(
     content = await callLlmStream(config, messages, abortSignal);
   } catch (err) {
     // M10: Propagate AbortError for proper cancellation
-    if (err instanceof Error && err.name === "AbortError") throw err;
+    if (err instanceof Error && err.name === "AbortError") {
+      throw err;
+    }
     return null;
   }
 
@@ -413,7 +419,9 @@ export function groundEntityDescription(
   logger?: { warn: (msg: string) => void },
   entityName?: string,
 ): string | undefined {
-  if (!description) return undefined;
+  if (!description) {
+    return undefined;
+  }
 
   const descLower = description.toLowerCase();
   const sourceLower = sourceText.toLowerCase();
@@ -474,8 +482,10 @@ function validateExtractionResult(
           String(e.name).trim().toLowerCase(),
         ),
         properties: (() => {
-          const raw = (e as Record<string, unknown>).properties;
-          if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+          const raw = e.properties;
+          if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+            return undefined;
+          }
           const props: Record<string, string> = {};
           for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
             if (typeof k === "string" && typeof v === "string" && v.trim().length > 0) {
@@ -505,11 +515,7 @@ function validateExtractionResult(
         confidence: typeof r.confidence === "number" ? Math.min(1, Math.max(0, r.confidence)) : 0.7,
         qualifier: (() => {
           const q =
-            typeof (r as Record<string, unknown>).qualifier === "string"
-              ? String((r as Record<string, unknown>).qualifier)
-                  .trim()
-                  .toLowerCase()
-              : undefined;
+            typeof r.qualifier === "string" ? String(r.qualifier).trim().toLowerCase() : undefined;
           const ALLOWED_QUALIFIERS = new Set([
             "primary",
             "default",
@@ -549,7 +555,7 @@ function validateExtractionResult(
                 (e: unknown): e is Record<string, unknown> => e !== null && typeof e === "object",
               )
               .map((e) =>
-                String((e as Record<string, unknown>).name ?? "")
+                String(e.name ?? "")
                   .trim()
                   .toLowerCase(),
               )

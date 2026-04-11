@@ -25,9 +25,15 @@ import { runSleepCycle } from "./sleep-cycle.js";
 
 /** Iterative max to avoid stack overflow from Math.max(...spread) on large arrays. */
 function iterMax(arr: number[]): number {
-  if (arr.length === 0) return 0;
+  if (arr.length === 0) {
+    return 0;
+  }
   let max = -Infinity;
-  for (const v of arr) if (v > max) max = v;
+  for (const v of arr) {
+    if (v > max) {
+      max = v;
+    }
+  }
   return max;
 }
 
@@ -184,17 +190,21 @@ export async function handleList(
       >
     >();
     for (const row of rows) {
-      const agent = (row.agentId as string) ?? "default";
-      const cat = (row.category as string) ?? "other";
-      if (!byAgent.has(agent)) byAgent.set(agent, new Map());
+      const agent = row.agentId ?? "default";
+      const cat = row.category ?? "other";
+      if (!byAgent.has(agent)) {
+        byAgent.set(agent, new Map());
+      }
       const catMap = byAgent.get(agent)!;
-      if (!catMap.has(cat)) catMap.set(cat, []);
+      if (!catMap.has(cat)) {
+        catMap.set(cat, []);
+      }
       catMap.get(cat)!.push({
-        id: row.id as string,
-        text: row.text as string,
-        importance: row.importance as number,
-        createdAt: row.createdAt as string,
-        source: row.source as string,
+        id: row.id,
+        text: row.text,
+        importance: row.importance,
+        createdAt: row.createdAt,
+        source: row.source,
       });
     }
 
@@ -221,7 +231,9 @@ export async function handleList(
       >();
       for (const row of entityRows) {
         const agent = row.agentId ?? "unknown";
-        if (!entitiesByAgent.has(agent)) entitiesByAgent.set(agent, []);
+        if (!entitiesByAgent.has(agent)) {
+          entitiesByAgent.set(agent, []);
+        }
         entitiesByAgent.get(agent)!.push({
           name: row.name,
           type: row.type,
@@ -258,7 +270,9 @@ export async function handleList(
       >();
       for (const row of tagRows) {
         const agent = row.agentId ?? "unknown";
-        if (!tagsByAgent.has(agent)) tagsByAgent.set(agent, []);
+        if (!tagsByAgent.has(agent)) {
+          tagsByAgent.set(agent, []);
+        }
         tagsByAgent.get(agent)!.push({
           tagName: row.tagName,
           tagCategory: row.tagCategory,
@@ -339,8 +353,12 @@ export async function handleSearch(
           : undefined,
       };
       if (provenanceEnabled) {
-        if (r.provenance) base.provenance = r.provenance;
-        if (r.fusionProvenance) base.fusionProvenance = r.fusionProvenance;
+        if (r.provenance) {
+          base.provenance = r.provenance;
+        }
+        if (r.fusionProvenance) {
+          base.fusionProvenance = r.fusionProvenance;
+        }
       }
       return base;
     };

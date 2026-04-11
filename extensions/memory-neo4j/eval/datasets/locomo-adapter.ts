@@ -101,12 +101,12 @@ export async function loadLoCoMoDataset(opts: LoCoMoOptions = {}): Promise<TestC
 // ── Conversion helpers ────────────────────────────────────────────────────────
 
 function convertSampleToCases(sample: LoCoMoSample, filterAbility?: MemoryAbility): TestCase[] {
-  const conv = sample.conversation as Record<string, unknown>;
+  const conv = sample.conversation;
 
   // Collect sessions that have actual turn data (some sessions only have a date entry).
   const sessionKeys = Object.keys(conv)
     .filter((k) => k.startsWith("session_") && !k.endsWith("_date_time") && Array.isArray(conv[k]))
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       const na = parseInt(a.replace("session_", ""), 10);
       const nb = parseInt(b.replace("session_", ""), 10);
       return na - nb;
@@ -134,8 +134,12 @@ function convertSampleToCases(sample: LoCoMoSample, filterAbility?: MemoryAbilit
   for (let qi = 0; qi < sample.qa.length; qi++) {
     const qa = sample.qa[qi];
     const ability = CAT_TO_ABILITY[qa.category];
-    if (ability === null) continue; // skip cat3
-    if (filterAbility && ability !== filterAbility) continue;
+    if (ability === null) {
+      continue;
+    } // skip cat3
+    if (filterAbility && ability !== filterAbility) {
+      continue;
+    }
 
     // For abstention cases the model must recognise the answer is absent.
     const goldMemoryIds: string[] =

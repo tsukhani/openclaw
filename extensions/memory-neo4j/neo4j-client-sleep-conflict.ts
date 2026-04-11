@@ -380,7 +380,9 @@ Return JSON: {"classification": "SUPERSEDES"|"COMPLEMENTS"|"UNRELATED"}`,
         timeoutSignal,
       );
 
-      if (!content) continue;
+      if (!content) {
+        continue;
+      }
 
       const parsed: unknown = JSON.parse(stripCodeFences(content));
       if (isClassificationResult(parsed) && parsed.classification === "SUPERSEDES") {
@@ -448,7 +450,9 @@ export async function fetchMemoriesForRetroactiveConflictScan(
  * Memories are re-eligible after 7 days (checked in `fetchMemoriesForRetroactiveConflictScan`).
  */
 export async function markConflictScanned(session: Session, ids: string[]): Promise<void> {
-  if (ids.length === 0) return;
+  if (ids.length === 0) {
+    return;
+  }
   await session.executeWrite((tx) =>
     tx.run(
       `UNWIND $ids AS id
@@ -563,7 +567,9 @@ export async function clearPendingConflictsBatch(
   session: Session,
   pairs: Array<{ idA: string; idB: string }>,
 ): Promise<void> {
-  if (pairs.length === 0) return;
+  if (pairs.length === 0) {
+    return;
+  }
   await session.executeWrite((tx) =>
     tx.run(
       `UNWIND $pairs AS pair
@@ -633,7 +639,9 @@ export async function getMemoryField(
     }),
   );
   const record = result.records[0];
-  if (!record) return undefined;
+  if (!record) {
+    return undefined;
+  }
   const value = record.get("value");
   return value != null ? String(value) : undefined;
 }

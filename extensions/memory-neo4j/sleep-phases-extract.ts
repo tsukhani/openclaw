@@ -34,7 +34,9 @@ export async function runExtraction(
     onProgress,
   } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   if (!config.enabled) {
     logger.info("memory-neo4j: [sleep] Phase 2 skipped — extraction not enabled");
@@ -64,6 +66,7 @@ export async function runExtraction(
       const existingTags = await db.getTopTagNames(100).catch(() => [] as string[]);
 
       let hasMore = true;
+      // oxlint-disable-next-line eslint/no-unmodified-loop-condition
       while (hasMore && !abortSignal?.aborted) {
         const pending = await db.listPendingExtractions(extractionBatchSize, agentId);
 
@@ -73,6 +76,7 @@ export async function runExtraction(
         }
 
         // Process in parallel chunks of llmConcurrency
+        // oxlint-disable-next-line eslint/no-unmodified-loop-condition
         for (let i = 0; i < pending.length && !abortSignal?.aborted; i += llmConcurrency) {
           const chunk = pending.slice(i, i + llmConcurrency);
           const outcomes = await Promise.allSettled(
@@ -163,7 +167,9 @@ export async function runRetroactiveTagging(
     onProgress,
   } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   if (!config.enabled) {
     logger.info("memory-neo4j: [sleep] Phase 2b skipped — extraction not enabled");
@@ -187,6 +193,7 @@ export async function runRetroactiveTagging(
     // (e.g. incrementTaggingRetries silently fails → same memory loops forever)
     let lastBatchFirstId: string | undefined;
     let stalledCount = 0;
+    // oxlint-disable-next-line eslint/no-unmodified-loop-condition
     while (hasMore && !abortSignal?.aborted) {
       const untagged = await db.listUntaggedMemories(retroactiveTagBatchSize, agentId);
 
@@ -214,6 +221,7 @@ export async function runRetroactiveTagging(
       result.retroactiveTagging.total = runningTotal;
 
       // Process in parallel chunks of llmConcurrency
+      // oxlint-disable-next-line eslint/no-unmodified-loop-condition
       for (let i = 0; i < untagged.length && !abortSignal?.aborted; i += llmConcurrency) {
         const chunk = untagged.slice(i, i + llmConcurrency);
         const outcomes = await Promise.allSettled(

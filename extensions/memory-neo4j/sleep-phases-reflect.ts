@@ -132,7 +132,9 @@ function parseReflectionResponse(response: string): LlmOpinion[] {
 
   try {
     const parsed: unknown = JSON.parse(jsonStr);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
 
     return parsed
       .filter(
@@ -253,7 +255,9 @@ export async function runReflection(
   logger.info(`memory-neo4j: [sleep] reflection — processing ${candidates.length} entities`);
 
   for (const candidate of candidates) {
-    if (abortSignal?.aborted) break;
+    if (abortSignal?.aborted) {
+      break;
+    }
 
     try {
       const { entityName, observationSummary } = candidate;
@@ -265,7 +269,9 @@ export async function runReflection(
         entityName,
         MAX_MEMORIES_PER_ENTITY,
       );
-      if (memories.length < MIN_MEMORIES_FOR_REFLECTION) continue;
+      if (memories.length < MIN_MEMORIES_FOR_REFLECTION) {
+        continue;
+      }
 
       // Fetch existing opinions for this entity
       const existingOpinions = await getOpinionsForEntity(session, agentId, entityName);
@@ -359,7 +365,9 @@ export async function runReflection(
         `memory-neo4j: [sleep] reflection for "${entityName}" — ${newOpinions.length} opinions processed`,
       );
     } catch (err) {
-      if (abortSignal?.aborted) break;
+      if (abortSignal?.aborted) {
+        break;
+      }
       logger.warn(
         `memory-neo4j: [sleep] reflection failed for "${candidate.entityName}": ${String(err)}`,
       );
@@ -452,7 +460,9 @@ function parseGeneralizationResponse(response: string): LlmGeneralizedOpinion[] 
 
   try {
     const parsed: unknown = JSON.parse(jsonStr);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
 
     return parsed
       .filter(
@@ -498,7 +508,9 @@ async function runGeneralization(
   }> = [];
 
   for (const entityName of entityNames.slice(0, MAX_ENTITIES_FOR_GENERALIZATION)) {
-    if (abortSignal?.aborted) return 0;
+    if (abortSignal?.aborted) {
+      return 0;
+    }
     const opinions = await getOpinionsForEntity(session, agentId, entityName);
     if (opinions.length > 0) {
       entityOpinions.push({
@@ -513,7 +525,9 @@ async function runGeneralization(
   }
 
   // Need opinions from at least 2 entities to generalize
-  if (entityOpinions.length < 2) return 0;
+  if (entityOpinions.length < 2) {
+    return 0;
+  }
 
   const prompt = buildGeneralizationPrompt(entityOpinions);
   const response = await callLlm(config, prompt, abortSignal);
@@ -524,13 +538,17 @@ async function runGeneralization(
   }
 
   const generalizedOpinions = parseGeneralizationResponse(response);
-  if (generalizedOpinions.length === 0) return 0;
+  if (generalizedOpinions.length === 0) {
+    return 0;
+  }
 
   let created = 0;
   for (const opinion of generalizedOpinions) {
     // Only keep generalizations that reference actual reflected entities
     const validEntities = opinion.sourceEntities.filter((e) => entityNames.includes(e));
-    if (validEntities.length < 2) continue;
+    if (validEntities.length < 2) {
+      continue;
+    }
 
     await upsertOpinion(session, agentId, {
       topic: opinion.topic,

@@ -1,4 +1,3 @@
-import type { OpenClawConfig } from "../../config/config.js";
 import { resolveStateDir } from "../../config/paths.js";
 import {
   generateImage as generateRuntimeImage,

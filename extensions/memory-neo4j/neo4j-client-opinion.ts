@@ -166,7 +166,9 @@ export async function getOpinionsForTopics(
     supportingMemoryIds: string[];
   }>
 > {
-  if (topics.length === 0) return [];
+  if (topics.length === 0) {
+    return [];
+  }
   const result = await session.executeRead((tx) =>
     tx.run(
       `UNWIND $topics AS keyword

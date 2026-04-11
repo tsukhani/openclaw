@@ -127,7 +127,9 @@ function buildCompletenessComparison(
   runB: EvalRunResult,
   nSamples: number,
 ): MetricComparison | null {
-  if (!runA.contextCompleteness || !runB.contextCompleteness) return null;
+  if (!runA.contextCompleteness || !runB.contextCompleteness) {
+    return null;
+  }
 
   const valA = runA.contextCompleteness.aggregate.completenessRate;
   const valB = runB.contextCompleteness.aggregate.completenessRate;
@@ -196,13 +198,17 @@ function buildLatencyComparisons(
   runB: EvalRunResult,
   nSamples: number,
 ): MetricComparison[] {
-  if (!runA.performance || !runB.performance) return [];
+  if (!runA.performance || !runB.performance) {
+    return [];
+  }
 
   const latenciesA = runA.retrievalCases.map((c) => c.latencyMs ?? 0);
   const latenciesB = runB.retrievalCases.map((c) => c.latencyMs ?? 0);
   const n = Math.min(latenciesA.length, latenciesB.length);
 
-  if (n === 0) return [];
+  if (n === 0) {
+    return [];
+  }
 
   return PERF_METRIC_SPECS.map((spec) => {
     const valA = spec.overall(runA) ?? 0;

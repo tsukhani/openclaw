@@ -109,7 +109,9 @@ async function checkMutualExclusion(
   constraint: ConstraintDefinition,
   logger: Logger,
 ): Promise<ConstraintViolation[]> {
-  if (!constraint.secondaryRelationshipType) return [];
+  if (!constraint.secondaryRelationshipType) {
+    return [];
+  }
   const violations: ConstraintViolation[] = [];
   try {
     const result = await session.executeRead((tx) =>
@@ -152,7 +154,9 @@ async function checkTemporalOrdering(
   constraint: ConstraintDefinition,
   logger: Logger,
 ): Promise<ConstraintViolation[]> {
-  if (!constraint.secondaryRelationshipType) return [];
+  if (!constraint.secondaryRelationshipType) {
+    return [];
+  }
   const violations: ConstraintViolation[] = [];
   try {
     const result = await session.executeRead((tx) =>
@@ -241,7 +245,9 @@ async function checkTypeConstraint(
   constraint: ConstraintDefinition,
   logger: Logger,
 ): Promise<ConstraintViolation[]> {
-  if (!constraint.requiredTargetType) return [];
+  if (!constraint.requiredTargetType) {
+    return [];
+  }
   const violations: ConstraintViolation[] = [];
   try {
     const result = await session.executeRead((tx) =>
@@ -304,9 +310,7 @@ export async function checkConstraint(
     case "type_constraint":
       return checkTypeConstraint(session, constraint, logger);
     default:
-      logger.warn(
-        `memory-neo4j: [consistency] unknown constraint type: ${(constraint as ConstraintDefinition).type}`,
-      );
+      logger.warn(`memory-neo4j: [consistency] unknown constraint type: ${constraint.type}`);
       return [];
   }
 }
@@ -353,7 +357,9 @@ export async function checkCandidateFact(
       (c.relationshipType === relationshipType || c.secondaryRelationshipType === relationshipType),
   );
 
-  if (relevant.length === 0) return [];
+  if (relevant.length === 0) {
+    return [];
+  }
 
   const violations: ConstraintViolation[] = [];
   for (const constraint of relevant) {

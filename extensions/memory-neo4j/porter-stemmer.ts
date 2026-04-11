@@ -55,7 +55,9 @@ const s_v = new RegExp("^(" + C + ")?" + v);
  * Returns the stemmed form (lowercase).
  */
 export function porterStem(w: string): string {
-  if (w.length < 3) return w;
+  if (w.length < 3) {
+    return w;
+  }
 
   let stem: string;
   let suffix: string;

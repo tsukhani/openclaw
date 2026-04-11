@@ -47,7 +47,9 @@ export async function decomposeIntoAtomicFacts(
     content = await callLlmStream(config, messages, abortSignal);
   } catch (err) {
     // H5: Re-throw AbortError — deliberate cancellation must propagate to callers
-    if (err instanceof Error && err.name === "AbortError") throw err;
+    if (err instanceof Error && err.name === "AbortError") {
+      throw err;
+    }
     return null;
   }
 

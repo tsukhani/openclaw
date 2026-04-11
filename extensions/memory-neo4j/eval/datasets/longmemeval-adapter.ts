@@ -118,6 +118,7 @@ function parseDataset(raw: string): LongMemEvalRecord[] {
   } catch (err) {
     throw new Error(
       `Failed to parse LongMemEval dataset: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err },
     );
   }
 }

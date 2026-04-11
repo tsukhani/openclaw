@@ -290,7 +290,7 @@ export const CREDENTIAL_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
 
   // Generic long tokens/secrets (hex or base64, 32+ chars)
   {
-    pattern: /\b(?:token|secret|key)\s*[:=]\s*["']?[a-z0-9+/=_\-]{32,}["']?/i,
+    pattern: /\b(?:token|secret|key)\s*[:=]\s*["']?[a-z0-9+/=_-]{32,}["']?/i,
     label: "Token/secret",
   },
 

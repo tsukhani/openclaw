@@ -37,11 +37,15 @@ export async function validateRule(
 ): Promise<ValidationResult> {
   // Check 1: Cypher syntax validation
   const syntaxResult = await validateCypherSyntax(session, rule, logger);
-  if (!syntaxResult.valid) return syntaxResult;
+  if (!syntaxResult.valid) {
+    return syntaxResult;
+  }
 
   // Check 2: Check for contradictions with existing rules
   const contradictionResult = await checkContradictions(session, rule, agentId, logger);
-  if (!contradictionResult.valid) return contradictionResult;
+  if (!contradictionResult.valid) {
+    return contradictionResult;
+  }
 
   return { valid: true };
 }

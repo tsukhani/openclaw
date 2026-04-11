@@ -21,7 +21,9 @@ export async function resolveConflict(
   config: ExtractionConfig,
   abortSignal?: AbortSignal,
 ): Promise<"a" | "b" | "both" | "skip" | "transient"> {
-  if (!config.enabled) return "skip";
+  if (!config.enabled) {
+    return "skip";
+  }
 
   const messages = [
     {
@@ -51,16 +53,22 @@ Return JSON: {"keep": "a"|"b"|"both", "reason": "brief explanation"}`,
       abortSignal,
     );
     // null = callLlm returned empty content on a successful 200 response — skip this pair
-    if (!content) return "skip";
+    if (!content) {
+      return "skip";
+    }
 
     const parsed = JSON.parse(stripCodeFences(content)) as { keep?: string };
     const keep = parsed.keep;
-    if (keep === "a" || keep === "b" || keep === "both") return keep;
+    if (keep === "a" || keep === "b" || keep === "both") {
+      return keep;
+    }
     return "skip";
   } catch (err) {
     // withRetry throws on: all retries exhausted (transient) or abort signal fired.
     // Non-transient errors (4xx, content policy, JSON parse) are re-thrown directly.
-    if (isTransientError(err)) return "transient";
+    if (isTransientError(err)) {
+      return "transient";
+    }
     return "skip";
   }
 }

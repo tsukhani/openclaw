@@ -60,7 +60,9 @@ function buildDateRangeFilter(
   dateRangeStart?: string,
   dateRangeEnd?: string,
 ): { filter: string; params: Record<string, string> } {
-  if (!dateRangeStart && !dateRangeEnd) return { filter: "", params: {} };
+  if (!dateRangeStart && !dateRangeEnd) {
+    return { filter: "", params: {} };
+  }
   const parts: string[] = [];
   const params: Record<string, string> = {};
   if (dateRangeStart) {
@@ -158,7 +160,9 @@ export async function bm25Search(
   dateRangeEnd?: string,
 ): Promise<SearchSignalResult[]> {
   const escaped = escapeLucene(query);
-  if (!escaped.trim()) return [];
+  if (!escaped.trim()) {
+    return [];
+  }
   const agentFilter = agentId ? "AND node.agentId = $agentId" : "";
   const quarantineFilter = includeQuarantined
     ? ""
@@ -261,7 +265,9 @@ export async function communitySearch(
     asOf,
   );
   const escaped = escapeLucene(query);
-  if (!escaped.trim()) return [];
+  if (!escaped.trim()) {
+    return [];
+  }
 
   // OP-176: Use EXTRACTED_FROM provenance edge to bridge community member
   // entities back to source Memory nodes (replaces TAGGED tag-bridge path).
@@ -330,7 +336,9 @@ async function fuzzyTokenSeed(
     .toLowerCase()
     .split(/\s+/)
     .filter((t) => t.length >= 2);
-  if (tokens.length === 0) return new Map();
+  if (tokens.length === 0) {
+    return new Map();
+  }
 
   const agentFilter = agentId ? "AND e.agentId = $agentId" : "";
 
@@ -470,7 +478,9 @@ async function exactNameAliasSeed(
   seedCap: number,
   agentId?: string,
 ): Promise<Map<string, number>> {
-  if (entityNames.length === 0) return new Map();
+  if (entityNames.length === 0) {
+    return new Map();
+  }
 
   const agentFilter = agentId ? "AND e.agentId = $agentId" : "";
   const result = await session.executeRead((tx) =>
@@ -604,7 +614,9 @@ export async function structuredGraphSearch(
   // M6: Escape Lucene special characters in the graph search query to prevent
   // query syntax errors from user input containing +, -, *, etc.
   const escapedGraphQuery = escapeLucene(query);
-  if (!escapedGraphQuery.trim()) return [];
+  if (!escapedGraphQuery.trim()) {
+    return [];
+  }
 
   // Run fulltext + vector seed queries in PARALLEL when a session factory is
   // available and we have an embedding. Each query gets its own session because
@@ -721,7 +733,7 @@ export async function structuredGraphSearch(
   }
 
   // Sort seeds by score descending and cap to seedCap
-  const sortedSeeds = [...seedScores.entries()].sort((a, b) => b[1] - a[1]).slice(0, seedCap);
+  const sortedSeeds = [...seedScores.entries()].toSorted((a, b) => b[1] - a[1]).slice(0, seedCap);
   const seedElementIds = sortedSeeds.map(([eid]) => eid);
   const seedScoreMap = new Map(sortedSeeds);
 
@@ -909,7 +921,9 @@ export async function structuredGraphSearch(
   const byId = new Map<string, SearchSignalResult>();
   for (const record of result.records) {
     const id = record.get("id") as string;
-    if (!id) continue;
+    if (!id) {
+      continue;
+    }
     const traversalScore = record.get("graphScore") as number;
     const memoryEmbedding = record.get("memoryEmbedding") as number[] | null;
 
@@ -955,7 +969,7 @@ export async function structuredGraphSearch(
   }
 
   return Array.from(byId.values())
-    .sort((a, b) => b.score - a.score)
+    .toSorted((a, b) => b.score - a.score)
     .slice(0, limit);
 }
 
@@ -973,7 +987,9 @@ export const DEFAULT_CAUSAL_RELATIONSHIP_TYPES = [
 function buildCausalRelPattern(types: string[]): string | null {
   const safe = types.map((t) => sanitizeRelationshipType(t)).filter((t): t is string => t !== null);
   // M19: Return null instead of throwing — callers return empty results for graceful degradation
-  if (safe.length === 0) return null;
+  if (safe.length === 0) {
+    return null;
+  }
   return safe.join("|");
 }
 
@@ -1003,7 +1019,9 @@ export async function causalChainSearch(
   const types = causalRelTypes ?? DEFAULT_CAUSAL_RELATIONSHIP_TYPES;
   const CAUSAL_REL_PATTERN = buildCausalRelPattern(types);
   // M19: Graceful degradation when all causal types are invalid
-  if (!CAUSAL_REL_PATTERN) return [];
+  if (!CAUSAL_REL_PATTERN) {
+    return [];
+  }
   // OP-142: Agent scoping uses Entity.agentId property (not MENTIONS traversal)
   const agentFilter = agentId ? "AND node.agentId = $agentId" : "";
   // SAFETY: Cap maxHops at 3, consistent with structuredGraphSearch (M25).
@@ -1065,9 +1083,11 @@ export async function causalChainSearch(
     }
   }
 
-  if (seedScores.size === 0) return [];
+  if (seedScores.size === 0) {
+    return [];
+  }
 
-  const sortedSeeds = [...seedScores.entries()].sort((a, b) => b[1] - a[1]).slice(0, seedCap);
+  const sortedSeeds = [...seedScores.entries()].toSorted((a, b) => b[1] - a[1]).slice(0, seedCap);
   const seedElementIds = sortedSeeds.map(([eid]) => eid);
   const seedScoreMap = Object.fromEntries(sortedSeeds);
 
@@ -1174,7 +1194,9 @@ export async function causalChainSearch(
   const byId = new Map<string, SearchSignalResult>();
   for (const record of result.records) {
     const id = record.get("id") as string;
-    if (!id) continue;
+    if (!id) {
+      continue;
+    }
     const score = record.get("graphScore") as number;
     const existing = byId.get(id);
     if (!existing || score > existing.score) {
@@ -1208,7 +1230,7 @@ export async function causalChainSearch(
   }
 
   return Array.from(byId.values())
-    .sort((a, b) => b.score - a.score)
+    .toSorted((a, b) => b.score - a.score)
     .slice(0, limit);
 }
 
@@ -1234,7 +1256,9 @@ export async function possessiveChainSearch(
 ): Promise<SearchSignalResult[]> {
   const agentFilter = agentId ? "AND node.agentId = $agentId" : "";
   const seedName = escapeLucene(chain.seedEntity);
-  if (!seedName.trim()) return [];
+  if (!seedName.trim()) {
+    return [];
+  }
 
   // Build dynamic Cypher for each chain step.
   // Each step is an OPTIONAL MATCH along the specified relationship types.
@@ -1403,7 +1427,9 @@ export async function possessiveChainSearch(
   const byId = new Map<string, SearchSignalResult>();
   for (const record of result.records) {
     const id = record.get("id") as string;
-    if (!id) continue;
+    if (!id) {
+      continue;
+    }
     const graphScore = record.get("graphScore") as number;
     const chainText = record.get("chainText") as string;
     const entityName = record.get("entityName") as string | null;
@@ -1429,7 +1455,7 @@ export async function possessiveChainSearch(
   }
 
   return Array.from(byId.values())
-    .sort((a, b) => b.score - a.score)
+    .toSorted((a, b) => b.score - a.score)
     .slice(0, limit);
 }
 
@@ -1552,7 +1578,9 @@ export async function recordRetrievals(
   entries: Array<[string, number]>,
   logger?: Logger,
 ): Promise<void> {
-  if (entries.length === 0) return;
+  if (entries.length === 0) {
+    return;
+  }
   // M11: Warn on unusually large counts (from buffer accumulation during outage)
   for (const [id, cnt] of entries) {
     if (cnt > 100) {
@@ -1594,7 +1622,9 @@ export async function episodeEnrich(
   session: Session,
   memoryIds: string[],
 ): Promise<EpisodeMetadata[]> {
-  if (memoryIds.length === 0) return [];
+  if (memoryIds.length === 0) {
+    return [];
+  }
 
   const result = await session.executeRead((tx) =>
     tx.run(

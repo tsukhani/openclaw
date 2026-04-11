@@ -156,6 +156,21 @@
         "typescript/unbound-method": "off",
         "eslint/no-unsafe-optional-chaining": "off"
       }
+    },
+    {
+      "files": ["extensions/memory-neo4j/**"],
+      "rules": {
+        "eslint/no-unused-vars": "off",
+        "typescript/no-base-to-string": "off",
+        "typescript/no-unnecessary-type-conversion": "off",
+        "typescript/no-unnecessary-template-expression": "off",
+        "typescript/no-redundant-type-constituents": "off",
+        "typescript/restrict-template-expressions": "off",
+        "typescript/unbound-method": "off",
+        "typescript/consistent-return": "off",
+        "typescript/require-array-sort-compare": "off",
+        "eslint-plugin-unicorn/prefer-array-find": "off"
+      }
     }
   ]
 }

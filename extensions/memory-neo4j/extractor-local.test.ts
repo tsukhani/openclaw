@@ -202,7 +202,7 @@ describe("mergeExtractionResults", () => {
 
     const merged = mergeExtractionResults(local, llm)!;
     expect(merged.entities).toHaveLength(2);
-    expect(merged.entities.map((e) => e.name).sort()).toEqual(["alice", "project alpha"]);
+    expect(merged.entities.map((e) => e.name).toSorted()).toEqual(["alice", "project alpha"]);
   });
 
   it("merges local properties into LLM entity", () => {

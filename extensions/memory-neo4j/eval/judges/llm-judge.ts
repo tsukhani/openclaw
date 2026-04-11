@@ -195,7 +195,9 @@ export function extractJson(text: string): string {
   // Strip markdown code fences
   const stripped = text.replace(/```(?:json)?\s*/gi, "").replace(/```\s*/g, "");
   const start = stripped.indexOf("{");
-  if (start === -1) return stripped.trim();
+  if (start === -1) {
+    return stripped.trim();
+  }
 
   // Walk forward tracking brace depth + string context to find matching close
   let depth = 0;
@@ -215,9 +217,12 @@ export function extractJson(text: string): string {
       inString = !inString;
       continue;
     }
-    if (inString) continue;
-    if (ch === "{") depth++;
-    else if (ch === "}") {
+    if (inString) {
+      continue;
+    }
+    if (ch === "{") {
+      depth++;
+    } else if (ch === "}") {
       depth--;
       if (depth === 0) {
         return stripped.slice(start, i + 1);
@@ -227,7 +232,9 @@ export function extractJson(text: string): string {
 
   // Unbalanced braces — fall back to original slice
   const end = stripped.lastIndexOf("}");
-  if (end > start) return stripped.slice(start, end + 1);
+  if (end > start) {
+    return stripped.slice(start, end + 1);
+  }
   return stripped.trim();
 }
 
@@ -235,8 +242,12 @@ export function normalizeVerdict(raw: unknown): ContextVerdict {
   const s = String(raw ?? "")
     .toUpperCase()
     .trim();
-  if (s === "COMPLETE") return "COMPLETE";
-  if (s === "PARTIAL") return "PARTIAL";
+  if (s === "COMPLETE") {
+    return "COMPLETE";
+  }
+  if (s === "PARTIAL") {
+    return "PARTIAL";
+  }
   return "INSUFFICIENT";
 }
 
@@ -244,7 +255,11 @@ export function normalizeCorrectness(raw: unknown): AnswerCorrectness {
   const s = String(raw ?? "")
     .toLowerCase()
     .trim();
-  if (s === "correct") return "correct";
-  if (s === "partial") return "partial";
+  if (s === "correct") {
+    return "correct";
+  }
+  if (s === "partial") {
+    return "partial";
+  }
   return "incorrect";
 }

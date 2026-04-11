@@ -62,7 +62,9 @@ export function extractRegexProperties(text: string): {
 
   for (const match of text.matchAll(PHONE_RE)) {
     const val = match[0].trim();
-    if (val.replace(/\D/g, "").length < 7) continue;
+    if (val.replace(/\D/g, "").length < 7) {
+      continue;
+    }
     const contextName = findPrecedingName(text, match.index);
     properties.push({ key: "phone", value: val, contextName });
   }
@@ -148,7 +150,9 @@ function findPrecedingName(text: string, matchIndex: number): string | undefined
   ];
   for (const pattern of patterns) {
     const m = before.match(pattern);
-    if (m) return m[1];
+    if (m) {
+      return m[1];
+    }
   }
   return undefined;
 }
@@ -210,7 +214,9 @@ let glinerPromise: Promise<GlinerPipeline | null> | null = null;
 
 /** Initialize the GLiNER pipeline lazily. Returns null on failure. */
 async function getGlinerPipeline(): Promise<GlinerPipeline | null> {
-  if (glinerPromise) return glinerPromise;
+  if (glinerPromise) {
+    return glinerPromise;
+  }
 
   glinerPromise = (async () => {
     try {
@@ -222,7 +228,6 @@ async function getGlinerPipeline(): Promise<GlinerPipeline | null> {
       // Download and cache the ONNX model, then create session
       const modelBuffer = await downloadOnnxModel(GLINER_MODEL, "onnx/model_quantized.onnx");
       // onnxruntime-node is a transitive dep of @huggingface/transformers — dynamic import
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ort: OrtModule = await import("onnxruntime-node" as string);
       const session = await ort.InferenceSession.create(modelBuffer);
 
@@ -262,7 +267,9 @@ async function downloadOnnxModel(modelId: string, filename: string): Promise<Buf
     try {
       const storedHash = (await fs.readFile(hashPath, "utf-8")).trim();
       const actualHash = createHash("sha256").update(cached).digest("hex");
-      if (storedHash === actualHash) return cached;
+      if (storedHash === actualHash) {
+        return cached;
+      }
       // Hash mismatch — re-download
     } catch {
       // No hash file — trust existing cache (backward compat)
@@ -333,7 +340,9 @@ async function runGlinerInference(
   for (const m of text.matchAll(wordPattern)) {
     words.push({ text: m[0], start: m.index, end: m.index + m[0].length });
   }
-  if (words.length === 0) return [];
+  if (words.length === 0) {
+    return [];
+  }
 
   // Build the combined input: [CLS] <<ENT>> label1 <<ENT>> label2 ... <<SEP>> word1 word2 ... [SEP]
   // Since GLiNER uses DeBERTa tokenizer, we construct the full text and tokenize
@@ -353,7 +362,7 @@ async function runGlinerInference(
 
   // Build words_mask: 1 for text word starts, 0 elsewhere
   // Approximate: map word boundaries to token positions
-  const wordsMask = new Array(seqLen).fill(0);
+  const wordsMask = Array.from({ length: seqLen }, () => 0);
   const textTokenStart = prefixLen - 1; // -1 because CLS is included
   const numTextTokens = seqLen - textTokenStart - 1; // -1 for trailing SEP
 
@@ -381,17 +390,19 @@ async function runGlinerInference(
       spans.push([i, j]);
     }
   }
-  if (spans.length === 0) return [];
+  if (spans.length === 0) {
+    return [];
+  }
 
   // Build span_idx tensor [1, numSpans, 2]
-  const spanIdx = new Array(spans.length * 2);
+  const spanIdx = Array.from<number>({ length: spans.length * 2 });
   for (let i = 0; i < spans.length; i++) {
     spanIdx[i * 2] = spans[i][0];
     spanIdx[i * 2 + 1] = spans[i][1];
   }
 
   // Build span_mask tensor [1, numSpans]
-  const spanMask = new Array(spans.length).fill(1);
+  const spanMask = Array.from({ length: spans.length }, () => 1);
 
   // Build text_lengths tensor [1]
   const textLengths = [numWords];
@@ -416,9 +427,11 @@ async function runGlinerInference(
   // Run inference
   const output = await session.run(feeds);
   const logits = output.logits ?? output.span_logits ?? Object.values(output)[0];
-  if (!logits) return [];
+  if (!logits) {
+    return [];
+  }
 
-  let logitsData = logits.data as Float32Array;
+  let logitsData = logits.data;
   const numLabels = labels.length;
   const logitsDims = logits.dims;
 
@@ -475,7 +488,9 @@ async function runGlinerInference(
         break;
       }
     }
-    if (overlaps) continue;
+    if (overlaps) {
+      continue;
+    }
 
     // Mark words as taken
     for (let w = c.spanStart; w <= c.spanEnd; w++) {
@@ -485,7 +500,9 @@ async function runGlinerInference(
     // Map back to text
     const startWord = words[c.spanStart];
     const endWord = words[c.spanEnd];
-    if (!startWord || !endWord) continue;
+    if (!startWord || !endWord) {
+      continue;
+    }
 
     results.push({
       text: text.slice(startWord.start, endWord.end),
@@ -519,7 +536,9 @@ export async function extractNer(text: string, logger?: Logger): Promise<Extract
         type: e.label,
       }))
       .filter((e) => {
-        if (e.name.length === 0 || seen.has(e.name)) return false;
+        if (e.name.length === 0 || seen.has(e.name)) {
+          return false;
+        }
         seen.add(e.name);
         return true;
       });
@@ -546,7 +565,9 @@ export async function extractLocal(
   logger?: Logger,
 ): Promise<ExtractionResult> {
   const empty: ExtractionResult = { entities: [], relationships: [], tags: [] };
-  if (!enabled) return empty;
+  if (!enabled) {
+    return empty;
+  }
 
   let regexEntities: ExtractedEntity[] = [];
   let nerEntities: ExtractedEntity[] = [];
@@ -612,9 +633,15 @@ export function mergeExtractionResults(
   local: ExtractionResult | null,
   llm: ExtractionResult | null,
 ): ExtractionResult | null {
-  if (!local && !llm) return null;
-  if (!local) return llm;
-  if (!llm) return local;
+  if (!local && !llm) {
+    return null;
+  }
+  if (!local) {
+    return llm;
+  }
+  if (!llm) {
+    return local;
+  }
 
   const merged = new Map<string, ExtractedEntity & { _confidence: number }>();
   for (const e of local.entities) {

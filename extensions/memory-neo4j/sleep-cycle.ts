@@ -293,7 +293,7 @@ export async function runSleepCycle(
         const cdResult = await runCommunityDetection(
           session,
           agentId,
-          options.communityDetectionConfig!,
+          options.communityDetectionConfig,
           logger,
           abortSignal,
         );

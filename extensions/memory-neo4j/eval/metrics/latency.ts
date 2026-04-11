@@ -26,9 +26,11 @@ const ZERO_STATS: LatencyStats = {
  *   p_X = sorted[floor(X/100 * count)]
  */
 export function computeLatencyStats(samples: number[]): LatencyStats {
-  if (samples.length === 0) return ZERO_STATS;
+  if (samples.length === 0) {
+    return ZERO_STATS;
+  }
 
-  const sorted = [...samples].sort((a, b) => a - b);
+  const sorted = [...samples].toSorted((a, b) => a - b);
   const n = sorted.length;
 
   const sum = sorted.reduce((s, v) => s + v, 0);

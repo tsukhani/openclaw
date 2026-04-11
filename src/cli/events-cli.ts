@@ -57,6 +57,8 @@ function summarizeEvent(event: UnifiedEvent): string {
       return `${event.jobName ?? event.jobId} self-destructed${event.reason ? ` (${event.reason})` : ""}`;
     case "cron-management":
       return `${event.jobName ?? event.jobId} ${event.operation}${event.enabled != null ? ` (enabled=${event.enabled})` : ""}`;
+    default:
+      return "(unknown event)";
   }
 }
 

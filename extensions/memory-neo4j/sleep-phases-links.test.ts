@@ -183,10 +183,10 @@ describe("createTemporalLinks", () => {
     await createTemporalLinks(session as any, "agent-1", logger as any);
 
     // Check first link (1 min gap) has higher weight than second (30 min gap)
-    const firstCallArgs = (session.executeWrite.mock.calls[0][0] as any)({
+    const firstCallArgs = session.executeWrite.mock.calls[0][0]({
       run: vi.fn().mockResolvedValue({ records: [] }),
     });
-    const secondCallArgs = (session.executeWrite.mock.calls[1][0] as any)({
+    const secondCallArgs = session.executeWrite.mock.calls[1][0]({
       run: vi.fn().mockResolvedValue({ records: [] }),
     });
 

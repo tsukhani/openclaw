@@ -27,9 +27,13 @@ import type { SearchSignalResult, SignalAttribution, SignalProvenance } from "./
  * and the rest scale proportionally.
  */
 export function normalizeSignalScores(results: SearchSignalResult[]): SearchSignalResult[] {
-  if (results.length === 0) return [];
+  if (results.length === 0) {
+    return [];
+  }
   const maxScore = results[0].score; // results are already sorted desc by score
-  if (maxScore <= 0) return results.map((r) => ({ ...r, score: 0 }));
+  if (maxScore <= 0) {
+    return results.map((r) => ({ ...r, score: 0 }));
+  }
   return results.map((r) => ({ ...r, score: r.score / maxScore }));
 }
 

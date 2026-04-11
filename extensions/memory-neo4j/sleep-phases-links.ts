@@ -42,6 +42,7 @@ export async function createSemanticLinks(
   let totalCreated = 0;
 
   // Process in batches until no more unlinked memories
+  // oxlint-disable-next-line eslint/no-unmodified-loop-condition
   while (!abortSignal?.aborted) {
     // Find memories with embeddings but no SIMILAR edges yet
     // NOTE: Use toInteger() for LIMIT because JS numbers are IEEE 754 doubles
@@ -58,10 +59,14 @@ export async function createSemanticLinks(
       ),
     );
 
-    if (unlinked.records.length === 0) break;
+    if (unlinked.records.length === 0) {
+      break;
+    }
 
     for (const record of unlinked.records) {
-      if (abortSignal?.aborted) break;
+      if (abortSignal?.aborted) {
+        break;
+      }
 
       const sourceId = record.get("id") as string;
       const embedding = record.get("embedding") as number[];
@@ -106,7 +111,9 @@ export async function createSemanticLinks(
     }
 
     // If we got fewer than the batch size, we're done
-    if (unlinked.records.length < SEMANTIC_BATCH_SIZE) break;
+    if (unlinked.records.length < SEMANTIC_BATCH_SIZE) {
+      break;
+    }
   }
 
   return totalCreated;
@@ -128,7 +135,9 @@ export async function createTemporalLinks(
   logger: Logger,
   abortSignal?: AbortSignal,
 ): Promise<number> {
-  if (abortSignal?.aborted) return 0;
+  if (abortSignal?.aborted) {
+    return 0;
+  }
   let totalCreated = 0;
 
   // Find sessions with unlinked memories, grouped and ordered
@@ -148,7 +157,9 @@ export async function createTemporalLinks(
   );
 
   for (const record of sessionGroups.records) {
-    if (abortSignal?.aborted) break;
+    if (abortSignal?.aborted) {
+      break;
+    }
 
     const memories = record.get("memories") as Array<{ id: string; createdAt: string }>;
 
@@ -208,8 +219,12 @@ export async function createCausalLinks(
   logger: Logger,
   abortSignal?: AbortSignal,
 ): Promise<number> {
-  if (!config.enabled) return 0;
-  if (abortSignal?.aborted) return 0;
+  if (!config.enabled) {
+    return 0;
+  }
+  if (abortSignal?.aborted) {
+    return 0;
+  }
 
   let totalCreated = 0;
 
@@ -225,7 +240,9 @@ export async function createCausalLinks(
     ),
   );
 
-  if (candidates.records.length === 0) return 0;
+  if (candidates.records.length === 0) {
+    return 0;
+  }
 
   // Build pairs for LLM evaluation
   const pairs = candidates.records.map((r) => ({
@@ -255,14 +272,18 @@ Respond with a JSON array only, no other text:
 [{"fromId": "...", "toId": "...", "isCausal": true/false, "reason": "...", "confidence": 0.0-1.0}]`;
 
   const response = await callLlm(config, prompt, abortSignal);
-  if (!response || response.trim().length === 0) return 0;
+  if (!response || response.trim().length === 0) {
+    return 0;
+  }
 
   // Parse response
   let assessments: CausalAssessment[] = [];
   try {
     let jsonStr = response.trim();
     const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fenceMatch) jsonStr = fenceMatch[1].trim();
+    if (fenceMatch) {
+      jsonStr = fenceMatch[1].trim();
+    }
 
     const parsed: unknown = JSON.parse(jsonStr);
     if (Array.isArray(parsed)) {
@@ -285,13 +306,21 @@ Respond with a JSON array only, no other text:
   const validPairIds = new Set(pairs.map((p) => `${p.fromId}\0${p.toId}`));
 
   for (const assessment of assessments) {
-    if (abortSignal?.aborted) break;
-    if (!assessment.isCausal) continue;
-    if (assessment.confidence < 0.5) continue;
+    if (abortSignal?.aborted) {
+      break;
+    }
+    if (!assessment.isCausal) {
+      continue;
+    }
+    if (assessment.confidence < 0.5) {
+      continue;
+    }
 
     // Validate that this pair was in our candidate set
     const pairKey = `${assessment.fromId}\0${assessment.toId}`;
-    if (!validPairIds.has(pairKey)) continue;
+    if (!validPairIds.has(pairKey)) {
+      continue;
+    }
 
     await session.executeWrite((tx) =>
       tx.run(

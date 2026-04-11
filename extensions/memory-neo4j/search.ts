@@ -381,7 +381,7 @@ export async function hybridSearch(
   // When reranking is active, fetch topK candidates before reranking; otherwise fetch limit*multiplier
   const rerankerActive = rerankerConfig?.enabled && rerankerConfig.provider !== "none";
   const candidateLimit = rerankerActive
-    ? Math.floor(Math.min(200, Math.max(1, rerankerConfig!.topK ?? 10)))
+    ? Math.floor(Math.min(200, Math.max(1, rerankerConfig.topK ?? 10)))
     : Math.floor(Math.min(200, Math.max(1, limit * candidateMultiplier)));
 
   // 1. Generate query embedding
@@ -432,7 +432,9 @@ export async function hybridSearch(
         ac.abort();
         resolve(fallback);
       }, timeoutMs);
-      if (typeof timer === "object" && "unref" in timer) timer.unref();
+      if (typeof timer === "object" && "unref" in timer) {
+        timer.unref();
+      }
     });
     return Promise.race([fn(ac.signal).finally(() => clearTimeout(timer)), timeoutPromise]);
   };
@@ -471,7 +473,9 @@ export async function hybridSearch(
     ),
     withAbortableTimeout(
       async (signal) => {
-        if (!graphEnabled) return [] as SearchSignalResult[];
+        if (!graphEnabled) {
+          return [] as SearchSignalResult[];
+        }
 
         // LLM-based chain decomposition for relationship traversal queries.
         // The LLM determines whether the query is a multi-hop traversal and
@@ -492,7 +496,9 @@ export async function hybridSearch(
           // entity/extraction queries or when the rule-based parser can't parse it.
           if (queryType === "possessive-chain") {
             const ruleResult = parsePossessiveChain(query, selfEntityName ?? undefined);
-            if (ruleResult.isChain) parsedChain = ruleResult;
+            if (ruleResult.isChain) {
+              parsedChain = ruleResult;
+            }
           }
           if (!parsedChain && extractionConfig) {
             // Fetch live graph schema to ground the LLM in actual entity names
@@ -505,7 +511,9 @@ export async function hybridSearch(
               signal,
               schema,
             );
-            if (llmResult.isChain) parsedChain = llmResult;
+            if (llmResult.isChain) {
+              parsedChain = llmResult;
+            }
           }
         }
 
@@ -565,7 +573,9 @@ export async function hybridSearch(
     // when provenanceEnabled is threaded through (Phase 2 graph task).
     // For now, tag any graph results that don't have provenance yet.
     for (const r of graphResults) {
-      if (!r.provenance) r.provenance = { signal: "graph" };
+      if (!r.provenance) {
+        r.provenance = { signal: "graph" };
+      }
     }
     tagProvenance(communityResults, { signal: "community" });
   }
@@ -616,7 +626,7 @@ export async function hybridSearch(
             : vectorSeedIds.size > 0
               ? "vector"
               : "bm25";
-        r.provenance = { signal: "mpfp", seededBy: seededBy as "vector" | "bm25" | "both" };
+        r.provenance = { signal: "mpfp", seededBy: seededBy };
       }
     }
   }
@@ -879,14 +889,30 @@ export async function hybridSearch(
       // Build contributing signals list from non-zero signal attributions.
       const contributing: SignalName[] = [];
       const s = r.signals;
-      if (s.vector.rank > 0) contributing.push("vector");
-      if (s.bm25.rank > 0) contributing.push("bm25");
-      if (s.graph.rank > 0) contributing.push("graph");
-      if (s.freshness?.rank && s.freshness.rank > 0) contributing.push("freshness");
-      if (s.community?.rank && s.community.rank > 0) contributing.push("community");
-      if (s.mpfp?.rank && s.mpfp.rank > 0) contributing.push("mpfp");
-      if (s.observation?.rank && s.observation.rank > 0) contributing.push("observation");
-      if (s.opinion?.rank && s.opinion.rank > 0) contributing.push("opinion");
+      if (s.vector.rank > 0) {
+        contributing.push("vector");
+      }
+      if (s.bm25.rank > 0) {
+        contributing.push("bm25");
+      }
+      if (s.graph.rank > 0) {
+        contributing.push("graph");
+      }
+      if (s.freshness?.rank && s.freshness.rank > 0) {
+        contributing.push("freshness");
+      }
+      if (s.community?.rank && s.community.rank > 0) {
+        contributing.push("community");
+      }
+      if (s.mpfp?.rank && s.mpfp.rank > 0) {
+        contributing.push("mpfp");
+      }
+      if (s.observation?.rank && s.observation.rank > 0) {
+        contributing.push("observation");
+      }
+      if (s.opinion?.rank && s.opinion.rank > 0) {
+        contributing.push("opinion");
+      }
 
       const fusion: FusionProvenance = { contributingSignals: contributing };
       if (factTypeIntent) {

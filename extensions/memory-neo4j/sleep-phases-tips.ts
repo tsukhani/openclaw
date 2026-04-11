@@ -95,10 +95,14 @@ function processSessionLine(
 ): void {
   try {
     const obj = JSON.parse(line) as Record<string, unknown>;
-    if (obj.type !== "message") return;
+    if (obj.type !== "message") {
+      return;
+    }
 
     const msg = obj.message as Record<string, unknown>;
-    if (!msg || typeof msg !== "object") return;
+    if (!msg || typeof msg !== "object") {
+      return;
+    }
 
     const role = String(msg.role ?? "");
 
@@ -133,7 +137,9 @@ function processSessionLine(
       }
     } else if (role === "assistant") {
       const content = msg.content as Array<Record<string, unknown>> | undefined;
-      if (!Array.isArray(content)) return;
+      if (!Array.isArray(content)) {
+        return;
+      }
 
       const textContent = content
         .filter((c) => c.type === "text")
@@ -186,7 +192,9 @@ export async function runTipGeneration(
     onProgress,
   } = options;
 
-  if (abortSignal?.aborted) return;
+  if (abortSignal?.aborted) {
+    return;
+  }
 
   if (!config.enabled) {
     logger.info("memory-neo4j: [sleep] Phase 8 skipped — extraction not enabled");
@@ -226,7 +234,7 @@ export async function runTipGeneration(
             r.status === "fulfilled",
         )
         .filter((r) => r.value.mtime >= cutoff)
-        .sort((a, b) => b.value.mtime - a.value.mtime)
+        .toSorted((a, b) => b.value.mtime - a.value.mtime)
         .map((r) => r.value.path);
     } catch {
       logger.info("memory-neo4j: [sleep] Phase 8: sessions dir not found, skipping");
@@ -238,10 +246,14 @@ export async function runTipGeneration(
 
       const allPatterns: Array<{ failure: string; correction: string }> = [];
       for (const sessionFile of sessionFiles) {
-        if (abortSignal?.aborted) break;
+        if (abortSignal?.aborted) {
+          break;
+        }
         const patterns = await extractFailurePatterns(sessionFile, tipGenMaxFailures);
         allPatterns.push(...patterns);
-        if (allPatterns.length >= tipGenMaxFailures) break;
+        if (allPatterns.length >= tipGenMaxFailures) {
+          break;
+        }
       }
 
       result.tipGeneration.failurePatternsFound = allPatterns.length;
@@ -256,6 +268,7 @@ export async function runTipGeneration(
         const collectedTips: Array<{ text: string; importance: number }> = [];
 
         const BATCH_SIZE = 10;
+        // oxlint-disable-next-line eslint/no-unmodified-loop-condition
         for (let i = 0; i < allPatterns.length && !abortSignal?.aborted; i += BATCH_SIZE) {
           const batch = allPatterns.slice(i, i + BATCH_SIZE);
           // H9: Sanitize failure/correction text before interpolating into LLM prompt.
@@ -264,7 +277,7 @@ export async function runTipGeneration(
             s
               .slice(0, 500)
               .replace(/[\r\n]+/g, " ")
-              .replace(/[\[\]`{}]/g, "");
+              .replace(/[[\]`{}]/g, "");
           const promptContent = batch
             .map(
               (p, idx) =>
@@ -282,7 +295,9 @@ export async function runTipGeneration(
               abortSignal,
             );
 
-            if (!content) continue;
+            if (!content) {
+              continue;
+            }
 
             // Use stripCodeFences before JSON.parse — some models wrap JSON in ``` fences.
             // Without this, a SyntaxError would be silently swallowed and the whole batch dropped.
@@ -290,17 +305,22 @@ export async function runTipGeneration(
             const rawTips = Array.isArray(parsed.tips) ? parsed.tips : [];
 
             for (const tip of rawTips) {
-              if (abortSignal?.aborted) break;
+              if (abortSignal?.aborted) {
+                break;
+              }
               if (
                 !tip ||
                 typeof tip !== "object" ||
                 typeof (tip as Record<string, unknown>).text !== "string"
-              )
+              ) {
                 continue;
+              }
 
               const tipObj = tip as Record<string, unknown>;
               const text = String(tipObj.text).trim();
-              if (!text || text.length < 20) continue;
+              if (!text || text.length < 20) {
+                continue;
+              }
 
               const importance =
                 typeof tipObj.importance === "number"
