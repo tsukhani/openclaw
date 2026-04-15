@@ -944,7 +944,7 @@ export async function handleToolExecutionEnd(
       sessionKey: ctx.params.sessionKey,
       runId,
       toolName,
-      toolParams: afterToolCallArgs,
+      toolParams: startArgs,
       durationMs: durationMsForEvent,
       result: isToolError
         ? { status: "error", error: extractToolErrorMessage(sanitizedResult) ?? "unknown error" }

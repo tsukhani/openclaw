@@ -39,7 +39,7 @@ describe("synthetic onboard", () => {
       baseUrl: "https://api.synthetic.new/anthropic",
       legacyApi: "openai-completions",
     });
-    const ids = provider?.models.map((m) => m.id);
+    const ids = provider?.models?.map((m) => m.id);
     expect(ids).toContain("old-model");
     expect(ids).toContain(SYNTHETIC_DEFAULT_MODEL_REF.replace(/^synthetic\//, ""));
   });

@@ -33,8 +33,8 @@ describe("mistral onboard", () => {
       legacyModelId: "custom-model",
       legacyModelName: "Custom",
     });
-    expect(provider?.models.map((m) => m.id)).toEqual(["custom-model", "mistral-large-latest"]);
-    const mistralDefault = provider?.models.find((model) => model.id === "mistral-large-latest");
+    expect(provider?.models?.map((m) => m.id)).toEqual(["custom-model", "mistral-large-latest"]);
+    const mistralDefault = provider?.models?.find((model) => model.id === "mistral-large-latest");
     expect(mistralDefault?.contextWindow).toBe(262144);
     expect(mistralDefault?.maxTokens).toBe(16384);
   });

@@ -99,11 +99,11 @@ describe("buildQaGatewayConfig", () => {
     expect(getPrimaryModel(cfg.agents?.defaults?.model)).toBe("openai/gpt-5.5");
     expect(cfg.models?.providers?.openai?.api).toBe("openai-responses");
     expect(cfg.models?.providers?.openai?.request).toEqual({ allowPrivateNetwork: true });
-    expect(cfg.models?.providers?.openai?.models.map((model) => model.id)).toContain("gpt-5.5");
+    expect(cfg.models?.providers?.openai?.models?.map((model) => model.id)).toContain("gpt-5.5");
     expect(cfg.models?.providers?.anthropic?.api).toBe("anthropic-messages");
     expect(cfg.models?.providers?.anthropic?.baseUrl).toBe("http://127.0.0.1:44080");
     expect(cfg.models?.providers?.anthropic?.request).toEqual({ allowPrivateNetwork: true });
-    expect(cfg.models?.providers?.anthropic?.models.map((model) => model.id)).toContain(
+    expect(cfg.models?.providers?.anthropic?.models?.map((model) => model.id)).toContain(
       "claude-opus-4-6",
     );
     expect(cfg.plugins?.allow).toEqual(["acpx", "memory-core"]);

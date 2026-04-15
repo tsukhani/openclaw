@@ -18,7 +18,7 @@ describe("minimax onboard", () => {
 
   it("keeps reasoning enabled for MiniMax-M2.7", () => {
     const cfg = applyMinimaxApiConfig({}, "MiniMax-M2.7");
-    expect(cfg.models?.providers?.minimax?.models[0]?.reasoning).toBe(true);
+    expect(cfg.models?.providers?.minimax?.models?.[0]?.reasoning).toBe(true);
   });
 
   it("keeps MiniMax chat models text-only so image tools use MiniMax-VL-01", () => {
@@ -59,7 +59,7 @@ describe("minimax onboard", () => {
       legacyApi: "openai-completions",
     });
     expect(provider?.authHeader).toBe(true);
-    expect(provider?.models.map((m) => m.id)).toEqual(["old-model", "MiniMax-M2.7"]);
+    expect(provider?.models?.map((m) => m.id)).toEqual(["old-model", "MiniMax-M2.7"]);
   });
 
   it("preserves other providers when adding minimax", () => {

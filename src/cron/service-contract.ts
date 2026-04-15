@@ -27,7 +27,10 @@ export interface CronServiceContract {
   listPage(opts?: CronListPageOptions): Promise<CronListPageResult>;
   add(input: CronAddInput): Promise<CronAddResult>;
   update(id: string, patch: CronUpdateInput): Promise<CronUpdateResult>;
-  remove(id: string): Promise<CronRemoveResult>;
+  remove(
+    id: string,
+    opts?: { selfDestruct?: boolean; agentSessionKey?: string },
+  ): Promise<CronRemoveResult>;
   run(id: string, mode?: CronRunMode): Promise<CronServiceRunResult>;
   enqueueRun(id: string, mode?: CronRunMode): Promise<CronServiceRunResult>;
   getJob(id: string): CronJob | undefined;
