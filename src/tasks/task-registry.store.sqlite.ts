@@ -341,7 +341,6 @@ function migrateLegacyOwnerColumns(db: DatabaseSync) {
       SET owner_key = requester_session_key
       WHERE owner_key IS NULL
     `);
-    db.exec(`ALTER TABLE task_runs DROP COLUMN requester_session_key`);
   }
   db.exec(`
     UPDATE task_runs
