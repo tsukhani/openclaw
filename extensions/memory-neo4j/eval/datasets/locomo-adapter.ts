@@ -107,8 +107,8 @@ function convertSampleToCases(sample: LoCoMoSample, filterAbility?: MemoryAbilit
   const sessionKeys = Object.keys(conv)
     .filter((k) => k.startsWith("session_") && !k.endsWith("_date_time") && Array.isArray(conv[k]))
     .toSorted((a, b) => {
-      const na = parseInt(a.replace("session_", ""), 10);
-      const nb = parseInt(b.replace("session_", ""), 10);
+      const na = Number.parseInt(a.replace("session_", ""), 10);
+      const nb = Number.parseInt(b.replace("session_", ""), 10);
       return na - nb;
     });
 

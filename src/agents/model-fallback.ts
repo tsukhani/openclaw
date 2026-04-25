@@ -9,7 +9,7 @@ import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { sanitizeForLog } from "../terminal/ansi.js";
 import { hasAnyAuthProfileStoreSource } from "./auth-profiles/source-check.js";
 import type { AuthProfileStore } from "./auth-profiles/types.js";
-import { resolveDefaultsFromConfig } from "./defaults.js";
+import { DEFAULT_PROVIDER, resolveDefaultsFromConfig } from "./defaults.js";
 import {
   FailoverError,
   coerceToFailoverError,

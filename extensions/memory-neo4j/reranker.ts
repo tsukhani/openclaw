@@ -145,12 +145,12 @@ export async function rerankCandidates(
       const candidate = candidates[index];
       const normalizedRerank = rerankRange > 0 ? (relevanceScore - rerankMin) / rerankRange : 0.5;
       const blended = effectiveAlpha * candidate.score + (1 - effectiveAlpha) * normalizedRerank;
-      return {
-        ...candidate,
+      const result: HybridSearchResult = Object.assign({}, candidate, {
         rerankScore: relevanceScore,
         rrfScore: candidate.score,
         score: blended,
-      };
+      });
+      return result;
     });
 
     reranked.sort((a, b) => b.score - a.score);

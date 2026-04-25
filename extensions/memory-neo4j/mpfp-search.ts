@@ -132,7 +132,7 @@ async function traversePattern(
 
   // Score = decay^hops × product of edge weights
   const weightProduct = relAliases.map((r) => `COALESCE(${r}.weight, 1.0)`).join(" * ");
-  const decayFactor = Math.pow(decay, pattern.length);
+  const decayFactor = decay ** pattern.length;
 
   // Determine expected final node label based on last edge type
   // EXTRACTED_FROM: if previous node is Memory, final is Entity (or vice versa)

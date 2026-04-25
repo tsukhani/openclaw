@@ -534,14 +534,7 @@ async function handleSendAction(ctx: ResolvedActionContext): Promise<MessageActi
   const hasPresentation = hasMessagePresentationBlocks(params.presentation);
   const hasInteractive = hasInteractiveReplyBlocks(params.interactive);
   const caption = readStringParam(params, "caption", { allowEmpty: true }) ?? "";
-  const messageRequired =
-    !mediaHint &&
-    !hasButtons &&
-    !hasCard &&
-    !hasComponents &&
-    !hasInteractive &&
-    !hasBlocks &&
-    !hasPresentation;
+  const messageRequired = !mediaHint && !hasPresentation && !hasInteractive;
   let message =
     readStringParam(params, "message", { required: false, allowEmpty: true }) ??
     readStringParam(params, "content", { required: false, allowEmpty: true }) ??

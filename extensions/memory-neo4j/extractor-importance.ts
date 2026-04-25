@@ -61,7 +61,7 @@ export async function rateImportance(
     }
 
     const parsed = JSON.parse(stripCodeFences(content)) as { score?: unknown };
-    const score = typeof parsed.score === "number" ? parsed.score : NaN;
+    const score = typeof parsed.score === "number" ? parsed.score : Number.NaN;
     if (Number.isNaN(score)) {
       return 0.5;
     }

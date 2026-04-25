@@ -153,7 +153,7 @@ export async function flushRetrievalBuffer(
       // Use exponential backoff capped at the normal interval to avoid hammering
       // a persistently-down Neo4j instance.
       const retryDelay = Math.min(
-        RETRIEVAL_RETRY_INTERVAL_MS * Math.pow(2, state.consecutiveFailures - 1),
+        RETRIEVAL_RETRY_INTERVAL_MS * 2 ** (state.consecutiveFailures - 1),
         RETRIEVAL_FLUSH_INTERVAL_MS,
       );
       scheduleRetrievalFlush(

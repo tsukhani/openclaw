@@ -20,7 +20,7 @@ if (tables.includes("memories")) {
   console.log("\nCategory breakdown:", stats);
   console.log("\nSample entries:");
   all.slice(0, 5).forEach((e, i) => {
-    console.log(`${i + 1}. [${e.category}] ${(e.text || "").substring(0, 100)}...`);
+    console.log(`${i + 1}. [${e.category}] ${(e.text || "").slice(0, 100)}...`);
     console.log(`   id: ${e.id}, importance: ${e.importance}, vectorDim: ${e.vector?.length}`);
   });
 }

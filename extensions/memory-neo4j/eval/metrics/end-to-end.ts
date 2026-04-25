@@ -24,7 +24,7 @@ export async function generateAnswer(
 
   try {
     return await judge.generateAnswer(question, retrievedTexts);
-  } catch (err) {
+  } catch {
     return null;
   }
 }

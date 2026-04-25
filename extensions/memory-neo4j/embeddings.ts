@@ -92,7 +92,7 @@ const OLLAMA_EMBED_CONCURRENCY = (() => {
   if (envVal === undefined) {
     return 4;
   }
-  const parsed = parseInt(envVal, 10);
+  const parsed = Number.parseInt(envVal, 10);
   if (Number.isNaN(parsed)) {
     return 4;
   }

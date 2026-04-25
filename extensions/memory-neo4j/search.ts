@@ -804,13 +804,13 @@ export async function hybridSearch(
   //    the RRF top-N can still surface after the recency re-sort.
   const recencyWindow = Math.min(fused.length, limit * 2);
   const candidates = fused.slice(0, recencyWindow).map((r) => {
-    const createdAtMs = r.createdAt ? new Date(r.createdAt).getTime() : NaN;
+    const createdAtMs = r.createdAt ? new Date(r.createdAt).getTime() : Number.NaN;
     const ageDays = !Number.isNaN(createdAtMs)
       ? (now - createdAtMs) / (1000 * 60 * 60 * 24)
       : RECENCY_DECAY_DAYS; // default to 1 year if missing or malformed createdAt
     const recencyScore = Math.exp(-ageDays / RECENCY_DECAY_DAYS);
     const boostedScore = r.rrfScore * (1 + recencyWeight * recencyScore);
-    return { ...r, recencyScore, boostedScore };
+    return Object.assign({}, r, { recencyScore, boostedScore });
   });
 
   // Re-sort by boosted score (recency boost may reorder vs pure RRF)
@@ -866,20 +866,19 @@ export async function hybridSearch(
   })();
 
   const results: HybridSearchResult[] = candidates.map((r, idx) => {
-    const result: HybridSearchResult = {
-      id: r.id,
-      text: r.text,
-      category: r.category,
-      importance: r.importance,
-      createdAt: r.createdAt,
-      validFrom: r.validFrom,
-      score: Math.min(1, r.boostedScore * normalizer),
-      ...(lowConfidence ? { lowConfidence: true as const } : {}),
-      signals: {
-        ...r.signals,
-        recency: { rank: 0, score: r.recencyScore },
+    const result: HybridSearchResult = Object.assign(
+      {
+        id: r.id,
+        text: r.text,
+        category: r.category,
+        importance: r.importance,
+        createdAt: r.createdAt,
+        validFrom: r.validFrom,
+        score: Math.min(1, r.boostedScore * normalizer),
       },
-    };
+      lowConfidence ? { lowConfidence: true as const } : {},
+      { signals: { ...r.signals, recency: { rank: 0, score: r.recencyScore } } },
+    );
 
     // OP-200: Attach provenance and fusionProvenance for top 5 results only (context budget).
     if (provenanceEnabled && idx < 5) {

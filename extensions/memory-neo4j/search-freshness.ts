@@ -67,7 +67,7 @@ export function buildFreshnessSignal(
     if (Number.isNaN(validFromMs)) {
       continue;
     } // M9: skip malformed date strings
-    const createdAtMs = c.createdAt ? new Date(c.createdAt).getTime() : NaN;
+    const createdAtMs = c.createdAt ? new Date(c.createdAt).getTime() : Number.NaN;
     // M7: Skip when createdAt is missing/malformed — NaN comparison would bypass the 7-day guard
     if (Number.isNaN(createdAtMs)) {
       continue;

@@ -597,16 +597,19 @@ function loadSkillEntries(
       dir: workspaceSkillsDir,
       source: "openclaw-workspace",
     });
-    return workspaceSkills.map((skill) => {
-      let frontmatter: ParsedSkillFrontmatter = {};
-      try {
-        const raw = fs.readFileSync(skill.filePath, "utf-8");
-        frontmatter = parseFrontmatter(raw);
-      } catch {
-        // ignore malformed skills
-      }
+    return workspaceSkills.map((loaded) => {
+      const frontmatter: ParsedSkillFrontmatter =
+        loaded.frontmatter ??
+        (() => {
+          try {
+            const raw = fs.readFileSync(loaded.skill.filePath, "utf-8");
+            return parseFrontmatter(raw);
+          } catch {
+            return {};
+          }
+        })();
       return {
-        skill,
+        skill: loaded.skill,
         frontmatter,
         metadata: resolveOpenClawMetadata(frontmatter),
         invocation: resolveSkillInvocationPolicy(frontmatter),

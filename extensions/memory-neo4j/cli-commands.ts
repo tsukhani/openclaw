@@ -47,7 +47,7 @@ export async function handleList(
 ): Promise<void> {
   try {
     await db.ensureInitialized();
-    const perCategoryLimit = opts.limit ? parseInt(opts.limit, 10) : 20;
+    const perCategoryLimit = opts.limit ? Number.parseInt(opts.limit, 10) : 20;
     if (Number.isNaN(perCategoryLimit) || perCategoryLimit <= 0) {
       console.error("Error: --limit must be greater than 0");
       process.exitCode = 1;
@@ -326,7 +326,7 @@ export async function handleSearch(
       db,
       embeddings,
       query,
-      Math.max(1, parseInt(opts.limit, 10) || 5),
+      Math.max(1, Number.parseInt(opts.limit, 10) || 5),
       opts.agent ?? "default",
       extractionConfig.enabled,
       searchOptions,
@@ -615,10 +615,10 @@ export async function handleSleep(
 
   try {
     // Validate sleep cycle CLI parameters before running
-    const batchSize = opts.batchSize ? parseInt(opts.batchSize, 10) : undefined;
-    const delay = opts.delay ? parseInt(opts.delay, 10) : undefined;
-    const decayHalfLife = opts.decayHalfLife ? parseInt(opts.decayHalfLife, 10) : undefined;
-    const decayThreshold = opts.decayThreshold ? parseFloat(opts.decayThreshold) : undefined;
+    const batchSize = opts.batchSize ? Number.parseInt(opts.batchSize, 10) : undefined;
+    const delay = opts.delay ? Number.parseInt(opts.delay, 10) : undefined;
+    const decayHalfLife = opts.decayHalfLife ? Number.parseInt(opts.decayHalfLife, 10) : undefined;
+    const decayThreshold = opts.decayThreshold ? Number.parseFloat(opts.decayThreshold) : undefined;
 
     if (batchSize != null && (Number.isNaN(batchSize) || batchSize <= 0)) {
       console.error("Error: --batch-size must be greater than 0");
@@ -645,7 +645,7 @@ export async function handleSleep(
     }
 
     // C1: Validate dedupThreshold — must be between 0 and 1 (like decayThreshold above)
-    const dedupThreshold = opts.dedupThreshold ? parseFloat(opts.dedupThreshold) : undefined;
+    const dedupThreshold = opts.dedupThreshold ? Number.parseFloat(opts.dedupThreshold) : undefined;
     if (
       dedupThreshold != null &&
       (Number.isNaN(dedupThreshold) || dedupThreshold < 0 || dedupThreshold > 1)
@@ -656,7 +656,7 @@ export async function handleSleep(
     }
 
     const maxSemanticPairs = opts.maxSemanticPairs
-      ? parseInt(opts.maxSemanticPairs, 10)
+      ? Number.parseInt(opts.maxSemanticPairs, 10)
       : undefined;
     if (maxSemanticPairs != null && (Number.isNaN(maxSemanticPairs) || maxSemanticPairs <= 0)) {
       console.error("Error: --max-semantic-pairs must be greater than 0");
@@ -664,7 +664,7 @@ export async function handleSleep(
       return;
     }
 
-    const concurrency = opts.concurrency ? parseInt(opts.concurrency, 10) : undefined;
+    const concurrency = opts.concurrency ? Number.parseInt(opts.concurrency, 10) : undefined;
     if (concurrency != null && (Number.isNaN(concurrency) || concurrency <= 0)) {
       console.error("Error: --concurrency must be greater than 0");
       process.exitCode = 1;
@@ -839,7 +839,7 @@ export async function handleIndex(
   vectorDim: number,
   opts: { batchSize?: string },
 ): Promise<void> {
-  const batchSize = opts.batchSize ? parseInt(opts.batchSize, 10) : 50;
+  const batchSize = opts.batchSize ? Number.parseInt(opts.batchSize, 10) : 50;
   if (Number.isNaN(batchSize) || batchSize <= 0) {
     console.error("Error: --batch-size must be greater than 0");
     process.exitCode = 1;
@@ -1169,7 +1169,7 @@ export async function handleEval(
 ): Promise<void> {
   const validVariants = Object.keys(EVAL_VARIANTS);
 
-  const k = parseInt(opts.k, 10);
+  const k = Number.parseInt(opts.k, 10);
   if (Number.isNaN(k) || k < 1) {
     console.error("Error: --k must be a positive integer");
     process.exitCode = 1;
@@ -1220,7 +1220,7 @@ export async function handleEval(
     );
   }
 
-  const limit = opts.limit ? parseInt(opts.limit, 10) : undefined;
+  const limit = opts.limit ? Number.parseInt(opts.limit, 10) : undefined;
   if (limit !== undefined && (Number.isNaN(limit) || limit < 1)) {
     console.error("Error: --limit must be a positive integer");
     process.exitCode = 1;
@@ -1273,7 +1273,7 @@ export async function handleEval(
       agentId: opts.agentId,
       warmup: opts.warmup === true,
       perfRegressionThreshold: opts.perfRegressionThreshold
-        ? parseFloat(opts.perfRegressionThreshold)
+        ? Number.parseFloat(opts.perfRegressionThreshold)
         : undefined,
     };
 

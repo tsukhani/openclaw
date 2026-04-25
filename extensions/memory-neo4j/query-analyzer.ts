@@ -50,7 +50,7 @@ function parseNumber(s: string): number | null {
   if (n != null) {
     return n;
   }
-  const parsed = parseInt(s, 10);
+  const parsed = Number.parseInt(s, 10);
   return Number.isNaN(parsed) ? null : parsed;
 }
 
@@ -316,7 +316,7 @@ function matchNamedMonth(query: string, now: Date): TemporalMatch | null {
     if (month == null) {
       return null;
     }
-    const year = m[2] ? parseInt(m[2], 10) : now.getFullYear();
+    const year = m[2] ? Number.parseInt(m[2], 10) : now.getFullYear();
     const startDate = new Date(year, month, 1);
     const endDate = endOfMonth(startDate);
     return {
@@ -369,7 +369,7 @@ function matchYear(query: string, _now: Date): TemporalMatch | null {
   if (!m) {
     return null;
   }
-  const year = parseInt(m[1], 10);
+  const year = Number.parseInt(m[1], 10);
   return {
     startDate: startOfYear(new Date(year, 0, 1)),
     endDate: endOfYear(new Date(year, 0, 1)),
@@ -402,7 +402,7 @@ function matchBeforeAfter(query: string, now: Date): TemporalMatch | null {
     if (month == null) {
       return null;
     }
-    const year = parseInt(m[3], 10);
+    const year = Number.parseInt(m[3], 10);
     pivotStart = new Date(year, month, 1);
     pivotEnd = endOfMonth(pivotStart);
   } else if (m[4] && m[5]) {
@@ -411,7 +411,7 @@ function matchBeforeAfter(query: string, now: Date): TemporalMatch | null {
     if (month == null) {
       return null;
     }
-    const day = parseInt(m[5], 10);
+    const day = Number.parseInt(m[5], 10);
     pivotStart = new Date(now.getFullYear(), month, day);
     pivotEnd = endOfDay(pivotStart);
   } else if (m[6]) {
@@ -494,8 +494,8 @@ function matchBetween(query: string, now: Date): TemporalMatch | null {
     return null;
   }
 
-  const year1 = m[2] ? parseInt(m[2], 10) : now.getFullYear();
-  const year2 = m[4] ? parseInt(m[4], 10) : now.getFullYear();
+  const year1 = m[2] ? Number.parseInt(m[2], 10) : now.getFullYear();
+  const year2 = m[4] ? Number.parseInt(m[4], 10) : now.getFullYear();
 
   const startDate = new Date(year1, month1, 1);
   const endDate = endOfMonth(new Date(year2, month2, 1));

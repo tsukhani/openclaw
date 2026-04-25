@@ -231,14 +231,15 @@ export async function bm25Search(
   const maxScore = records[0].rawScore;
   const minScore = records[records.length - 1].rawScore;
   const range = maxScore - minScore;
-  return records.map((r) => ({
-    ...r,
-    score:
-      range > 0
-        ? BM25_NORMALIZATION_FLOOR +
-          ((1 - BM25_NORMALIZATION_FLOOR) * (r.rawScore - minScore)) / range
-        : 0.5, // Single result or identical scores → moderate 0.5 to avoid inflating weak matches
-  }));
+  return records.map((r) =>
+    Object.assign({}, r, {
+      score:
+        range > 0
+          ? BM25_NORMALIZATION_FLOOR +
+            ((1 - BM25_NORMALIZATION_FLOOR) * (r.rawScore - minScore)) / range
+          : 0.5, // Single result or identical scores → moderate 0.5 to avoid inflating weak matches
+    }),
+  );
 }
 
 /**

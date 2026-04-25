@@ -648,11 +648,10 @@ export async function getReplyFromConfig(
         return {
           text: `✅ Context compacted successfully.\n\n**Before:** ${tokensBefore.toLocaleString()} tokens\n**After:** ${tokensAfter.toLocaleString()} tokens\n**Saved:** ${(tokensBefore - tokensAfter).toLocaleString()} tokens`,
         };
-      } else {
-        return {
-          text: `ℹ️ Nothing to compact. ${compactResult.reason ?? "Session is already compact."}`,
-        };
       }
+      return {
+        text: `ℹ️ Nothing to compact. ${compactResult.reason ?? "Session is already compact."}`,
+      };
     } catch (err) {
       return {
         text: `❌ Compaction failed: ${String(err)}`,

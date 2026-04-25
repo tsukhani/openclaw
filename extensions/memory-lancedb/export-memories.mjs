@@ -8,7 +8,7 @@
  * Default output: memories-export.json
  */
 
-import { writeFileSync } from "fs";
+import { writeFileSync } from "node:fs";
 import * as lancedb from "@lancedb/lancedb";
 
 const LANCEDB_PATH = process.env.LANCEDB_PATH || "/home/tsukhani/.openclaw/memory/lancedb";

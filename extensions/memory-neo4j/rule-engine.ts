@@ -84,7 +84,7 @@ export function computeChainConfidence(
   depthDecay: number,
 ): number {
   const aggregated = aggregateConfidence(edgeConfidences, formula);
-  return ruleConfidence * aggregated * Math.pow(depthDecay, depth);
+  return ruleConfidence * aggregated * depthDecay ** depth;
 }
 
 // ============================================================================
